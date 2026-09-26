@@ -6,6 +6,8 @@ import { hatchRect } from '../../../fx/image'
 import { memo } from '../../../engine/three-host'
 import { GREAT_LAKES, LIGHTS, NORTH_AMERICA, type LonLat } from './geo'
 import { spline, typeBox, typed } from './util'
+import { hasWorld, world, GREAT_LAKES as LAKE_NAMES } from '../../../assets/geo'
+import { tune } from './tune'
 
 /**
  * 11.8–15.1  「2003 Blackout」标题 + 美国东北斜纹地图 + 青色半透明气泡 + 「Panic / New York State」标签，整层持续推近。
@@ -14,7 +16,14 @@ import { spline, typeBox, typed } from './util'
  */
 
 // 经纬度 → 世界坐标（在 12.9s 参考帧上对齐五大湖与纽约）
-const proj = (p: LonLat): [number, number] => [216 + (p[0] + 95) * 33, 276 + (49 - p[1]) * 34]
+// V2：明尼阿波利斯/堪萨斯城/圣路易斯/多伦多/华盛顿/杰克逊维尔等气泡对照后仍沿用 V1 的线性投影，参数开放给调参
+const PX = () => [tune('bx', 186), tune('by', 296), tune('bsx', 33), tune('bsy', 26.5), tune('bxy', 0), tune('byx', 0.75)] as const
+const proj = (p: LonLat): [number, number] => {
+  const [x0, y0, sx, sy, xy, yx] = PX()
+  const u = p[0] + 95
+  const v = 49 - p[1]
+  return [x0 + u * sx + v * xy, y0 + v * sy + u * yx]
+}
 
 interface Bubble {
   x: number
@@ -23,7 +32,36 @@ interface Bubble {
   delay: number
 }
 
+/**
+ * V2：气泡 = Natural Earth 城市点（美国/加拿大，经纬度框内），半径 ∝ 人口^0.33，
+ * 大城市周围再撒 1–3 个小卫星泡（原片气泡数约为城市数的两倍）。world 数据缺失时回退到 V1 灯光团。
+ */
+function realBubbles(): Bubble[] {
+  const key = `wd1p1:bubblesReal:${PX().join(',')}:${tune('bk', 7)}:${tune('bp', 0.37)}`
+  return memo(key, () => {
+    const R = rng(815)
+    const out: Bubble[] = []
+    const k = tune('bk', 7)
+    const pw = tune('bp', 0.37)
+    for (const [, iso, lon, lat, pop] of world('50m').cities) {
+      if ((iso !== 'USA' && iso !== 'CAN') || lon < -98 || lon > -58 || lat < 24 || lat > 50) continue
+      const [x, y] = proj([lon, lat])
+      if (x < 180 || y > 1000 || x > 1480 || y < 270) continue
+      const r = Math.min(46, k * Math.pow(pop / 1e5, pw))
+      out.push({ x, y, r, delay: R.next() })
+      const n = pop > 2e6 ? 3 : pop > 5e5 ? 2 : 1
+      for (let i = 0; i < n; i++) {
+        const a = R.range(0, Math.PI * 2)
+        const d = r * R.range(0.6, 1.6)
+        out.push({ x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, r: r * R.range(0.25, 0.6), delay: R.next() })
+      }
+    }
+    return out
+  })
+}
+
 function bubbles(): Bubble[] {
+  if (hasWorld('50m')) return realBubbles()
   return memo('wd1p1:bubbles', () => {
     const R = rng(814)
     const out: Bubble[] = []
@@ -44,7 +82,44 @@ function bubbles(): Bubble[] {
   })
 }
 
+/** V2：Natural Earth 50m 陆地 + 五大湖挖洞（evenodd） */
+function realLandPath(ctx: CanvasRenderingContext2D) {
+  const w = world('50m')
+  ctx.beginPath()
+  const ring = (r: Float32Array) => {
+    let first = true
+    for (let i = 0; i < r.length; i += 2) {
+      const lon = r[i]
+      const lat = r[i + 1]
+      const [x, y] = proj([Math.max(-140, Math.min(-40, lon)), Math.max(10, Math.min(70, lat))])
+      if (first) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+      first = false
+    }
+    ctx.closePath()
+  }
+  for (const poly of w.land) {
+    const r0 = poly[0]
+    // 只要北美范围内的面
+    let hit = false
+    for (let i = 0; i < r0.length; i += 2) if (r0[i] > -100 && r0[i] < -55 && r0[i + 1] > 24 && r0[i + 1] < 52) { hit = true; break }
+    if (hit) poly.forEach(ring)
+  }
+  for (const l of w.lakes) if ((LAKE_NAMES as readonly string[]).includes(l.name)) l.polys.forEach((p) => p.forEach(ring))
+}
+
 function hatchLand(ctx: CanvasRenderingContext2D) {
+  if (hasWorld('50m')) {
+    ctx.save()
+    realLandPath(ctx)
+    ctx.clip('evenodd')
+    ctx.beginPath()
+    ctx.rect(173, 262, 1330, 760)
+    ctx.clip()
+    hatchRect(ctx, 173, 262, 1330, 760, 9, 'rgba(255,255,255,0.2)', 1.1)
+    ctx.restore()
+    return
+  }
   ctx.save()
   ctx.beginPath()
   NORTH_AMERICA.forEach((p, i) => {

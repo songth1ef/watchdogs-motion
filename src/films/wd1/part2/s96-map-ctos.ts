@@ -4,12 +4,16 @@
  * 97.9 暗色展台（白色发光边线的主平板 + 后方一辆车）出现。
  * 98.2 交接给 part3/objects.ts（wd1-098-ctos-objects）：它用同一套针孔相机参数（D/H/yaw、f=900、地平线 380）、
  * 同样的字标画法与天幕渐变接着画 3D 展台、其余设备与后续绕转，98.2 这一帧两边构图一致。
- * ASSET：CONTINENTS（大陆粗轮廓）、drawCar（汽车剪影）是手写近似，
- *        换成真实地图图片 / 模型渲染图分别替换 drawWorld() 与 drawCar() 即可。
+ * V2：世界地图换成真实数据——Natural Earth 50m 陆地面做遮罩，GEBCO 高程梯度 + Blue Marble 灰度做浮雕，
+ *     整张图按 97.0s 参考帧 10 个海岸地标拟合的单应矩阵（原片地图平面略带透视，上窄下宽）贴到画面，带投影阴影。
+ *     资产缺失时回退到 V1 的 CONTINENTS 手写轮廓。
+ * ASSET：drawCar（汽车剪影）仍是手写近似。
  */
 import type { Scene } from '../../../engine/types'
 import { rng } from '../../../engine/math'
 import { FONT, ref, setFont, span, track } from './common'
+import { hasWorld, world } from '../../../assets/geo'
+import { earthImage, hasEarth } from '../../../assets/earth'
 
 const CONTINENTS: [number, number][][] = [
   [[-168, 65], [-140, 70], [-95, 72], [-80, 63], [-60, 55], [-66, 45], [-75, 35], [-81, 25], [-97, 26], [-105, 20], [-90, 15], [-83, 9], [-78, 8], [-105, 22], [-115, 30], [-124, 40], [-125, 49], [-135, 58], [-150, 60], [-165, 55]],
@@ -22,9 +26,123 @@ const CONTINENTS: [number, number][][] = [
   [[130, 31], [140, 36], [142, 42], [136, 38]],
   [[166, -46], [174, -41], [178, -38], [170, -46]],
 ]
-// 地图坐标：经度 -170..180 → x 150..1080，纬度 83..-56 → y 240..600（97.2s 画面）
+// V1 地图坐标：经度 -170..180 → x 150..1080，纬度 83..-56 → y 240..600（97.2s 画面），仅回退路径用
 const mx = (lon: number) => 150 + ((lon + 170) / 350) * 930
 const my = (lat: number) => 240 + ((83 - lat) / 139) * 360
+
+/** 地图层的上移曲线（render 与单应矩阵的反算共用） */
+const DY_KEYS: [number, number][] = [
+  [95.95, 520],
+  [96.2, 400],
+  [96.6, 60],
+  [96.9, 20],
+  [97.2, 0],
+]
+/**
+ * V2：等距圆柱 (lon, lat) → 1280 画面的单应矩阵，97.0s 参考帧拟合（开普角/好望角/纽约/北京/墨尔本/因弗卡吉尔/达喀尔/
+ * 威尔士王子角/瓜达富伊角/直布罗陀，残差 10px），再减去 97.0s 时的层位移，得到地图层自身坐标。
+ */
+const HOM = [2.36206, 1.02463, 577.336, -0.131637, -1.69894, 444.616, -0.000249098, 0.0013843]
+const HOM_DY = track(97.0, DY_KEYS)
+function hp(lon: number, lat: number): [number, number] {
+  const w = HOM[6] * lon + HOM[7] * lat + 1
+  return [(HOM[0] * lon + HOM[1] * lat + HOM[2]) / w, (HOM[3] * lon + HOM[4] * lat + HOM[5]) / w - HOM_DY]
+}
+
+/** 真实浮雕世界地图：先合成等距圆柱浮雕灰度（陆地内），再用三角网按单应矩阵贴到 1280×720 离屏画布，结果缓存 */
+let reliefCache: HTMLCanvasElement | null = null
+function reliefMap(): HTMLCanvasElement {
+  if (reliefCache) return reliefCache
+  const EW = 2048
+  const EH = 1024
+  const e = document.createElement('canvas')
+  e.width = EW
+  e.height = EH
+  const g = e.getContext('2d', { willReadFrequently: true })!
+  // 陆地遮罩（Natural Earth 50m）
+  g.beginPath()
+  for (const poly of world('50m').land)
+    for (const r of poly) {
+      for (let i = 0; i < r.length; i += 2) {
+        const x = ((r[i] + 180) / 360) * EW
+        const y = ((90 - r[i + 1]) / 180) * EH
+        if (i) g.lineTo(x, y)
+        else g.moveTo(x, y)
+      }
+      g.closePath()
+    }
+  g.fillStyle = '#fff'
+  g.fill('evenodd')
+  const mask = g.getImageData(0, 0, EW, EH).data
+  const layer = (m: 'blue' | 'topo') => {
+    g.clearRect(0, 0, EW, EH)
+    g.drawImage(earthImage(m), 0, 0, EW, EH)
+    return g.getImageData(0, 0, EW, EH).data
+  }
+  const blue = layer('blue')
+  const topo = layer('topo')
+  const out = g.createImageData(EW, EH)
+  const d = out.data
+  for (let y = 0; y < EH; y++)
+    for (let x = 0; x < EW; x++) {
+      const i = (y * EW + x) * 4
+      if (mask[i] < 128 || y > EH * 0.83) continue // 不要南极洲
+      const lum = 0.3 * blue[i] + 0.59 * blue[i + 1] + 0.11 * blue[i + 2]
+      const xl = x > 0 ? i - 4 : i
+      const yu = y > 0 ? i - EW * 4 : i
+      const relief = (topo[i] - topo[xl]) * 1.6 + (topo[i] - topo[yu]) * 1.6 // 左上光
+      const v = Math.max(90, Math.min(245, 150 + Math.min(lum, 200) * 0.35 + relief * 3))
+      d[i] = d[i + 1] = d[i + 2] = v
+      d[i + 3] = 255
+    }
+  g.putImageData(out, 0, 0)
+  // 三角网贴图：每 10°×10° 一格
+  const c = document.createElement('canvas')
+  c.width = 1280
+  c.height = 720
+  const o = c.getContext('2d')!
+  const tri = (s0: number[], s1: number[], s2: number[], d0: number[], d1: number[], d2: number[]) => {
+    // 源三角 → 目标三角 的仿射
+    const den = (s1[0] - s0[0]) * (s2[1] - s0[1]) - (s2[0] - s0[0]) * (s1[1] - s0[1])
+    const a = ((d1[0] - d0[0]) * (s2[1] - s0[1]) - (d2[0] - d0[0]) * (s1[1] - s0[1])) / den
+    const b = ((d1[1] - d0[1]) * (s2[1] - s0[1]) - (d2[1] - d0[1]) * (s1[1] - s0[1])) / den
+    const cc = ((d2[0] - d0[0]) * (s1[0] - s0[0]) - (d1[0] - d0[0]) * (s2[0] - s0[0])) / den
+    const dd = ((d2[1] - d0[1]) * (s1[0] - s0[0]) - (d1[1] - d0[1]) * (s2[0] - s0[0])) / den
+    const ex = d0[0] - a * s0[0] - cc * s0[1]
+    const fy = d0[1] - b * s0[0] - dd * s0[1]
+    o.save()
+    const cx = (d0[0] + d1[0] + d2[0]) / 3
+    const cy = (d0[1] + d1[1] + d2[1]) / 3
+    const grow = (p: number[]) => [p[0] + Math.sign(p[0] - cx) * 0.6, p[1] + Math.sign(p[1] - cy) * 0.6]
+    const [p0, p1, p2] = [grow(d0), grow(d1), grow(d2)]
+    o.beginPath()
+    o.moveTo(p0[0], p0[1])
+    o.lineTo(p1[0], p1[1])
+    o.lineTo(p2[0], p2[1])
+    o.closePath()
+    o.clip()
+    o.setTransform(a, b, cc, dd, ex, fy)
+    o.drawImage(e, 0, 0)
+    o.restore()
+  }
+  const S = 10
+  for (let lon = -180; lon < 180; lon += S)
+    for (let lat = 90; lat > -60; lat -= S) {
+      const sp = (lo: number, la: number) => [((lo + 180) / 360) * EW, ((90 - la) / 180) * EH]
+      const a0 = sp(lon, lat)
+      const a1 = sp(lon + S, lat)
+      const a2 = sp(lon + S, lat - S)
+      const a3 = sp(lon, lat - S)
+      const b0 = hp(lon, lat)
+      const b1 = hp(lon + S, lat)
+      const b2 = hp(lon + S, lat - S)
+      const b3 = hp(lon, lat - S)
+      tri(a0, a1, a2, b0, b1, b2)
+      tri(a0, a2, a3, b0, b2, b3)
+    }
+  reliefCache = c
+  return c
+}
 
 const NET = (() => {
   const R = rng(9600)
@@ -35,7 +153,9 @@ const NET = (() => {
   for (let i = 0; i < 45; i++) {
     const a = R.pick(hubs)
     const b = R.pick(hubs)
-    lines.push([mx(a[0] + R.range(-8, 8)), my(a[1] + R.range(-6, 6)), mx(b[0] + R.range(-8, 8)), my(b[1] + R.range(-6, 6)), R.next()])
+    const p = hp(a[0] + R.range(-8, 8), a[1] + R.range(-6, 6))
+    const q = hp(b[0] + R.range(-8, 8), b[1] + R.range(-6, 6))
+    lines.push([p[0], p[1], q[0], q[1], R.next()])
   }
   const marks: [number, number, number][] = []
   for (let i = 0; i < 60; i++) marks.push([R.range(-100, 1380), R.range(-50, 780), R.next()])
@@ -51,7 +171,16 @@ function drawWorld(ctx: CanvasRenderingContext2D, t: number) {
   ctx.strokeRect(320, 430, 150, 160)
   ctx.strokeRect(870, 510, 215, 80)
   ctx.strokeRect(160, 405, 60, 30)
-  for (const poly of CONTINENTS) {
+  if (hasWorld('50m') && hasEarth('blue') && hasEarth('topo')) {
+    // 真实浮雕地图 + 向下的柔和投影（原片陆地像压起的厚纸）
+    const m = reliefMap()
+    ctx.save()
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'
+    ctx.shadowBlur = 8
+    ctx.shadowOffsetY = 4
+    ctx.drawImage(m, 0, 0)
+    ctx.restore()
+  } else for (const poly of CONTINENTS) {
     ctx.beginPath()
     poly.forEach(([lo, la], i) => (i ? ctx.lineTo(mx(lo), my(la)) : ctx.moveTo(mx(lo), my(la))))
     ctx.closePath()
@@ -133,13 +262,7 @@ export const s96MapCtos: Scene = {
         [97.5, 1.02],
         [97.8, 1.05],
       ])
-      const dy = track(t, [
-        [95.95, 520],
-        [96.2, 400],
-        [96.6, 60],
-        [96.9, 20],
-        [97.2, 0],
-      ])
+      const dy = track(t, DY_KEYS)
       ctx.save()
       ctx.translate(615, 420 + dy)
       ctx.scale(s, s)

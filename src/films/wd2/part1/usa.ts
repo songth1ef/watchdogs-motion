@@ -7,6 +7,9 @@ import { clamp, ease, lerp, seg } from '../../../engine/math'
 import { FONT, font, tracking } from '../../../fx/text'
 import { WD2 } from '../../../theme'
 import { boxDot, cached, ctosLogo, fr, h2, spacedLabel, wordReveal } from './lib'
+import { hasWorld, world } from '../../../assets/geo'
+import { earthImage, hasEarth } from '../../../assets/earth'
+import { tune } from './tune'
 
 // ───────────────────────── 柱状图 ─────────────────────────
 
@@ -186,12 +189,16 @@ const RED: LL[][] = [
 
 /** 相机：以某个经纬度为屏幕中心，缩放（px/度）+ 旋转 */
 function usCam(t: number) {
-  const logS = keys(t, [[26.5, 6.55], [27.5, 6.55], [28.5, 6.3], [29.4, 5.15], [30.05, 4.1], [30.8, 3.5], [31.4, 3.42]], ease.inOutCubic)
+  // V2：29.0 / 29.5 / 30.0 三个关键帧用真实州界量出（犹他东西界 -114.05/-109.05、37° 线、41° 线、科罗拉多东界 -102.05）；
+  // 30.0 时仍停在科罗拉多一带，30.0→30.5 才急速拉到全美
+  const logS = keys(t, [[26.5, 6.55], [27.5, 6.55], [28.5, 6.3], [29.0, 5.31], [29.5, 4.59], [30.0, 4.64], [30.25, tune('usS3025', 3.71)], [30.5, 3.6], [31.0, tune('usS31', 3.48)], [31.4, tune('usS314', 3.42)]], ease.inOutCubic)
   const rot = lerp(0.62, 0, ease.inOutCubic(seg(t, 27.4, 29.3)))
   // 屏幕中心对应的经纬度（关键帧由原片几个地标位置反推）
-  const cx = keys(t, [[26.5, -121.2], [27.5, -121.05], [28.5, -118.2], [29.4, -109.6], [30.05, -103], [30.8, -97.6]], ease.inOutCubic)
-  const cy = keys(t, [[26.5, 38.0], [27.5, 38.15], [28.5, 38.9], [29.4, 40.2], [30.05, 40], [30.8, 38.6]], ease.inOutCubic)
-  return { s: Math.exp(logS), rot, cx, cy }
+  const cx = keys(t, [[26.5, -121.2], [27.5, -121.05], [28.5, -118.2], [29.0, -113.1], [29.5, -106.1], [30.0, -103.3], [30.25, tune('usCx', -96.5)]], ease.inOutCubic)
+  const cy = keys(t, [[26.5, 38.0], [27.5, 38.15], [28.5, 38.9], [29.0, 39.06], [29.5, 38.82], [30.0, 37.65], [30.25, tune('usCy', 38.5)]], ease.inOutCubic)
+  // 原片纵向比等距圆柱扁（29.0 量得 0.88、29.5 量得 0.84），像斜看的平面
+  const sq = keys(t, [[28.5, 1], [29.0, 0.88], [29.5, 0.84], [30.0, 0.86], [30.25, tune('usSq', 0.92)]], ease.inOutCubic)
+  return { s: Math.exp(logS), rot, cx, cy, sq }
 }
 
 function projector(t: number) {
@@ -201,9 +208,68 @@ function projector(t: number) {
   const sin = Math.sin(c.rot)
   return (p: LL) => {
     const x = (p[0] - c.cx) * k * c.s
-    const y = -(p[1] - c.cy) * c.s
+    const y = -(p[1] - c.cy) * c.s * c.sq
     return [960 + x * cos - y * sin, 540 + x * sin + y * cos] as [number, number]
   }
+}
+
+/** projector 的仿射矩阵（(lon, lat) → 画面），给 Path2D.addPath / drawImage 用 */
+function projMatrix(t: number): DOMMatrix {
+  const c = usCam(t)
+  const k = Math.cos((38 * Math.PI) / 180)
+  const cos = Math.cos(c.rot)
+  const sin = Math.sin(c.rot)
+  const a = k * c.s * cos
+  const cc = c.s * c.sq * sin
+  const b = k * c.s * sin
+  const d = -c.s * c.sq * cos
+  return new DOMMatrix([a, b, cc, d, 960 - a * c.cx - cc * c.cy, 540 - b * c.cx - d * c.cy])
+}
+
+/**
+ * V2 真实美国：Natural Earth 50m 美国本土州面（lon/lat 原始坐标的 Path2D，每帧用 projMatrix 变换），
+ * 替换 V1 手写的 US 轮廓与 BORDERS 折线。
+ */
+const hasReal = () => hasWorld('50m')
+function usPaths() {
+  return cached('wd2p1:usReal', () => {
+    const states = new Path2D()
+    for (const st of world('50m').states) {
+      if (st.country !== 'USA' || st.postal === 'AK' || st.postal === 'HI') continue
+      for (const poly of st.polys)
+        for (const r of poly) {
+          for (let i = 0; i < r.length; i += 2) {
+            if (i) states.lineTo(r[i], r[i + 1])
+            else states.moveTo(r[i], r[i + 1])
+          }
+          states.closePath()
+        }
+    }
+    // 点内判定栅格（经度 -125..-66、纬度 24..50，每度 20 格）
+    const W = 1180
+    const H = 520
+    const cv = document.createElement('canvas')
+    cv.width = W
+    cv.height = H
+    const g = cv.getContext('2d', { willReadFrequently: true })!
+    g.setTransform(20, 0, 0, -20, 125 * 20, 50 * 20)
+    g.fillStyle = '#fff'
+    g.fill(states)
+    const mask = g.getImageData(0, 0, W, H).data
+    const inside = (lon: number, lat: number) => {
+      const x = Math.floor((lon + 125) * 20)
+      const y = Math.floor((50 - lat) * 20)
+      if (x < 0 || y < 0 || x >= W || y >= H) return false
+      return mask[(y * W + x) * 4] > 127
+    }
+    return { states, inside }
+  })
+}
+/** 屏幕空间的真实州界路径 */
+function usScreenPath(t: number) {
+  const p = new Path2D()
+  p.addPath(usPaths().states, projMatrix(t))
+  return p
 }
 
 function pathLL(ctx: CanvasRenderingContext2D, P: (p: LL) => [number, number], pts: LL[]) {
@@ -216,6 +282,7 @@ function pathLL(ctx: CanvasRenderingContext2D, P: (p: LL) => [number, number], p
 }
 
 function insideUS(lon: number, lat: number) {
+  if (hasReal()) return usPaths().inside(lon, lat)
   let inside = false
   for (let i = 0, j = US.length - 1; i < US.length; j = i++) {
     const [xi, yi] = US[i]
@@ -232,7 +299,7 @@ const HUBS: LL[] = [
   [-71.06, 42.36], [-111.89, 40.76], [-115.14, 36.17], [-86.78, 36.16], [-81.69, 41.5], [-97.74, 30.27],
 ]
 function usNetwork() {
-  return cached('wd2p1:usnet', () => {
+  return cached(`wd2p1:usnet:${hasReal()}`, () => {
     const nodes: LL[] = [...HUBS]
     let i = 0
     while (nodes.length < 260 && i < 5000) {
@@ -259,9 +326,22 @@ function usNetwork() {
       for (let b = a + 1; b < HUBS.length; b++) if (h2(a, b, 132) < 0.3) edges.push([a, b, h2(a, b, 133)])
     // 美国轮廓内的点阵网格
     const grid: LL[] = []
-    for (let lon = -124; lon < -67; lon += 0.55)
-      for (let lat = 25; lat < 49; lat += 0.45) if (insideUS(lon, lat) && h2(Math.round(lon * 10), Math.round(lat * 10), 134) < 0.8) grid.push([lon, lat])
-    return { nodes, edges, grid }
+    const gdx = hasReal() ? 0.28 : 0.55
+    const gdy = hasReal() ? 0.24 : 0.45
+    for (let lon = -124; lon < -67; lon += gdx)
+      for (let lat = 25; lat < 49; lat += gdy) if (insideUS(lon, lat) && h2(Math.round(lon * 10), Math.round(lat * 10), 134) < 0.8) grid.push([lon, lat])
+    // V2：点阵亮度取 GEBCO 高程（原片点阵在西部山地更亮，像像素化的地形）
+    const gridB: number[] = []
+    if (hasEarth('topo')) {
+      const cv = document.createElement('canvas')
+      cv.width = 1024
+      cv.height = 512
+      const g = cv.getContext('2d', { willReadFrequently: true })!
+      g.drawImage(earthImage('topo'), 0, 0, 1024, 512)
+      const d = g.getImageData(0, 0, 1024, 512).data
+      for (const [lon, lat] of grid) gridB.push(d[(Math.floor(((90 - lat) / 180) * 512) * 1024 + Math.floor(((lon + 180) / 360) * 1024)) * 4] / 255)
+    } else for (let i = 0; i < grid.length; i++) gridB.push(0.3)
+    return { nodes, edges, grid, gridB }
   })
 }
 
@@ -292,10 +372,12 @@ export const usMap: Scene = {
     // 州界
     ctx.strokeStyle = `rgba(150,190,200,${0.45 * seg(t, 27.8, 28.6) * (0.4 + 0.6 * detailA)})`
     ctx.lineWidth = 1.3
-    for (const b of BORDERS) {
-      pathLL(ctx, P, b)
-      ctx.stroke()
-    }
+    if (hasReal()) ctx.stroke(usScreenPath(t))
+    else
+      for (const b of BORDERS) {
+        pathLL(ctx, P, b)
+        ctx.stroke()
+      }
     // 从 San Jose 放射的灰色细线 + 远程交叉细线
     const [sjx, sjy] = P(SJ)
     ctx.strokeStyle = `rgba(170,190,200,${0.35 * inA * detailA})`
@@ -363,11 +445,37 @@ export const usMap: Scene = {
     if (netA > 0) {
       const net = usNetwork()
       ctx.globalAlpha = netA
-      ctx.fillStyle = 'rgba(200,210,215,0.35)'
-      for (const g of net.grid) {
-        const [x, y] = P(g)
-        ctx.fillRect(x - 1, y - 1, 2, 2)
+      // V2：底色/浮雕/点阵 29.7 起才出现（原片 29.5 时还只有州界与网络）
+      const fillA = hasReal() ? seg(t, 29.7, 30.2) : 1
+      if (hasReal() && fillA > 0) {
+        ctx.globalAlpha = netA * fillA
+        // 美国本土暗灰底 + 高程浮雕（GEBCO 灰度按同一仿射贴上，裁到州面内）
+        const sp = usScreenPath(t)
+        ctx.save()
+        ctx.clip(sp)
+        ctx.fillStyle = `rgba(40,44,48,${tune('usFill', 0.15)})`
+        ctx.fillRect(0, 0, 1920, 1080)
+        if (hasEarth('topo')) {
+          ctx.globalAlpha = netA * fillA * tune('usTopo', 0.2)
+          const m = projMatrix(t).multiply(new DOMMatrix([360 / 4096, 0, 0, -180 / 2048, -180, 90]))
+          ctx.setTransform(m)
+          ctx.drawImage(earthImage('topo'), 0, 0)
+          ctx.setTransform(1, 0, 0, 1, 0, 0)
+          ctx.globalAlpha = netA * fillA
+        }
+        ctx.restore()
+        ctx.strokeStyle = `rgba(150,190,200,${0.3 * netA})`
+        ctx.lineWidth = 1
+        ctx.stroke(sp)
       }
+      const gs = hasReal() ? clamp(c.s * 0.08, 2, 5) : 2
+      ctx.globalAlpha = netA * fillA
+      net.grid.forEach((g, i) => {
+        const [x, y] = P(g)
+        ctx.fillStyle = `rgba(200,210,215,${hasReal() ? 0.12 + 0.6 * net.gridB[i] : 0.35})`
+        ctx.fillRect(x - gs / 2, y - gs / 2, gs, gs)
+      })
+      ctx.globalAlpha = netA
       const np = seg(t, 29.3, 30.3)
       ctx.lineWidth = 1
       ctx.strokeStyle = 'rgba(95,211,217,0.42)'

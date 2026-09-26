@@ -2,14 +2,39 @@
  * 67.6–71.9  星状放射网络 "_INDIVIDUAL" "_DATA CLUSTER" → 美国地图（城市名小字点阵）"_Global Network" → 急推到五大湖城市名。
  * 67.6–69.4 这段画在头骨下面：由 s62-skull 先调用 drawNetworkWorld()，本镜头从 69.4 起单独接管。
  * 世界坐标 = 原片 70.2s 时的屏幕坐标（缩放 1）。
- * ASSET：US_OUTLINE（美国本土轮廓，约 40 个经纬度点）与 CITIES 是手写近似数据，换成真实 GeoJSON / 城市库即可。
+ * V2：投影换成美国标准 Albers（原片就是它：旧金山/丹佛/芝加哥/纽约/华盛顿/休斯敦/洛杉矶七个枢纽拟合残差 5.8px），
+ * 美国轮廓用 Natural Earth 50m 州面，城市小字优先用 Natural Earth 真实城市（美国 + 加拿大南部），枢纽放在真实城市上，
+ * 射线改为「枢纽 → 城市」连线（原片是航线网）。world 数据缺失时回退到 V1 手写轮廓。
  */
 import type { Scene } from '../../../engine/types'
 import { rng } from '../../../engine/math'
 import { FONT, ease, ref, span, track, typed } from './common'
+import { hasWorld, world } from '../../../assets/geo'
+import { tune } from '../part1/tune'
 
-const lonX = (lon: number) => ((lon + 125) / 58) * 1260 + 10
-const latY = (lat: number) => ((49.5 - lat) / 24.5) * 540 + 20
+/** Albers 等积圆锥（美国标准：中央经线 -96°，标准纬线 29.5/45.5，原点纬度 23°），单位 = 地球半径 */
+const albers = (() => {
+  const D = Math.PI / 180
+  const p1 = 29.5 * D
+  const p2 = 45.5 * D
+  const n = (Math.sin(p1) + Math.sin(p2)) / 2
+  const C = Math.cos(p1) ** 2 + 2 * n * Math.sin(p1)
+  const r0 = Math.sqrt(C - 2 * n * Math.sin(23 * D)) / n
+  return (lon: number, lat: number): [number, number] => {
+    const r = Math.sqrt(C - 2 * n * Math.sin(lat * D)) / n
+    const th = n * (lon + 96) * D
+    return [r * Math.sin(th), r0 - r * Math.cos(th)]
+  }
+})()
+// 70.5s 参考帧上的「Albers → 1280 屏幕」仿射（最小二乘，7 个枢纽城市），再用 cam(70.5) 反算到世界坐标
+const AFF = [1232.719, 66.929, 479.57, 100.881, -1185.821, 759.764]
+function toWorld(lon: number, lat: number): [number, number] {
+  const [x, y] = albers(lon, lat)
+  const sx = AFF[0] * x + AFF[1] * y + AFF[2]
+  const sy = AFF[3] * x + AFF[4] * y + AFF[5]
+  const c = cam(70.5)
+  return [406 + (sx - c.ox) / c.s, 260 + (sy - c.oy) / c.s]
+}
 
 /** ASSET：美国本土轮廓（经度, 纬度） */
 const US_OUTLINE: [number, number][] = [
@@ -20,9 +45,45 @@ const US_OUTLINE: [number, number][] = [
   [-104.7, 29.9], [-106.5, 31.8], [-111, 31.3], [-114.8, 32.5], [-117.1, 32.5], [-118.5, 34], [-120.6, 34.6], [-122.5, 37.5],
   [-124.2, 40.3], [-124.1, 43], [-124.7, 48.4],
 ]
-const OUTLINE = US_OUTLINE.map(([lo, la]) => [lonX(lo), latY(la)] as const)
+const outlineV1 = () => US_OUTLINE.map(([lo, la]) => toWorld(lo, la))
+let OUTLINE: (readonly [number, number])[] = []
+
+/** 真实美国本土州面（多环）的点内判定：离屏栅格 */
+let usMask: { data: Uint8ClampedArray; x0: number; y0: number; w: number; h: number } | null = null
+function buildUsMask() {
+  const x0 = -300
+  const y0 = -200
+  const w = 1900
+  const h = 1100
+  const cv = document.createElement('canvas')
+  cv.width = w
+  cv.height = h
+  const g = cv.getContext('2d', { willReadFrequently: true })!
+  g.beginPath()
+  for (const st of world('50m').states) {
+    if (st.country !== 'USA' || st.postal === 'AK' || st.postal === 'HI') continue
+    for (const poly of st.polys)
+      for (const r of poly) {
+        for (let i = 0; i < r.length; i += 2) {
+          const [x, y] = toWorld(r[i], r[i + 1])
+          if (i) g.lineTo(x - x0, y - y0)
+          else g.moveTo(x - x0, y - y0)
+        }
+        g.closePath()
+      }
+  }
+  g.fillStyle = '#fff'
+  g.fill()
+  usMask = { data: g.getImageData(0, 0, w, h).data, x0, y0, w, h }
+}
 
 function inside(x: number, y: number) {
+  if (usMask) {
+    const X = Math.floor(x - usMask.x0)
+    const Y = Math.floor(y - usMask.y0)
+    if (X < 0 || Y < 0 || X >= usMask.w || Y >= usMask.h) return false
+    return usMask.data[(Y * usMask.w + X) * 4] > 127
+  }
   let c = false
   for (let i = 0, j = OUTLINE.length - 1; i < OUTLINE.length; j = i++) {
     const [xi, yi] = OUTLINE[i]
@@ -56,10 +117,45 @@ const CITIES: [string, number, number][] = [
   ['SYRACUSE', -76.15, 43.05], ['ROCHESTER', -77.61, 43.16], ['SPOKANE', -117.4, 47.66], ['RENO', -119.8, 39.53], ['SACRAMENTO', -121.5, 38.58],
 ]
 
-const WORLD = (() => {
+type NetWorld = {
+  labels: { text: string; x: number; y: number; bar: boolean }[]
+  nReal: number
+  hubs: [number, number][]
+  rays: [number, number, number, number, number][]
+  bits: [number, number, number, number][]
+}
+let cached: { real: boolean; w: NetWorld } | null = null
+let cachedKey = ''
+/** 懒构建（资产在 preloadAssets 之后才可用，不能在模块加载时算） */
+function getWorld(): NetWorld {
+  const real = hasWorld('50m')
+  if (!cached || cached.real !== real || cachedKey !== `${tune('nray', 20)}:${tune('nrand', 0)}`) {
+    if (real) buildUsMask()
+    else OUTLINE = outlineV1()
+    cached = { real, w: buildWorld(real) }
+    cachedKey = `${tune('nray', 20)}:${tune('nrand', 0)}`
+  }
+  return cached.w
+}
+
+function buildWorld(real: boolean): NetWorld {
   const R = rng(6900)
   // 城市小字：真实城市 + 大量填充（原片里远看是一根根短横线）
-  const labels: { text: string; x: number; y: number; bar: boolean }[] = CITIES.map(([n, lo, la]) => ({ text: n, x: lonX(lo), y: latY(la), bar: false }))
+  const labels: { text: string; x: number; y: number; bar: boolean }[] = CITIES.map(([n, lo, la]) => {
+    const [x, y] = toWorld(lo, la)
+    return { text: n, x, y, bar: false }
+  })
+  if (real) {
+    const have = new Set(CITIES.map((c) => c[0]))
+    for (const [name, iso, lo, la] of world('50m').cities) {
+      if (!((iso === 'USA' && la < 50 && lo > -126) || (iso === 'CAN' && la < 56))) continue
+      const text = name.toUpperCase()
+      if (have.has(text)) continue
+      const [x, y] = toWorld(lo, la)
+      labels.push({ text, x, y, bar: false })
+    }
+  }
+  const nReal = labels.length
   const syll = ['NOR', 'MAR', 'LIN', 'TON', 'VILLE', 'SPR', 'ING', 'FIELD', 'PORT', 'DALE', 'WOOD', 'BUR', 'GH', 'RED', 'OAK', 'SAN', 'LAKE', 'MONT']
   let guard = 0
   while (labels.length < 520 && guard++ < 20000) {
@@ -72,17 +168,27 @@ const WORLD = (() => {
     for (let k = 0; k < n; k++) text += R.pick(syll)
     labels.push({ text, x, y, bar })
   }
-  // 中心节点：每个向四周打出几十条长射线
-  const hubs: [number, number][] = [
-    [290, 410],
-    [634, 376],
-    [890, 380],
-    [470, 666],
-    [60, 470],
-  ]
+  // 中心节点：V2 放在真实枢纽城市（下标 1 = 芝加哥，画大点）；射线 = 枢纽 → 城市标签
+  const hubs: [number, number][] = real
+    ? ([[-104.99, 39.74], [-87.63, 41.88], [-74, 40.71], [-95.37, 29.76], [-122.4, 37.77], [-77.04, 38.9], [-118.24, 34.05]] as [number, number][]).map(
+        ([lo, la]) => toWorld(lo, la),
+      )
+    : [
+        [290, 410],
+        [634, 376],
+        [890, 380],
+        [470, 666],
+        [60, 470],
+      ]
   const rays: [number, number, number, number, number][] = []
   hubs.forEach(([hx, hy], h) => {
-    for (let i = 0; i < 70; i++) {
+    if (real) {
+      for (let i = 0; i < tune('nray', 20); i++) {
+        const L = labels[R.int(0, labels.length - 1)]
+        rays.push([hx, hy, L.x, L.y, R.next()])
+      }
+    }
+    for (let i = 0; i < (real ? tune('nrand', 0) : 70); i++) {
       const a = R.range(0, Math.PI * 2)
       const len = R.range(120, 520)
       rays.push([hx, hy, hx + Math.cos(a) * len, hy + Math.sin(a) * len * 0.8, R.next()])
@@ -98,8 +204,8 @@ const WORLD = (() => {
     const y = R.range(-100, 820)
     bits.push([x, y, x + R.range(-40, 40), y + R.range(-50, 10)])
   }
-  return { labels, hubs, rays, bits }
-})()
+  return { labels, nReal, hubs, rays, bits }
+}
 
 /** 世界 → 屏幕的相机：以 C=(406,260)（_INDIVIDUAL 标签）为锚点缩放 + 旋转 */
 function cam(t: number) {
@@ -110,8 +216,8 @@ function cam(t: number) {
     [68.9, 1.55],
     [69.4, 1.4],
     [70.2, 1.0],
-    [71.0, 0.8],
-    [71.5, 0.95],
+    [71.0, tune('s71', 0.8)],
+    [71.5, tune('s715', 0.95)],
     [71.7, 1.23],
     [71.75, 1.59],
     [71.77, 1.62],
@@ -124,7 +230,8 @@ function cam(t: number) {
     [68.9, 300],
     [69.4, 300],
     [70.2, 406],
-    [71.0, 454],
+    [71.0, tune('x71', 439)],
+    [71.5, tune('x715', 407)],
     [71.7, 360],
     [71.75, 288],
     [71.77, 280],
@@ -137,7 +244,8 @@ function cam(t: number) {
     [68.9, 230],
     [69.4, 220],
     [70.2, 260],
-    [71.0, 276],
+    [71.0, tune('y71', 286)],
+    [71.5, tune('y715', 270)],
     [71.7, 236],
     [71.75, 200],
     [71.77, 196],
@@ -156,6 +264,7 @@ function cam(t: number) {
 
 /** 画网络（1280 坐标系下调用） */
 export function drawNetworkWorld(ctx: CanvasRenderingContext2D, t: number) {
+  const WORLD = getWorld()
   const { s, ox, oy, rot } = cam(t)
   ctx.save()
   ctx.translate(ox, oy)
@@ -202,7 +311,7 @@ export function drawNetworkWorld(ctx: CanvasRenderingContext2D, t: number) {
         ctx.fillRect(L.x, L.y - 3, 14, 3)
         return
       }
-      ctx.fillStyle = i < CITIES.length ? 'rgba(235,235,235,0.9)' : 'rgba(190,190,190,0.75)'
+      ctx.fillStyle = i < WORLD.nReal ? 'rgba(235,235,235,0.9)' : 'rgba(190,190,190,0.75)'
       ctx.fillText(L.text, L.x, L.y)
     })
     ctx.letterSpacing = '0px'

@@ -25,7 +25,7 @@
 | 0.10–1.00 | `wd2-000-2013` | 0.1s 品红切条故障闪出巨大 "2013"，背后暗灰美国 HUD（国界折线、方点标签、THURSDAY, MAY 9） | `intro.ts year2013` | 构图/字号接近 1:1；HUD 细节为近似 |
 | 1.00–1.60 | 同上 | 相机指数冲进 "0" 的右笔画并逆时针倾斜 ~30°，1.35s 起沿倾斜方向切成横条 | 同上 | 接近 |
 | 1.50–2.75 | 同上 + `wd2-001.5-chicago-sat` | 白色斜条两端收短、错位、消失，露出芝加哥卫星图；地图从大马赛克块解析清晰 | `intro.ts` | 节奏接近；卫星图 **ASSET** |
-| 1.50–4.30 | `wd2-001.5-chicago-sat` | 芝加哥夜景卫星图（东侧湖面）缓旋推近，红色飞机 + 红色虚线航迹 + AF-338 标签，3.55s 起淡出 | `intro.ts chicagoSat` | 构图接近；**ASSET** `chicagoTexture()` |
+| 1.50–4.30 | `wd2-001.5-chicago-sat` | 芝加哥夜景卫星图（东侧湖面）缓旋推近，红色飞机 + 红色虚线航迹 + AF-338 标签，3.55s 起淡出 | `intro.ts chicagoSat` | 构图接近；V2 纹理换成 OSM 芝加哥（建筑/道路/铁路/河道 + 灯点），数据只有 Loop ±4 km，原片视野更广 |
 | 3.60–8.75 | `wd2-003.6-ctos-grid` | 3D 透视街网 + 远处青色点云天际线，相机低空前滑；ROUTE 19L/77H/07F/29G 悬空标签、青色节点椭圆环、红色折角框、贴地青色主干道；7.3s 起抬升俯仰到正俯视 | `ctos-city.ts ctosGrid`（three.js，`wireCity` + 点云） | 运镜/元素接近；城市 **ASSET** `buildGrid()` |
 | 4.00–10.95 | `wd2-004.0-ctos-logo` | 右上角 ctOS 标志（青底黑字、O 为白芯黑圈）4.0–4.9 逐块打出，下方数据细纹，10.75 起闪烁消失 | `ctos-city.ts ctosBadge` / `lib.ts ctosLogo` | 接近 1:1 |
 | 8.30–14.30 | `wd2-008.3-city-map` | V2：俯拍 ctOS 地图按原片 10.6s 重画——黑底 + 6px 灰马赛克街区 + 密集轴向街道（白/青/黄）+ 长直网络连线与节点圆 + 红色方框，湖岸从左 y≈340 斜升到右上；9.7s 起绕焦点持续推近，12.4 起轻微压暗，14.2 起随网格以 124px/s 上移 | `citymap2d.ts drawCtosMap`（经 `ctos-city.ts drawCityMap`） | 构图/线条密度接近；**ASSET** `ctosMapTexture()`（旧 `cityMapTexture` 仅 bay.ts 64 billion 还在用） |
@@ -37,12 +37,12 @@
 | 19.40–22.90 | `wd2-019.4-scatter` | V2：19.4–21.38 白色小方块/点簇位置按原片逐帧亮块检测数据（`scatter-dots.ts`）；之后程序化稀疏方块渐少 | `hack.ts scatter` | 19.4–21.4 接近 1:1 |
 | 21.35–22.90 | `wd2-021.35-they-were-wrong` | V2：像素字乱码逐字解出 "they were wrong." + 块光标；整行从字宽 97px 缩到 43px（原片逐 0.1s 量），17 格以 x≈955 居中；22.35 起只留光标（x≈1272）闪烁 | `hack.ts theyWereWrong` | 位置/字宽/解字进度接近；VT323 比原片字形略粗 |
 | 22.85–27.05 | `wd2-022.85-bar-chart` | 城市部署柱状图：右端几根矮柱长出 → 拉远露出 57 根灰白双色柱 + 旋转城市名 + 边框；24.35 起 56%→100%；25.15 起 ctOS 2.0 标志；26.45 起百分比乱跳、柱子塌成一排矮柱、边框擦除 | `usa.ts barChart` | 接近；柱高数据为程序化 |
-| 26.45–31.45 | `wd2-026.45-us-map` | SAN JOSE 放射细线 + 虚线大圆 + 红色虚线航线，SACRAMENTO / CARSON CITY 方框地标；连续拉远经 NEVADA / UTAH / COLORADO 等疏排州名与西部州界；29.3 起全美轮廓点阵 + 青色星状网络（中心城市星芒） | `usa.ts usMap`（经纬度投影） | 运镜近似；美国轮廓/州界为简化折线 |
+| 26.45–31.45 | `wd2-026.45-us-map` | SAN JOSE 放射细线 + 虚线大圆 + 红色虚线航线，SACRAMENTO / CARSON CITY 方框地标；连续拉远经 NEVADA / UTAH / COLORADO 等疏排州名与西部州界；29.3 起全美轮廓点阵 + 青色星状网络（中心城市星芒） | `usa.ts usMap`（经纬度投影） | V2：州界/轮廓换 NE 50m 真实州面；29.0/29.5/30.0 相机关键帧按真实州界量出（含纵向压扁 0.84–0.92）；29.7 起美国本土暗底 + GEBCO 高程浮雕 + 高程亮度点阵 |
 | 29.95–31.20 | `wd2-029.95-internet-of-things` | "the internet / of things." 两行白字逐词白块擦出 | `usa.ts internetWords` | 接近 |
 | 31.20–31.45 | `wd2-031.2-red-noise` | 切条错位 → 暗红/品红块噪点 | `usa.ts redNoise` | 近似 |
-| 31.45–33.45 | `wd2-031.45-64-billion` | 城市卫星切片每 0.1–0.25s 硬切（青/品红/黄绿染色、局部方块替换）+ 数值小标签；"64" 切条出现，"billion" 逐块拼出 | `bay.ts sixtyFourBillion` | 字/节奏接近；切片 **ASSET** `drawCityTile()` |
-| 33.40–37.00 | `wd2-033.4-bay-area` | 湾区卫星地形 + 斜排空心字 GREATER SAN FRANCISCO BAY AREA；34.2 硬切推近（像素块过渡）：红色航班 + 虚线、灰色网络细线、SAN FRANCISCO / SAN MATEO 区域标签与青色饼图；36.7 起大像素溶解 | `bay.ts bayArea` | 版式近似；地形 **ASSET** `bayTexture()` |
-| 36.90–40.75 | `wd2-036.9-peninsula` | 旧金山半岛暗蓝街区 + 白色节点网络 + 数值标签；37.35 起红色斜纹锯齿边界生长；"more secure"（37.9）；38.7 硬切推近；"more invasive / system."（38.9–39.95）；40.3 起向后倾倒 | `bay.ts peninsula` | 文字/时机接近；街区 **ASSET** `penTexture()` |
+| 31.45–33.45 | `wd2-031.45-64-billion` | 城市卫星切片每 0.1–0.25s 硬切（青/品红/黄绿染色、局部方块替换）+ 数值小标签；"64" 切条出现，"billion" 逐块拼出 | `bay.ts sixtyFourBillion` | 字/节奏接近；V2 切片换成旧金山市中心 OSM 建筑俯视（6 档屋顶灰 + 颗粒），原片是另一座欧洲老城航拍，只能近似 |
+| 33.40–37.00 | `wd2-033.4-bay-area` | 湾区卫星地形 + 斜排空心字 GREATER SAN FRANCISCO BAY AREA；34.2 硬切推近（像素块过渡）：红色航班 + 虚线、灰色网络细线、SAN FRANCISCO / SAN MATEO 区域标签与青色饼图；36.7 起大像素溶解 | `bay.ts bayArea` | V2：USGS 晕渲 + OSM 陆地/水面 + 半岛全等级道路/湾区主干道打散成灯点，远景/推近两个视图按参考帧拟合 |
+| 36.90–40.75 | `wd2-036.9-peninsula` | 旧金山半岛暗蓝街区 + 白色节点网络 + 数值标签；37.35 起红色斜纹锯齿边界生长；"more secure"（37.9）；38.7 硬切推近；"more invasive / system."（38.9–39.95）；40.3 起向后倾倒 | `bay.ts peninsula` | V2：街区换 OSM 旧金山（陆地 + 建筑 + 小街暗青/主干亮青/高速白），红色锯齿边界沿真实海岸线（sf 陆地面环）生长；38.7 推近机位重调 |
 | 40.70–41.25 | `wd2-040.7-bars3d` | 3D 透视青色网格 + 白色竖条（数据柱）升起抖动 | `bay.ts bars3d` | 近似 |
 | 41.25–42.37 | `wd2-041.25-waveforms` | 声波：品红单行 → 紫色两行 → 白色两行 → 红色三行 | `bay.ts waveforms` | 近似（波形为程序化） |
 | 42.37–43.00 | `wd2-042.25-dark-grid` | 近黑暗网格 + 三条暗红虚线，让位给 43.2 的下一段 | `bay.ts darkGrid` | 近似 |
@@ -97,21 +97,21 @@ export const part2 = [...shots, subtitleScene('wd2-part2-subs', 43, 94, SUBS)]  
 
 | 函数 | 位置 | 换成 |
 | --- | --- | --- |
-| `chicagoTexture()` | `intro.ts` | 芝加哥夜景卫星图（2048²） |
+| `chicagoTexture()` | `intro.ts` | **V2 已接 OSM 芝加哥**（`realChicagoTexture()`）；如有真实夜间卫星图仍可直接替换 |
 | `satelliteTexture()` | `lib.ts` | 通用：返回任意卫星图 canvas/Image |
 | `cityMapTexture()` / `groundTexture()` | `ctos-city.ts` | 俯视芝加哥街道地图（2048²）；3D 地面贴图 |
 | `buildGrid()` | `ctos-city.ts` | 真实芝加哥 3D 模型（返回 `{ scene, cam }`） |
 | `faceCanvas()` / `fingerprint()` | `ctos-city.ts` | 证件照 / 指纹图 |
-| `drawCityTile()` | `bay.ts` | 按 seed 取真实卫星图块 |
-| `bayTexture()` | `bay.ts` | 湾区卫星图（2400×1600） |
-| `penTexture()` | `bay.ts` | 旧金山街区地图 |
+| `drawCityTile()` | `bay.ts` | **V2 已接 OSM 旧金山建筑**（`realCityTile()`）；原片是航拍照片，最好换真实航拍 |
+| `bayTexture()` | `bay.ts` | **V2 已接湾区晕渲 + OSM**（`realBayMap()` + `bayView()`），`bayTexture()` 只作回退 |
+| `penTexture()` | `bay.ts` | **V2 已接 OSM 旧金山**（`realPenTexture()` / `realPen()` 真实海岸轮廓） |
 
 ## 已知差距
 
 - 所有卫星/地形/人脸都是程序化近似，质感与原片差距最大（尤其 33–37s 湾区地形、31.5–33.4 城市切片）。
 - 3D 网格城市（3.6–8.7）：原片相机俯角更大、天际线是更密的点云；地面没有原片的建筑块体。
 - 代码风暴（12.6–14.2）纸条排布为随机，未逐帧还原；原片还有漫画/人物剪影碎片未做。
-- 美国轮廓与州界是手写简化折线；全美网络的卫星底图（29.5–31.2 原片有暗色地形）未做。
+- V2：美国轮廓/州界已换 NE 真实数据，全美暗色地形用 GEBCO 高程近似；原片 31s 构图比等距圆柱更扁、网络更密（星芒射线），仍有差距。
 - 半岛红色锯齿边界是虚线描边近似，原片是斜纹粗齿；3D 倾倒（40.3–40.75）是 2D 纵向压扁近似。
 - 声波段（41.25–42.4）颜色切换时刻 ±0.1s，波形形状为程序化。
 - 原片整体有轻微色差/辉光（RGB 分离、黄蓝边），本段未做全片后期。
@@ -129,3 +129,11 @@ export const part2 = [...shots, subtitleScene('wd2-part2-subs', 43, 94, SUBS)]  
   - `sliceDraw()`（对矢量绘制做切条错位，不读像素）→ `src/fx/glitch.ts`
   - `fr()`（按 30fps 量化；原片 60fps 容器里内容是 30fps）→ `src/engine/math.ts`
 - `snaps/wd2p1-tools/snap.mjs`：关闭 HMR/文件监听的 snap。多个 agent 同时改文件时，原 `scripts/snap.mjs` 的 vite dev server 会因 HMR 整页重载导致截图中途报错；建议 `scripts/harness.mjs` 的 `createServer` 加 `server: { hmr: false, watch: null }`。
+
+## V2 精修记录（G1 地图与地球组）
+
+- `intro.ts`：只改 `chicagoSat` 的纹理（`realChicagoTexture()`，OSM 芝加哥，纹理坐标沿用 V1 的 2048² 北朝上）与旋转/缩放关键帧；2013 大字未动。
+- `usa.ts`：`usPaths()` NE 50m 美国本土州面（Path2D，每帧 `projMatrix()` 变换）；`usCam()` 新增 29.0/29.5/30.0/30.25 关键帧与纵向压扁 `sq`；全美点阵加密一倍、亮度取 GEBCO 高程。
+- `bay.ts`：`realBayMap()`（湾区晕渲 + OSM，30 m/px 离屏）+ `bayView()`；`realPenTexture()`/`realPen()`（旧金山 OSM + 真实海岸环）+ `penView()`；`realCityTile()`（64 billion 切片）。
+- 评分（`pnpm score wd2 --tag v2-g1`）：chicago-sat 32.8→32.4、us-map 69.5→70.1、64-billion 29.1→34.3、bay-area 42.9→53.3、peninsula 49.9→51.7。
+- 建议上提：湾区/半岛这类「多区域（sf 与 bay 原点不同）叠画」可以在 `geo-draw.ts` 加一个 `viewFor(regionId, baseView)` 自动换原点；`drawWater('chicago')` 在大视野下 lake 面会盖住陆地，需要核查 chicago 的 lake 图层环方向。

@@ -7,7 +7,10 @@ import { FONT, font, tracking } from '../../../fx/text'
 import { WD2 } from '../../../theme'
 import { layer } from '../../../fx/canvas'
 import { pixelate } from '../../../fx/image'
-import { cached, dashLine, fr, h2, plane, satelliteTexture, sliceDraw } from './lib'
+import { cached, dashLine, fr, h2, makeCanvas, plane, satelliteTexture, sliceDraw } from './lib'
+import { geo, hasGeo } from '../../../assets/geo'
+import { drawLayer, ROAD_FILTERS, viewAt } from '../../../assets/geo-draw'
+import { tune } from './tune'
 
 const TEXT_CX = 965
 const TEXT_BASE = 766 // 2013 基线
@@ -184,7 +187,49 @@ function chicagoWater(x: number, y: number) {
   return x > coast
 }
 
+/**
+ * V2：芝加哥夜景卫星图的真实近似（OSM，Loop ±4 km）：
+ *   黑底 → 建筑面暗灰（分 4 档）→ 全部道路细灰线 + 主干道稍亮 → 铁路/CTA 暗线 → 河道/湖面涂黑 → 随机灯点只落在建筑/道路上。
+ * 纹理坐标沿用 V1（2048²，北朝上，湖岸在 x≈1180），相机与航班位置不用改。
+ */
+function realChicagoTexture() {
+  const S = tune('chS', 0.18)
+  return cached(`wd2p1:chicagoReal:${S}:${tune('chLon', -87.625)}:${tune('chLat', 41.872)}:${tune('chB', 0.4)}`, () => {
+    const { canvas, ctx } = makeCanvas(2048, 2048)
+    ctx.fillStyle = '#050608'
+    ctx.fillRect(0, 0, 2048, 2048)
+    const v = viewAt(geo('chicago'), tune('chLon', -87.625), tune('chLat', 41.872), S, 0, 1180, 1024)
+    const b = tune('chB', 0.4)
+    for (let k = 0; k < 4; k++) {
+      const g = Math.round((22 + k * 12) * b)
+      drawLayer(ctx, 'chicago', 'buildings', v, { fill: `rgb(${g},${g},${g + 4})`, filter: (_c, i) => i % 4 === k, filterKey: `chsat${k}` })
+    }
+    drawLayer(ctx, 'chicago', 'roads', v, { stroke: `rgba(170,180,195,${0.22 * b})`, width: 1, filter: ROAD_FILTERS.minor, filterKey: 'minor' })
+    drawLayer(ctx, 'chicago', 'roads', v, { stroke: `rgba(200,210,225,${0.45 * b})`, width: 1.4, filter: ROAD_FILTERS.major, filterKey: 'major' })
+    drawLayer(ctx, 'chicago', 'rail', v, { stroke: `rgba(150,160,170,${0.25 * b})`, width: 1.2 })
+    // 注：chicago 的 lake 面在这个视图下会盖住陆地（drawWater 不可用），湖面本来就没有建筑/道路，只把河道/水面涂黑
+    drawLayer(ctx, 'chicago', 'water', v, { fill: '#000' })
+    drawLayer(ctx, 'chicago', 'rivers', v, { stroke: '#000', width: 5 })
+    // 灯点：只落在已有亮度的像素上（建筑/道路）
+    const img = ctx.getImageData(0, 0, 2048, 2048)
+    const d = img.data
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] < 14) continue
+      const r = h2(i >> 2, 9, 31)
+      if (r < 0.035) {
+        const L = 120 + h2(i >> 2, 10, 31) * 135
+        d[i] = L
+        d[i + 1] = L
+        d[i + 2] = Math.min(255, L + 10)
+      }
+    }
+    ctx.putImageData(img, 0, 0)
+    return canvas
+  })
+}
+
 export function chicagoTexture() {
+  if (hasGeo('chicago')) return realChicagoTexture()
   return satelliteTexture('chicago', {
     seed: 21,
     w: 2048,
@@ -211,9 +256,9 @@ export const chicagoSat: Scene = {
   end: 4.3,
   note: 'ASSET 芝加哥夜景卫星图（程序化）+ 红色飞机与虚线航迹，缓慢旋转推近；3.5s 起淡出进入透视网格',
   render({ ctx, t }) {
-    const tex = cached('wd2p1:chicago-tex', chicagoTexture)
-    const rot = lerp(-0.5, -0.62, seg(t, 1.5, 4.3))
-    const s = lerp(1.45, 1.1, ease.outCubic(seg(t, 1.5, 4.3)))
+    const tex = hasGeo('chicago') ? chicagoTexture() : cached('wd2p1:chicago-tex', chicagoTexture)
+    const rot = lerp(tune('chR0', -0.75), tune('chR1', -0.85), seg(t, 1.5, 4.3))
+    const s = lerp(tune('chS0', 1.45), tune('chS1', 1.1), ease.outCubic(seg(t, 1.5, 4.3)))
     // 2.0–2.6 从大马赛克块逐渐解析成清晰地图；3.55 起淡出
     const fade = seg(t, 1.9, 2.4) * (1 - seg(t, 3.55, 4.1))
     const block = Math.round(lerp(70, 1, ease.outCubic(seg(t, 1.95, 2.65))))

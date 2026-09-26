@@ -3,6 +3,7 @@ import { clamp, ease, hash, seg } from '../../../engine/math'
 import { FONT } from '../../../fx/text'
 import { EARTH_R0, renderEarth, projectLonLat } from './earth'
 import { blink, spline, typeBox, typed } from './util'
+import { tune } from './tune'
 
 /**
  * 2.7–11.8  暗色地球 + 星座连线 + 「14 AUGUST 2003」白底打字标签 → 灯光被黑色弧面吞掉 → 推近标签。
@@ -14,10 +15,11 @@ const R_KEYS: [number, number][] = [[2.7, 170], [3.5, 221], [5, 329], [6.9, 413]
 const CY_KEYS: [number, number][] = [[2.7, 470], [3.5, 449], [5, 408], [6.9, 384], [8.5, 345], [10.5, 276], [11.2, 245], [11.4, 250], [11.8, 240]]
 const CX_KEYS: [number, number][] = [[2.7, 965], [8.5, 975], [10.5, 984], [11.2, 980], [11.8, 1000]]
 
-// 视线中心经纬度与画面旋转（北极在画面右上方）
-const VIEW_LON = -101
+// 视线中心经纬度与画面旋转。V2：9s 参考帧东京/迈阿密/洛杉矶/格陵兰/安克雷奇/西雅图六点拟合（近正交投影，见 earth.ts CAM_D）
+// 得 lon≈-105、lat≈62–67，再用评分网格微调到 (-100, 66)
+const VIEW_LON = -100
 const VIEW_LAT = 66
-const ROLL = 8
+const ROLL0 = 2
 
 /** 星座/十字/方框等 HUD 元素：t=8.5 时的屏幕坐标（1920），整体随相机缩放 */
 const NODES = {
@@ -111,8 +113,9 @@ export const earth: Scene = {
     const cy = spline(t, CY_KEYS)
     const k = r / 450
     const fadeIn = ease.inOutCubic(seg(t, 2.8, 4.3))
-    const lon = VIEW_LON + (t - 8.5) * 0.9
-    const lat = VIEW_LAT
+    const lon = tune('lon', VIEW_LON) + (t - 8.5) * tune('drift', 0.9)
+    const lat = tune('lat', VIEW_LAT)
+    const ROLL = tune('roll', ROLL0)
 
     // HUD（在地球后面）
     hud(ctx, t, Math.pow(k, 0.9), fadeIn)
@@ -131,12 +134,12 @@ export const earth: Scene = {
     const lg = ctx.createLinearGradient(cx - r, cy - r * 0.3, cx + r, cy + r * 0.3)
     lg.addColorStop(0, 'rgba(0,0,0,0)')
     lg.addColorStop(0.55, 'rgba(0,0,0,0.05)')
-    lg.addColorStop(1, 'rgba(0,0,0,0.55)')
+    lg.addColorStop(1, `rgba(0,0,0,${tune('shadeR', 0.8)})`)
     ctx.fillStyle = lg
     ctx.fillRect(cx - r, cy - r, r * 2, r * 2)
     const rg = ctx.createRadialGradient(cx, cy, r * 0.55, cx, cy, r)
     rg.addColorStop(0, 'rgba(0,0,0,0)')
-    rg.addColorStop(1, 'rgba(0,0,0,0.45)')
+    rg.addColorStop(1, `rgba(0,0,0,${tune('shadeEdge', 0.45)})`)
     ctx.fillStyle = rg
     ctx.fillRect(cx - r, cy - r, r * 2, r * 2)
 

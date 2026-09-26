@@ -4,7 +4,9 @@
  *  - 84.0–94.0 数据宇宙 → 世界地图：成千上万个小数据块在纵深里漂浮（人脸卡片退入其中），
  *    87.5 起纵深逐渐压平，90.4 汇成世界地图的数据点，之后缓慢拉远、变暗。
  *
- * ASSET：世界地图轮廓 = CONTINENTS（手写的简化经纬度多边形），替换成真实 GeoJSON 投影即可。
+ * V2：世界地图数据点 = Natural Earth 50m 陆地面内、按 NASA Black Marble 夜光亮度加权的拒绝采样
+ *     （原片点阵在欧洲/印度/东亚/美东最密、撒哈拉/西伯利亚/格陵兰几乎为空，正是人口分布），投影参数用评分网格对 91.5–94s 拟合。
+ *     资产缺失时回退到 V1 的 CONTINENTS 手写轮廓均匀采样。
  */
 import type { FrameCtx, Scene } from '../../../engine/types'
 import { clamp, ease, hash, lerp, rng, seg } from '../../../engine/math'
@@ -12,6 +14,9 @@ import { FONT, font } from '../../../fx/text'
 import { WD2 } from '../../../theme'
 import { brainCanvas } from './brain'
 import { cachedCanvas, dataCard, faceTex, heart, mono } from './common'
+import { hasWorld, world } from '../../../assets/geo'
+import { earthImage, hasEarth } from '../../../assets/earth'
+import { tune } from '../part1/tune'
 
 // ---------------- 世界地图 ----------------
 /** 简化大陆轮廓（经度, 纬度） */
@@ -42,8 +47,10 @@ const CONTINENTS: number[][] = [
   [130, 31, 135, 34, 141, 38, 142, 44, 140, 42, 135, 36],
 ]
 /** 投影：对照原片 92.5s（欧洲 50°N 在 y≈360，南美南端在 y≈900） */
-const projX = (lon: number) => 1005 + (lon - 5) * 4.37
-const projY = (lat: number) => 360 + (50 - lat) * 5.14
+const projX = (lon: number) => tune('wx0', 933) + (lon - 5) * tune('wsx', 4.78)
+const projY = (lat: number) => tune('wy0', 404) + (50 - lat) * tune('wsy', 4.78)
+const unX = (x: number) => (x - tune('wx0', 933)) / tune('wsx', 4.78) + 5
+const unY = (y: number) => 50 - (y - tune('wy0', 404)) / tune('wsy', 4.78)
 
 interface Pt {
   x: number
@@ -56,7 +63,75 @@ interface Pt {
   kind: number
 }
 let pts: Pt[] | null = null
+let ptsKey = ''
+/** V2：真实陆地遮罩 + 夜光加权采样 */
+function realWorldPoints(): Pt[] {
+  const key = [tune('wx0', 933), tune('wsx', 4.78), tune('wy0', 404), tune('wsy', 4.78), tune('wbase', 0.002), tune('wn', 6500), tune('wthr', 0.05), tune('wgain', 8)].join(',')
+  if (pts && ptsKey === key) return pts
+  const W = 1920
+  const H = 1080
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const g = c.getContext('2d', { willReadFrequently: true })!
+  g.beginPath()
+  for (const poly of world('50m').land)
+    for (const r of poly) {
+      for (let i = 0; i < r.length; i += 2) {
+        const x = projX(r[i])
+        const y = projY(r[i + 1])
+        if (i) g.lineTo(x, y)
+        else g.moveTo(x, y)
+      }
+      g.closePath()
+    }
+  g.fillStyle = '#fff'
+  g.fill('evenodd')
+  const mask = g.getImageData(0, 0, W, H).data
+  // 夜光（原尺寸 4096×2048：降采样会把城市灯点抹平，巴黎反而比撒哈拉暗）
+  const NW = 4096
+  const NH = 2048
+  const nc = document.createElement('canvas')
+  nc.width = NW
+  nc.height = NH
+  const ng = nc.getContext('2d', { willReadFrequently: true })!
+  ng.drawImage(earthImage('night'), 0, 0, NW, NH)
+  const night = ng.getImageData(0, 0, NW, NH).data
+  const R = rng(90)
+  const out: Pt[] = []
+  const base = tune('wbase', 0.002)
+  const N = tune('wn', 6500)
+  let guard = 0
+  while (out.length < N && guard++ < 4000000) {
+    const x = R.range(100, 1900)
+    const y = R.range(60, 1040)
+    if (mask[(Math.floor(y) * W + Math.floor(x)) * 4] < 128) continue
+    const lon = unX(x)
+    const lat = unY(y)
+    if (lat < -58) continue
+    const nx = Math.floor(((lon + 180) / 360) * NW) & (NW - 1)
+    const ny = Math.max(0, Math.min(NH - 1, Math.floor(((90 - lat) / 180) * NH)))
+    const ni = (ny * NW + nx) * 4
+    // Black Marble 的暗陆地底色偏蓝（G≈B/2），灯光偏白：G − 0.55·B 只留灯光
+    const L = Math.max(0, night[ni + 1] - 0.55 * night[ni + 2]) / 255
+    if (R.next() > base + (1 - base) * Math.min(1, Math.max(0, L - tune('wthr', 0.05)) * tune('wgain', 8))) continue
+    out.push({
+      x,
+      y,
+      z: (R.next() + R.next() + R.next() - 1.5) * 2,
+      sx: R.range(-1, 1),
+      sy: R.range(-1, 1),
+      w: R.range(2, 9),
+      b: R.range(0.35, 1),
+      kind: R.chance(0.04) ? 2 : R.chance(0.3) ? 1 : 0,
+    })
+  }
+  pts = out
+  ptsKey = key
+  return out
+}
 function worldPoints() {
+  if (hasWorld('50m') && hasEarth('night')) return realWorldPoints()
   if (pts) return pts
   const mask = cachedCanvas('p2-worldmask', 1920, 1080, (c) => {
     c.fillStyle = '#fff'

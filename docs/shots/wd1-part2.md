@@ -36,10 +36,10 @@
 | 3D 城市 | `s50-city.ts` → `buildCity()` | 用 `three/city.ts` 程序化楼块；原片灰色阶段是高细节城市 |
 | 威利斯塔 | `s58-tower.ts` → `drawTower()` | 分层矩形 + 雾化渐变 |
 | CT 切片 / 头部体 | `s62-skull.ts` → `ctSlice(level)`、`widthAt()`/`drawHead()` | 程序化切片（颅骨环、脑回、眼眶、骨块）；换真实 CT 序列：`ctSlice` 返回对应层图片 |
-| 美国轮廓 / 城市 | `s69-network.ts` → `US_OUTLINE`、`CITIES` | 约 45 点轮廓 + 约 100 个城市坐标 + 随机填充 |
+| 美国轮廓 / 城市 | `s69-network.ts` → `US_OUTLINE`、`CITIES` | **V2 已换真实数据**：美国标准 Albers 投影（70.5s 七枢纽拟合残差 5.8px）+ Natural Earth 50m 州面做点内判定 + NE 城市点小字（美国 + 加拿大南部）+ 枢纽→城市射线；`US_OUTLINE`/手写城市仅作资产缺失回退。原片城市小字比 NE 城市库密得多，其余仍是随机填充 |
 | 自由女神 | `s72-statue.ts` → `statuePath()` / `drawStatue()` | 手写多边形剪影（V2 按真实比例重画）+ 随机面片明暗；影子复用同一剪影。未找到许可明确的 CC0 模型（Free3D 等为个人使用许可），仍是手绘近似 |
 | 白模人头 | `s91-profiles.ts` → `drawHead()` | 侧脸剪影 + 径向渐变 + 扫描线 |
-| 世界地图 | `s96-map-ctos.ts` → `CONTINENTS` / `drawWorld()` | 9 个粗多边形 + 阴影 |
+| 世界地图 | `s96-map-ctos.ts` → `CONTINENTS` / `drawWorld()` | **V2 已换真实数据**（仅 95.95–97.55）：NE 50m 陆地遮罩 + GEBCO 高程梯度/Blue Marble 灰度浮雕，按 97.0s 十个海岸地标拟合的单应矩阵（残差 10px，平面略带透视）三角网贴图，青色网络端点也走同一投影；`CONTINENTS` 仅作回退 |
 | 展台汽车 | `s96-map-ctos.ts` → `drawCar` | 2D 剪影按地面透视缩放（97.9–98.2）；98.2 起的展台设备是 part3 `objects.ts` 的 3D 替身 |
 
 ## 已知差距
@@ -81,3 +81,10 @@
 | wd1-086-how-you-think | 59.6 → 67.9 | 飞散/四散块的位置是随机的，边缘相关（EDGE）在 87–88.5 与 91.0 帧只有 0.05–0.3 |
 | wd1-091-citizen-profiles | 82.8 → ≈85 | 人头仍是剪影 |
 | wd1-094-sell-products | 70.3 → 76.2 | $ 字形与原片的点阵花样不同 |
+
+## V2 精修记录（G1 地图与地球组）
+
+- `s69-network.ts`：投影换美国标准 Albers（`albers()` + 70.5s 仿射 `AFF` + `cam(70.5)` 反算世界坐标）；71.0/71.5 相机关键帧重调；射线改「枢纽 → 城市」、数量减到每枢纽 20 条（原片远景更稀疏）。`drawNetworkWorld()` 仍被 `s62-skull` 在 67.6–69.4 调用，接口不变。
+- `s96-map-ctos.ts`：仅改 95.95–97.55 的 `drawWorld()`（真实浮雕地图 `reliefMap()` + 单应矩阵 `HOM`），97.55 之后的拉出/展台与 98.2 交接未动。
+- 评分（`--tag v2-g1`）：global-network 46.2→55.9；67.5–69.4 头骨叠加段 57.0→60.7；world-views 地图子段 79.3→79.7（整镜头 68.2→68.5，后半展台不属本组）。
+- 建议上提：`reliefMap()` 的「等距圆柱栅格 → 单应矩阵三角网贴图」可做成 `assets/projection.ts` 的通用函数。

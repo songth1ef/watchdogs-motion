@@ -1,8 +1,10 @@
 import * as THREE from 'three'
 import { memo } from '../../../engine/three-host'
+import { tune } from './tune'
 import type { ThreeHost } from '../../../engine/three-host'
 import { hash, rng } from '../../../engine/math'
 import { LAND, LIGHTS, WATER_HOLES, type LonLat } from './geo'
+import { earthImage, earthTexture as realEarthTexture, hasEarth } from '../../../assets/earth'
 
 const TW = 2048
 const TH = 1024
@@ -48,10 +50,74 @@ export function fbm(seed: number, x: number, y: number, oct = 5) {
 }
 
 /**
- * ASSET：程序化地球夜景贴图（等距圆柱投影，灰度）。
+ * 真实地球合成参数（按 9s 参考帧取样：海洋 ≈36–47、陆地 ≈43–53、格陵兰 ≈53，灯光叠加）。
+ * 原片是低反差的「海底 + 陆地浮雕」灰度图，所以海洋也要有测深纹理，雪/冰不能过曝。
+ */
+export const REAL_EARTH = { ocean0: 18, oceanK: 0.32, land0: 26, landK: 0.05, landCap: 170, topoK: 0.12, relief: 3, lights: 1.05, w: 4096, h: 2048 }
+
+/**
+ * 真实贴图合成（本镜头专用，assets/earth.ts 的 earthComposite 不能按海陆分开调增益，在这里包一层）：
+ *   海洋 = ocean0 + Blue Marble 测深灰度 × oceanK
+ *   陆地 = land0 + min(Blue Marble 灰度, landCap) × landK + GEBCO 高程 × topoK
+ *   + 高程东西向梯度做的浮雕（relief） + Black Marble 夜光灰度 × lights
+ */
+function realEarthCanvas() {
+  const o = { ...REAL_EARTH }
+  for (const k of Object.keys(o) as (keyof typeof o)[]) o[k] = tune('tex.' + k, o[k])
+  return memo('wd1p1:realEarth:' + JSON.stringify(o), () => {
+    const W = o.w
+    const H = o.h
+    const c = document.createElement('canvas')
+    c.width = W
+    c.height = H
+    const g = c.getContext('2d', { willReadFrequently: true })!
+    const layer = (m: 'night' | 'blue' | 'topo') => {
+      g.clearRect(0, 0, W, H)
+      g.drawImage(earthImage(m), 0, 0, W, H)
+      return g.getImageData(0, 0, W, H).data
+    }
+    const blue = layer('blue')
+    const topo = layer('topo')
+    const night = layer('night')
+    const out = g.createImageData(W, H)
+    const d = out.data
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4
+        const r = blue[i]
+        const gg = blue[i + 1]
+        const b = blue[i + 2]
+        const lum = 0.3 * r + 0.59 * gg + 0.11 * b
+        // Blue Marble 海洋偏蓝、陆地偏绿/棕/白：用蓝色优势判海
+        const sea = b > r + 12 && b > gg ? 1 : 0
+        const xl = x > 0 ? i - 4 : i
+        const xr = x < W - 1 ? i + 4 : i
+        const yu = y > 0 ? i - W * 4 : i
+        const relief = (topo[xl] - topo[xr]) * 0.7 + (topo[yu] - topo[i]) * 0.5
+        let v = sea ? o.ocean0 + lum * o.oceanK + (lum - blue[xr]) * 0.6 : o.land0 + Math.min(lum, o.landCap) * o.landK + topo[i] * o.topoK + relief * o.relief
+        const L = 0.3 * night[i] + 0.59 * night[i + 1] + 0.11 * night[i + 2]
+        v += L * o.lights
+        v = Math.max(0, Math.min(255, v))
+        d[i] = d[i + 1] = d[i + 2] = v
+        d[i + 3] = 255
+      }
+    }
+    g.putImageData(out, 0, 0)
+    c.dataset.key = JSON.stringify(o)
+    return c
+  })
+}
+
+/**
+ * 回退用：程序化地球夜景贴图（等距圆柱投影，灰度）。
  * 换真实素材：把返回的 canvas 换成 NASA Black Marble 与地形灰度图的合成即可，UV 约定不变。
  */
-export function earthTexture() {
+export function earthTexture(): THREE.Texture {
+  // V2：真实贴图（GEBCO 地形浮雕 + Black Marble 夜光灰度合成）可用时直接用；加载失败才回退到下面的程序化贴图
+  if (hasEarth('night') && hasEarth('topo')) {
+    const c = realEarthCanvas()
+    return realEarthTexture(c, 'wd1p1-earth:' + c.dataset.key)
+  }
   return memo('wd1p1:earthTex', () => {
     const mask = document.createElement('canvas')
     mask.width = TW
@@ -149,6 +215,8 @@ export function lonLatVec(lon: number, lat: number) {
 
 /** 地球在 three 画布里的投影半径（px）；外部按这个比例 drawImage 到目标圆 */
 export const EARTH_R0 = 520
+/** 相机距离（地球半径倍数）。V2：原片几乎是正交投影（9s 参考帧拟合东京/迈阿密/洛杉矶/格陵兰得 D≈40），V1 的 4 倍透视过强 */
+export const CAM_D = 40
 
 const earthScene = () =>
   memo('wd1p1:earthScene', () => {
@@ -156,9 +224,9 @@ const earthScene = () =>
     const mat = new THREE.MeshBasicMaterial({ map: earthTexture() })
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 160, 100), mat)
     scene.add(mesh)
-    const fov = 2 * Math.atan((Math.tan(Math.asin(1 / 4)) * 540) / EARTH_R0) * (180 / Math.PI)
-    const cam = new THREE.PerspectiveCamera(fov, 1920 / 1080, 0.1, 20)
-    return { scene, cam, mesh }
+    const fov = 2 * Math.atan((Math.tan(Math.asin(1 / CAM_D)) * 540) / EARTH_R0) * (180 / Math.PI)
+    const cam = new THREE.PerspectiveCamera(fov, 1920 / 1080, CAM_D - 2, CAM_D + 2)
+    return { scene, cam, mesh, mat }
   })
 
 /**
@@ -166,9 +234,14 @@ const earthScene = () =>
  * 返回 three 画布，地球在其中心、半径 EARTH_R0。
  */
 export function renderEarth(three: ThreeHost, lon: number, lat: number, roll: number) {
-  const { scene, cam } = earthScene()
+  const { scene, cam, mat } = earthScene()
+  const map = earthTexture()
+  if (mat.map !== map) {
+    mat.map = map
+    mat.needsUpdate = true
+  }
   const dir = lonLatVec(lon, lat)
-  cam.position.copy(dir.clone().multiplyScalar(4))
+  cam.position.copy(dir.clone().multiplyScalar(CAM_D))
   // 以北极为「上」，再绕视线旋转 roll
   const north = new THREE.Vector3(0, 1, 0)
   const up = north.clone().sub(dir.clone().multiplyScalar(north.dot(dir))).normalize()
@@ -183,7 +256,7 @@ export function renderEarth(three: ThreeHost, lon: number, lat: number, roll: nu
 export function projectLonLat(lon: number, lat: number, viewLon: number, viewLat: number, roll: number, cx: number, cy: number, r: number) {
   const { cam } = earthScene()
   const dir = lonLatVec(viewLon, viewLat)
-  cam.position.copy(dir.clone().multiplyScalar(4))
+  cam.position.copy(dir.clone().multiplyScalar(CAM_D))
   const north = new THREE.Vector3(0, 1, 0)
   const up = north.clone().sub(dir.clone().multiplyScalar(north.dot(dir))).normalize()
   up.applyAxisAngle(dir, (roll * Math.PI) / 180)
@@ -191,7 +264,7 @@ export function projectLonLat(lon: number, lat: number, viewLon: number, viewLat
   cam.lookAt(0, 0, 0)
   cam.updateMatrixWorld()
   const p = lonLatVec(lon, lat)
-  const vis = p.dot(dir) > 0.1
+  const vis = p.dot(dir) > 1 / CAM_D
   const v = p.clone().project(cam)
   const sx = (v.x * 960) / 1 // NDC → 以中心为原点的像素（three 画布 1920×1080）
   const sy = -v.y * 540

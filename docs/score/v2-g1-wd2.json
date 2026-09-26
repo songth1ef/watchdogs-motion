@@ -1,0 +1,4027 @@
+{
+ "baseline": "v2-g1",
+ "film": "wd2",
+ "reference": "public/reference/wd2-1080.mp4",
+ "range": [
+  0,
+  120.999
+ ],
+ "step": 0.5,
+ "generatedAt": "2026-09-26T12:39:49.989Z",
+ "formula": "score = 100 * (0.4*max(0,SSIM) + 0.4*EDGE + 0.2*HIST)；详见 scripts/score.mjs 文件头",
+ "filmAvg": 54.86,
+ "elapsedSec": 156.4,
+ "shots": [
+  {
+   "id": "wd2-012.35-code-storm",
+   "start": 12.35,
+   "end": 14.75,
+   "samples": 5,
+   "score": 27.36,
+   "ssim": 0.094,
+   "edge": 0.1585,
+   "hist": 0.8631,
+   "lumaMine": 102.8,
+   "lumaRef": 104.5,
+   "worst": {
+    "t": 13.5,
+    "score": 16.6
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-108-dedsec",
+   "start": 108.35,
+   "end": 113.1,
+   "samples": 10,
+   "score": 29.66,
+   "ssim": 0.213,
+   "edge": 0.1602,
+   "hist": 0.7363,
+   "lumaMine": 155.6,
+   "lumaRef": 147.6,
+   "worst": {
+    "t": 112.5,
+    "score": 21.06
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-001.5-chicago-sat",
+   "start": 1.5,
+   "end": 4.3,
+   "samples": 6,
+   "score": 32.39,
+   "ssim": 0.2484,
+   "edge": 0.2787,
+   "hist": 0.5652,
+   "lumaMine": 83.7,
+   "lumaRef": 44.1,
+   "worst": {
+    "t": 1.5,
+    "score": 7.64
+   },
+   "hint": "整体偏亮；构图部分对上"
+  },
+  {
+   "id": "wd2-031.45-64-billion",
+   "start": 31.45,
+   "end": 33.45,
+   "samples": 4,
+   "score": 34.33,
+   "ssim": 0.1535,
+   "edge": 0.2933,
+   "hist": 0.8229,
+   "lumaMine": 29.9,
+   "lumaRef": 30.1,
+   "worst": {
+    "t": 32,
+    "score": 24.27
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-059-room",
+   "start": 59.37,
+   "end": 65.42,
+   "samples": 12,
+   "score": 38.22,
+   "ssim": 0.3197,
+   "edge": 0.2156,
+   "hist": 0.8401,
+   "lumaMine": 11.9,
+   "lumaRef": 20.7,
+   "worst": {
+    "t": 64.5,
+    "score": 27.39
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-070-hijack",
+   "start": 70.333,
+   "end": 70.567,
+   "samples": 1,
+   "score": 38.6,
+   "ssim": 0.3117,
+   "edge": 0.2538,
+   "hist": 0.799,
+   "lumaMine": 13.6,
+   "lumaRef": 16.9,
+   "worst": {
+    "t": 70.5,
+    "score": 38.6
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-000-2013",
+   "start": 0,
+   "end": 2.75,
+   "samples": 6,
+   "score": 38.93,
+   "ssim": 0.4723,
+   "edge": 0.239,
+   "hist": 0.5238,
+   "lumaMine": 97.3,
+   "lumaRef": 63.9,
+   "worst": {
+    "t": 1.5,
+    "score": 7.64
+   },
+   "hint": "整体偏亮；构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-008.3-city-map",
+   "start": 8.3,
+   "end": 14.3,
+   "samples": 12,
+   "score": 40.07,
+   "ssim": 0.1623,
+   "edge": 0.3809,
+   "hist": 0.9171,
+   "lumaMine": 53.6,
+   "lumaRef": 54.6,
+   "worst": {
+    "t": 13.5,
+    "score": 16.6
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-014.2-grid-collapse",
+   "start": 14.2,
+   "end": 19.45,
+   "samples": 10,
+   "score": 40.35,
+   "ssim": 0.1971,
+   "edge": 0.344,
+   "hist": 0.9351,
+   "lumaMine": 26.1,
+   "lumaRef": 24.9,
+   "worst": {
+    "t": 14.5,
+    "score": 30.08
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-011.1-with-a-few-hundred",
+   "start": 11.1,
+   "end": 13,
+   "samples": 3,
+   "score": 41.5,
+   "ssim": 0.1129,
+   "edge": 0.446,
+   "hist": 0.9574,
+   "lumaMine": 30.6,
+   "lumaRef": 32.1,
+   "worst": {
+    "t": 12.5,
+    "score": 36.34
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-070-oak",
+   "start": 70.567,
+   "end": 72.37,
+   "samples": 3,
+   "score": 42.71,
+   "ssim": 0.5053,
+   "edge": 0.1162,
+   "hist": 0.8925,
+   "lumaMine": 15.6,
+   "lumaRef": 15.6,
+   "worst": {
+    "t": 71,
+    "score": 40.1
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-040.7-bars3d",
+   "start": 40.7,
+   "end": 41.25,
+   "samples": 1,
+   "score": 43.36,
+   "ssim": 0.4367,
+   "edge": 0.1923,
+   "hist": 0.9101,
+   "lumaMine": 7.6,
+   "lumaRef": 7.2,
+   "worst": {
+    "t": 41,
+    "score": 43.36
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-054-toys",
+   "start": 54.97,
+   "end": 59.37,
+   "samples": 9,
+   "score": 45.62,
+   "ssim": 0.3776,
+   "edge": 0.3488,
+   "hist": 0.8284,
+   "lumaMine": 26.5,
+   "lumaRef": 18.6,
+   "worst": {
+    "t": 55,
+    "score": 35.93
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-072-hood",
+   "start": 72.37,
+   "end": 77.67,
+   "samples": 11,
+   "score": 46.17,
+   "ssim": 0.49,
+   "edge": 0.1957,
+   "hist": 0.9369,
+   "lumaMine": 12,
+   "lumaRef": 10.3,
+   "worst": {
+    "t": 74,
+    "score": 36.92
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-077-brain",
+   "start": 77.67,
+   "end": 83.02,
+   "samples": 11,
+   "score": 46.76,
+   "ssim": 0.4089,
+   "edge": 0.3301,
+   "hist": 0.8598,
+   "lumaMine": 22.2,
+   "lumaRef": 27,
+   "worst": {
+    "t": 81,
+    "score": 26.37
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-082-pixel-face",
+   "start": 82.82,
+   "end": 86.47,
+   "samples": 7,
+   "score": 49.09,
+   "ssim": 0.572,
+   "edge": 0.238,
+   "hist": 0.8345,
+   "lumaMine": 21.7,
+   "lumaRef": 12.2,
+   "worst": {
+    "t": 84,
+    "score": 40.64
+   },
+   "hint": "构图/线条位置基本不对"
+  },
+  {
+   "id": "wd2-065-vin",
+   "start": 65.42,
+   "end": 70.333,
+   "samples": 10,
+   "score": 50.68,
+   "ssim": 0.51,
+   "edge": 0.3165,
+   "hist": 0.881,
+   "lumaMine": 21.1,
+   "lumaRef": 21.2,
+   "worst": {
+    "t": 69,
+    "score": 42.34
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-047-face-cards",
+   "start": 47.99,
+   "end": 49.25,
+   "samples": 3,
+   "score": 51.49,
+   "ssim": 0.5245,
+   "edge": 0.3596,
+   "hist": 0.8063,
+   "lumaMine": 53.1,
+   "lumaRef": 51,
+   "worst": {
+    "t": 48,
+    "score": 40.65
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-036.9-peninsula",
+   "start": 36.9,
+   "end": 40.75,
+   "samples": 8,
+   "score": 51.68,
+   "ssim": 0.4018,
+   "edge": 0.4423,
+   "hist": 0.896,
+   "lumaMine": 16.9,
+   "lumaRef": 11.5,
+   "worst": {
+    "t": 37,
+    "score": 40.41
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-004.0-ctos-logo",
+   "start": 4,
+   "end": 10.95,
+   "samples": 14,
+   "score": 52.74,
+   "ssim": 0.3589,
+   "edge": 0.4917,
+   "hist": 0.9356,
+   "lumaMine": 14.2,
+   "lumaRef": 13.8,
+   "worst": {
+    "t": 8,
+    "score": 41.52
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-033.4-bay-area",
+   "start": 33.4,
+   "end": 37,
+   "samples": 7,
+   "score": 53.31,
+   "ssim": 0.3554,
+   "edge": 0.5011,
+   "hist": 0.9525,
+   "lumaMine": 18.9,
+   "lumaRef": 21.6,
+   "worst": {
+    "t": 36.5,
+    "score": 49.9
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-003.6-ctos-grid",
+   "start": 3.6,
+   "end": 8.75,
+   "samples": 10,
+   "score": 54.24,
+   "ssim": 0.4118,
+   "edge": 0.4816,
+   "hist": 0.9253,
+   "lumaMine": 11.3,
+   "lumaRef": 10.6,
+   "worst": {
+    "t": 8,
+    "score": 41.52
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-084-universe-world",
+   "start": 84.07,
+   "end": 94.2,
+   "samples": 20,
+   "score": 54.96,
+   "ssim": 0.5295,
+   "edge": 0.3685,
+   "hist": 0.9519,
+   "lumaMine": 8.1,
+   "lumaRef": 5.4,
+   "worst": {
+    "t": 90,
+    "score": 37.32
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-094-currency",
+   "start": 94.2,
+   "end": 97.8,
+   "samples": 7,
+   "score": 56.29,
+   "ssim": 0.5417,
+   "edge": 0.4995,
+   "hist": 0.7323,
+   "lumaMine": 158.8,
+   "lumaRef": 150,
+   "worst": {
+    "t": 95,
+    "score": 21.51
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-008.4-dossier",
+   "start": 8.38,
+   "end": 9.6,
+   "samples": 3,
+   "score": 56.39,
+   "ssim": 0.2804,
+   "edge": 0.658,
+   "hist": 0.9426,
+   "lumaMine": 22.8,
+   "lumaRef": 20.3,
+   "worst": {
+    "t": 9.5,
+    "score": 54.36
+   },
+   "hint": "布局对但纹理/细节差"
+  },
+  {
+   "id": "wd2-045-chips",
+   "start": 45.95,
+   "end": 47.99,
+   "samples": 4,
+   "score": 57.01,
+   "ssim": 0.5154,
+   "edge": 0.448,
+   "hist": 0.9234,
+   "lumaMine": 26.8,
+   "lumaRef": 24.6,
+   "worst": {
+    "t": 47,
+    "score": 50.21
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-049-profile",
+   "start": 49.25,
+   "end": 54.97,
+   "samples": 11,
+   "score": 60.62,
+   "ssim": 0.6826,
+   "edge": 0.4117,
+   "hist": 0.8422,
+   "lumaMine": 62,
+   "lumaRef": 53.9,
+   "worst": {
+    "t": 53.5,
+    "score": 23.12
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-029.95-internet-of-things",
+   "start": 29.95,
+   "end": 31.2,
+   "samples": 3,
+   "score": 62.83,
+   "ssim": 0.424,
+   "edge": 0.6715,
+   "hist": 0.9504,
+   "lumaMine": 13.5,
+   "lumaRef": 15,
+   "worst": {
+    "t": 30,
+    "score": 41.15
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-041.25-waveforms",
+   "start": 41.25,
+   "end": 42.37,
+   "samples": 2,
+   "score": 64.47,
+   "ssim": 0.7902,
+   "edge": 0.3607,
+   "hist": 0.9218,
+   "lumaMine": 1.4,
+   "lumaRef": 6.7,
+   "worst": {
+    "t": 41.5,
+    "score": 61.03
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-113-skull",
+   "start": 113.1,
+   "end": 121,
+   "samples": 15,
+   "score": 65.38,
+   "ssim": 0.5606,
+   "edge": 0.624,
+   "hist": 0.8998,
+   "lumaMine": 32.4,
+   "lumaRef": 28.4,
+   "worst": {
+    "t": 114,
+    "score": 23.38
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-026.45-us-map",
+   "start": 26.45,
+   "end": 31.45,
+   "samples": 10,
+   "score": 70.13,
+   "ssim": 0.6304,
+   "edge": 0.6404,
+   "hist": 0.965,
+   "lumaMine": 8.1,
+   "lumaRef": 8.1,
+   "worst": {
+    "t": 30,
+    "score": 41.15
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-021.35-they-were-wrong",
+   "start": 21.35,
+   "end": 22.9,
+   "samples": 3,
+   "score": 70.99,
+   "ssim": 0.9524,
+   "edge": 0.3285,
+   "hist": 0.9878,
+   "lumaMine": 2.6,
+   "lumaRef": 1.9,
+   "worst": {
+    "t": 22.5,
+    "score": 59.7
+   },
+   "hint": "构图部分对上"
+  },
+  {
+   "id": "wd2-102-execute",
+   "start": 102.45,
+   "end": 108.35,
+   "samples": 12,
+   "score": 73.29,
+   "ssim": 0.7642,
+   "edge": 0.6559,
+   "hist": 0.8245,
+   "lumaMine": 191.8,
+   "lumaRef": 201,
+   "worst": {
+    "t": 108,
+    "score": 37.14
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-019.35-shards",
+   "start": 19.35,
+   "end": 19.65,
+   "samples": 1,
+   "score": 73.95,
+   "ssim": 0.7732,
+   "edge": 0.6012,
+   "hist": 0.9487,
+   "lumaMine": 28.2,
+   "lumaRef": 29.9,
+   "worst": {
+    "t": 19.5,
+    "score": 73.95
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-022.85-bar-chart",
+   "start": 22.85,
+   "end": 27.05,
+   "samples": 9,
+   "score": 74.91,
+   "ssim": 0.6887,
+   "edge": 0.7436,
+   "hist": 0.8809,
+   "lumaMine": 24.8,
+   "lumaRef": 24,
+   "worst": {
+    "t": 23.5,
+    "score": 65.15
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-043-big-brother",
+   "start": 43,
+   "end": 45.95,
+   "samples": 6,
+   "score": 78.42,
+   "ssim": 0.8798,
+   "edge": 0.6108,
+   "hist": 0.9399,
+   "lumaMine": 24.4,
+   "lumaRef": 28.2,
+   "worst": {
+    "t": 43.5,
+    "score": 49.31
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-019.4-scatter",
+   "start": 19.4,
+   "end": 22.9,
+   "samples": 7,
+   "score": 80.47,
+   "ssim": 0.9175,
+   "edge": 0.6044,
+   "hist": 0.9796,
+   "lumaMine": 7.8,
+   "lumaRef": 7.5,
+   "worst": {
+    "t": 22.5,
+    "score": 59.7
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-097-new-reality",
+   "start": 97.8,
+   "end": 102.45,
+   "samples": 9,
+   "score": 86.47,
+   "ssim": 0.9108,
+   "edge": 0.764,
+   "hist": 0.9741,
+   "lumaMine": 11.4,
+   "lumaRef": 10.9,
+   "worst": {
+    "t": 102,
+    "score": 76.88
+   },
+   "hint": "接近"
+  },
+  {
+   "id": "wd2-042.25-dark-grid",
+   "start": 42.37,
+   "end": 43,
+   "samples": 1,
+   "score": 89.51,
+   "ssim": 0.9121,
+   "edge": 0.8291,
+   "hist": 0.993,
+   "lumaMine": 0.5,
+   "lumaRef": 0.7,
+   "worst": {
+    "t": 42.5,
+    "score": 89.51
+   },
+   "hint": "接近"
+  }
+ ],
+ "worst10": [
+  {
+   "t": 1.5,
+   "score": 7.64,
+   "ssim": 0.1857,
+   "edge": 0.0052,
+   "hist": 0,
+   "emd": 0.4877,
+   "lumaMine": 238.4,
+   "lumaRef": 116.3,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-000-2013"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-001.50.png"
+  },
+  {
+   "t": 2,
+   "score": 15.64,
+   "ssim": 0.332,
+   "edge": 0.059,
+   "hist": 0,
+   "emd": 0.2981,
+   "lumaMine": 181.2,
+   "lumaRef": 105.9,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-000-2013"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-002.00.png"
+  },
+  {
+   "t": 13.5,
+   "score": 16.6,
+   "ssim": 0.0846,
+   "edge": 0,
+   "hist": 0.6607,
+   "emd": 0.0848,
+   "lumaMine": 186.2,
+   "lumaRef": 200.2,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-012.35-code-storm"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-013.50.png"
+  },
+  {
+   "t": 112.5,
+   "score": 21.06,
+   "ssim": 0.1479,
+   "edge": 0.0286,
+   "hist": 0.6998,
+   "emd": 0.075,
+   "lumaMine": 144.9,
+   "lumaRef": 145,
+   "scenes": [
+    "wd2-108-dedsec"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-112.50.png"
+  },
+  {
+   "t": 95,
+   "score": 21.51,
+   "ssim": 0.3721,
+   "edge": 0.1657,
+   "hist": 0,
+   "emd": 0.3413,
+   "lumaMine": 203.2,
+   "lumaRef": 118,
+   "scenes": [
+    "wd2-094-currency"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-095.00.png"
+  },
+  {
+   "t": 111.5,
+   "score": 22.91,
+   "ssim": 0.0712,
+   "edge": 0.1935,
+   "hist": 0.616,
+   "emd": 0.096,
+   "lumaMine": 129.8,
+   "lumaRef": 105.2,
+   "scenes": [
+    "wd2-108-dedsec"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-111.50.png"
+  },
+  {
+   "t": 53.5,
+   "score": 23.12,
+   "ssim": 0.4295,
+   "edge": 0.1485,
+   "hist": 0,
+   "emd": 0.2826,
+   "lumaMine": 73.6,
+   "lumaRef": 1.5,
+   "scenes": [
+    "wd2-049-profile"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-053.50.png"
+  },
+  {
+   "t": 114,
+   "score": 23.38,
+   "ssim": 0.1237,
+   "edge": 0.118,
+   "hist": 0.6857,
+   "emd": 0.0786,
+   "lumaMine": 54.4,
+   "lumaRef": 40.9,
+   "scenes": [
+    "wd2-113-skull"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-114.00.png"
+  },
+  {
+   "t": 112,
+   "score": 23.88,
+   "ssim": 0.1144,
+   "edge": 0.1104,
+   "hist": 0.7442,
+   "emd": 0.064,
+   "lumaMine": 141.7,
+   "lumaRef": 149.8,
+   "scenes": [
+    "wd2-108-dedsec"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-112.00.png"
+  },
+  {
+   "t": 2.5,
+   "score": 23.96,
+   "ssim": 0.1953,
+   "edge": 0.1107,
+   "hist": 0.5859,
+   "emd": 0.1035,
+   "lumaMine": 51,
+   "lumaRef": 24.7,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-000-2013"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-002.50.png"
+  }
+ ],
+ "frames": [
+  {
+   "t": 0,
+   "score": 100,
+   "ssim": 1,
+   "edge": 1,
+   "hist": 1,
+   "emd": 0,
+   "lumaMine": 0,
+   "lumaRef": 0,
+   "scenes": [
+    "wd2-000-2013"
+   ]
+  },
+  {
+   "t": 0.5,
+   "score": 56.62,
+   "ssim": 0.7163,
+   "edge": 0.2121,
+   "hist": 0.9742,
+   "emd": 0.0064,
+   "lumaMine": 43.8,
+   "lumaRef": 42.5,
+   "scenes": [
+    "wd2-000-2013"
+   ]
+  },
+  {
+   "t": 1,
+   "score": 29.73,
+   "ssim": 0.4045,
+   "edge": 0.0473,
+   "hist": 0.5825,
+   "emd": 0.1044,
+   "lumaMine": 69.5,
+   "lumaRef": 94.3,
+   "scenes": [
+    "wd2-000-2013"
+   ]
+  },
+  {
+   "t": 1.5,
+   "score": 7.64,
+   "ssim": 0.1857,
+   "edge": 0.0052,
+   "hist": 0,
+   "emd": 0.4877,
+   "lumaMine": 238.4,
+   "lumaRef": 116.3,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-000-2013"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-001.50.png"
+  },
+  {
+   "t": 2,
+   "score": 15.64,
+   "ssim": 0.332,
+   "edge": 0.059,
+   "hist": 0,
+   "emd": 0.2981,
+   "lumaMine": 181.2,
+   "lumaRef": 105.9,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-000-2013"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-002.00.png"
+  },
+  {
+   "t": 2.5,
+   "score": 23.96,
+   "ssim": 0.1953,
+   "edge": 0.1107,
+   "hist": 0.5859,
+   "emd": 0.1035,
+   "lumaMine": 51,
+   "lumaRef": 24.7,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-000-2013"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-002.50.png"
+  },
+  {
+   "t": 3,
+   "score": 50.54,
+   "ssim": 0.1978,
+   "edge": 0.6068,
+   "hist": 0.918,
+   "emd": 0.0205,
+   "lumaMine": 11.9,
+   "lumaRef": 5.8,
+   "scenes": [
+    "wd2-001.5-chicago-sat"
+   ]
+  },
+  {
+   "t": 3.5,
+   "score": 49.08,
+   "ssim": 0.1909,
+   "edge": 0.5689,
+   "hist": 0.9343,
+   "emd": 0.0164,
+   "lumaMine": 11.8,
+   "lumaRef": 8,
+   "scenes": [
+    "wd2-001.5-chicago-sat"
+   ]
+  },
+  {
+   "t": 4,
+   "score": 47.48,
+   "ssim": 0.3887,
+   "edge": 0.3217,
+   "hist": 0.9531,
+   "emd": 0.0117,
+   "lumaMine": 8.1,
+   "lumaRef": 4.2,
+   "scenes": [
+    "wd2-001.5-chicago-sat",
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 4.5,
+   "score": 50.32,
+   "ssim": 0.4387,
+   "edge": 0.3327,
+   "hist": 0.973,
+   "emd": 0.0068,
+   "lumaMine": 8.3,
+   "lumaRef": 7.2,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 5,
+   "score": 58.11,
+   "ssim": 0.4646,
+   "edge": 0.5152,
+   "hist": 0.9458,
+   "emd": 0.0135,
+   "lumaMine": 9.4,
+   "lumaRef": 11.1,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 5.5,
+   "score": 55.79,
+   "ssim": 0.4333,
+   "edge": 0.5075,
+   "hist": 0.9081,
+   "emd": 0.023,
+   "lumaMine": 9.5,
+   "lumaRef": 14,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 6,
+   "score": 57.45,
+   "ssim": 0.4357,
+   "edge": 0.547,
+   "hist": 0.907,
+   "emd": 0.0232,
+   "lumaMine": 10,
+   "lumaRef": 14.3,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 6.5,
+   "score": 57.07,
+   "ssim": 0.4535,
+   "edge": 0.5187,
+   "hist": 0.9093,
+   "emd": 0.0227,
+   "lumaMine": 10,
+   "lumaRef": 13.8,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 7,
+   "score": 58.71,
+   "ssim": 0.4622,
+   "edge": 0.5361,
+   "hist": 0.9385,
+   "emd": 0.0154,
+   "lumaMine": 10.8,
+   "lumaRef": 11.5,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 7.5,
+   "score": 56.94,
+   "ssim": 0.4526,
+   "edge": 0.4949,
+   "hist": 0.9521,
+   "emd": 0.012,
+   "lumaMine": 12,
+   "lumaRef": 9.2,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 8,
+   "score": 41.52,
+   "ssim": 0.3006,
+   "edge": 0.3138,
+   "hist": 0.8473,
+   "emd": 0.0382,
+   "lumaMine": 16,
+   "lumaRef": 6.5,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 8.5,
+   "score": 59.03,
+   "ssim": 0.2881,
+   "edge": 0.7283,
+   "hist": 0.9189,
+   "emd": 0.0203,
+   "lumaMine": 18.7,
+   "lumaRef": 13.8,
+   "scenes": [
+    "wd2-003.6-ctos-grid",
+    "wd2-008.3-city-map",
+    "wd2-008.4-dossier",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 9,
+   "score": 55.77,
+   "ssim": 0.2849,
+   "edge": 0.6376,
+   "hist": 0.9434,
+   "emd": 0.0141,
+   "lumaMine": 24.7,
+   "lumaRef": 21.8,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-008.4-dossier",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 9.5,
+   "score": 54.36,
+   "ssim": 0.2681,
+   "edge": 0.6082,
+   "hist": 0.9656,
+   "emd": 0.0086,
+   "lumaMine": 24.9,
+   "lumaRef": 25.4,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-008.4-dossier",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 10,
+   "score": 44.15,
+   "ssim": 0.1919,
+   "edge": 0.4262,
+   "hist": 0.971,
+   "emd": 0.0072,
+   "lumaMine": 18.2,
+   "lumaRef": 19.7,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 10.5,
+   "score": 41.61,
+   "ssim": 0.1624,
+   "edge": 0.3956,
+   "hist": 0.9646,
+   "emd": 0.0089,
+   "lumaMine": 18.8,
+   "lumaRef": 20.9,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-004.0-ctos-logo"
+   ]
+  },
+  {
+   "t": 11,
+   "score": 31.01,
+   "ssim": 0.1438,
+   "edge": 0.1574,
+   "hist": 0.9478,
+   "emd": 0.0131,
+   "lumaMine": 17.4,
+   "lumaRef": 21.2,
+   "scenes": [
+    "wd2-008.3-city-map"
+   ]
+  },
+  {
+   "t": 11.5,
+   "score": 39.96,
+   "ssim": 0.1307,
+   "edge": 0.3859,
+   "hist": 0.9646,
+   "emd": 0.0089,
+   "lumaMine": 20.7,
+   "lumaRef": 22.2,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-011.1-with-a-few-hundred"
+   ]
+  },
+  {
+   "t": 12,
+   "score": 48.21,
+   "ssim": 0.1177,
+   "edge": 0.6055,
+   "hist": 0.9641,
+   "emd": 0.009,
+   "lumaMine": 21.3,
+   "lumaRef": 23,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-011.1-with-a-few-hundred"
+   ]
+  },
+  {
+   "t": 12.5,
+   "score": 36.34,
+   "ssim": 0.0902,
+   "edge": 0.3465,
+   "hist": 0.9435,
+   "emd": 0.0141,
+   "lumaMine": 49.8,
+   "lumaRef": 51,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-012.35-code-storm",
+    "wd2-011.1-with-a-few-hundred"
+   ]
+  },
+  {
+   "t": 13,
+   "score": 27.74,
+   "ssim": 0.1046,
+   "edge": 0.1482,
+   "hist": 0.8816,
+   "emd": 0.0296,
+   "lumaMine": 133.7,
+   "lumaRef": 135.4,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-012.35-code-storm"
+   ]
+  },
+  {
+   "t": 13.5,
+   "score": 16.6,
+   "ssim": 0.0846,
+   "edge": 0,
+   "hist": 0.6607,
+   "emd": 0.0848,
+   "lumaMine": 186.2,
+   "lumaRef": 200.2,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-012.35-code-storm"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-013.50.png"
+  },
+  {
+   "t": 14,
+   "score": 26.06,
+   "ssim": 0.0804,
+   "edge": 0.1313,
+   "hist": 0.8794,
+   "emd": 0.0301,
+   "lumaMine": 108.5,
+   "lumaRef": 100.7,
+   "scenes": [
+    "wd2-008.3-city-map",
+    "wd2-012.35-code-storm"
+   ]
+  },
+  {
+   "t": 14.5,
+   "score": 30.08,
+   "ssim": 0.1101,
+   "edge": 0.1667,
+   "hist": 0.9505,
+   "emd": 0.0124,
+   "lumaMine": 36,
+   "lumaRef": 35,
+   "scenes": [
+    "wd2-014.2-grid-collapse",
+    "wd2-012.35-code-storm"
+   ]
+  },
+  {
+   "t": 15,
+   "score": 31.57,
+   "ssim": 0.1375,
+   "edge": 0.1789,
+   "hist": 0.9457,
+   "emd": 0.0136,
+   "lumaMine": 16.8,
+   "lumaRef": 18.6,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 15.5,
+   "score": 35.42,
+   "ssim": 0.1484,
+   "edge": 0.2704,
+   "hist": 0.9335,
+   "emd": 0.0166,
+   "lumaMine": 25.4,
+   "lumaRef": 25.8,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 16,
+   "score": 37.27,
+   "ssim": 0.1416,
+   "edge": 0.3399,
+   "hist": 0.9004,
+   "emd": 0.0249,
+   "lumaMine": 34.2,
+   "lumaRef": 28.5,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 16.5,
+   "score": 44.49,
+   "ssim": 0.1652,
+   "edge": 0.492,
+   "hist": 0.9101,
+   "emd": 0.0225,
+   "lumaMine": 32.2,
+   "lumaRef": 27.4,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 17,
+   "score": 42.48,
+   "ssim": 0.195,
+   "edge": 0.4036,
+   "hist": 0.9267,
+   "emd": 0.0183,
+   "lumaMine": 22.1,
+   "lumaRef": 18.4,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 17.5,
+   "score": 57.05,
+   "ssim": 0.2887,
+   "edge": 0.6691,
+   "hist": 0.9371,
+   "emd": 0.0157,
+   "lumaMine": 48.2,
+   "lumaRef": 45.2,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 18,
+   "score": 47.57,
+   "ssim": 0.2612,
+   "edge": 0.4641,
+   "hist": 0.9282,
+   "emd": 0.0179,
+   "lumaMine": 25.7,
+   "lumaRef": 28.5,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 18.5,
+   "score": 42.04,
+   "ssim": 0.2765,
+   "edge": 0.2903,
+   "hist": 0.9685,
+   "emd": 0.0079,
+   "lumaMine": 10.6,
+   "lumaRef": 11.6,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 19,
+   "score": 35.48,
+   "ssim": 0.2466,
+   "edge": 0.1653,
+   "hist": 0.9502,
+   "emd": 0.0124,
+   "lumaMine": 10.1,
+   "lumaRef": 10.1,
+   "scenes": [
+    "wd2-014.2-grid-collapse"
+   ]
+  },
+  {
+   "t": 19.5,
+   "score": 73.95,
+   "ssim": 0.7732,
+   "edge": 0.6012,
+   "hist": 0.9487,
+   "emd": 0.0128,
+   "lumaMine": 28.2,
+   "lumaRef": 29.9,
+   "scenes": [
+    "wd2-019.35-shards",
+    "wd2-019.4-scatter"
+   ]
+  },
+  {
+   "t": 20,
+   "score": 90.89,
+   "ssim": 0.9287,
+   "edge": 0.8521,
+   "hist": 0.9829,
+   "emd": 0.0043,
+   "lumaMine": 5.4,
+   "lumaRef": 5.2,
+   "scenes": [
+    "wd2-019.4-scatter"
+   ]
+  },
+  {
+   "t": 20.5,
+   "score": 93.13,
+   "ssim": 0.9432,
+   "edge": 0.892,
+   "hist": 0.9861,
+   "emd": 0.0035,
+   "lumaMine": 6,
+   "lumaRef": 5.5,
+   "scenes": [
+    "wd2-019.4-scatter"
+   ]
+  },
+  {
+   "t": 21,
+   "score": 92.31,
+   "ssim": 0.92,
+   "edge": 0.8996,
+   "hist": 0.9761,
+   "emd": 0.006,
+   "lumaMine": 7.1,
+   "lumaRef": 6.1,
+   "scenes": [
+    "wd2-019.4-scatter"
+   ]
+  },
+  {
+   "t": 21.5,
+   "score": 67.45,
+   "ssim": 0.9095,
+   "edge": 0.2816,
+   "hist": 0.9902,
+   "emd": 0.0024,
+   "lumaMine": 4.2,
+   "lumaRef": 3.7,
+   "scenes": [
+    "wd2-019.4-scatter",
+    "wd2-021.35-they-were-wrong"
+   ]
+  },
+  {
+   "t": 22,
+   "score": 85.83,
+   "ssim": 0.9541,
+   "edge": 0.704,
+   "hist": 0.9754,
+   "emd": 0.0061,
+   "lumaMine": 3.3,
+   "lumaRef": 1.8,
+   "scenes": [
+    "wd2-019.4-scatter",
+    "wd2-021.35-they-were-wrong"
+   ]
+  },
+  {
+   "t": 22.5,
+   "score": 59.7,
+   "ssim": 0.9935,
+   "edge": 0,
+   "hist": 0.9978,
+   "emd": 0.0005,
+   "lumaMine": 0.4,
+   "lumaRef": 0.2,
+   "scenes": [
+    "wd2-019.4-scatter",
+    "wd2-021.35-they-were-wrong"
+   ]
+  },
+  {
+   "t": 23,
+   "score": 83.94,
+   "ssim": 0.949,
+   "edge": 0.6548,
+   "hist": 0.9897,
+   "emd": 0.0026,
+   "lumaMine": 2.3,
+   "lumaRef": 1.6,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 23.5,
+   "score": 65.15,
+   "ssim": 0.7066,
+   "edge": 0.5355,
+   "hist": 0.7734,
+   "emd": 0.0567,
+   "lumaMine": 30.7,
+   "lumaRef": 16.5,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 24,
+   "score": 69.69,
+   "ssim": 0.6279,
+   "edge": 0.6698,
+   "hist": 0.8893,
+   "emd": 0.0277,
+   "lumaMine": 32.8,
+   "lumaRef": 33.6,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 24.5,
+   "score": 71.34,
+   "ssim": 0.5979,
+   "edge": 0.7414,
+   "hist": 0.8882,
+   "emd": 0.0279,
+   "lumaMine": 32.1,
+   "lumaRef": 33.7,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 25,
+   "score": 74.82,
+   "ssim": 0.6115,
+   "edge": 0.839,
+   "hist": 0.8401,
+   "emd": 0.04,
+   "lumaMine": 29.7,
+   "lumaRef": 35,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 25.5,
+   "score": 77.78,
+   "ssim": 0.6272,
+   "edge": 0.9012,
+   "hist": 0.8319,
+   "emd": 0.042,
+   "lumaMine": 30.6,
+   "lumaRef": 36.2,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 26,
+   "score": 80.6,
+   "ssim": 0.6549,
+   "edge": 0.9256,
+   "hist": 0.8687,
+   "emd": 0.0328,
+   "lumaMine": 32.4,
+   "lumaRef": 35.3,
+   "scenes": [
+    "wd2-022.85-bar-chart"
+   ]
+  },
+  {
+   "t": 26.5,
+   "score": 73.28,
+   "ssim": 0.634,
+   "edge": 0.7714,
+   "hist": 0.8533,
+   "emd": 0.0367,
+   "lumaMine": 31.1,
+   "lumaRef": 22,
+   "scenes": [
+    "wd2-022.85-bar-chart",
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 27,
+   "score": 77.56,
+   "ssim": 0.7892,
+   "edge": 0.6533,
+   "hist": 0.9931,
+   "emd": 0.0017,
+   "lumaMine": 1.8,
+   "lumaRef": 2.3,
+   "scenes": [
+    "wd2-022.85-bar-chart",
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 27.5,
+   "score": 75.9,
+   "ssim": 0.8149,
+   "edge": 0.5838,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 1.8,
+   "lumaRef": 1.8,
+   "scenes": [
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 28,
+   "score": 67.49,
+   "ssim": 0.7657,
+   "edge": 0.4266,
+   "hist": 0.9898,
+   "emd": 0.0026,
+   "lumaMine": 1.3,
+   "lumaRef": 2.1,
+   "scenes": [
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 28.5,
+   "score": 78.32,
+   "ssim": 0.8321,
+   "edge": 0.6297,
+   "hist": 0.9924,
+   "emd": 0.0019,
+   "lumaMine": 1,
+   "lumaRef": 1.5,
+   "scenes": [
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 29,
+   "score": 76.6,
+   "ssim": 0.7301,
+   "edge": 0.6881,
+   "hist": 0.9936,
+   "emd": 0.0016,
+   "lumaMine": 1.6,
+   "lumaRef": 1.9,
+   "scenes": [
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 29.5,
+   "score": 63.67,
+   "ssim": 0.4661,
+   "edge": 0.6361,
+   "hist": 0.979,
+   "emd": 0.0052,
+   "lumaMine": 2.2,
+   "lumaRef": 4.2,
+   "scenes": [
+    "wd2-026.45-us-map"
+   ]
+  },
+  {
+   "t": 30,
+   "score": 41.15,
+   "ssim": 0.1585,
+   "edge": 0.4067,
+   "hist": 0.9272,
+   "emd": 0.0182,
+   "lumaMine": 16.5,
+   "lumaRef": 16,
+   "scenes": [
+    "wd2-026.45-us-map",
+    "wd2-029.95-internet-of-things"
+   ]
+  },
+  {
+   "t": 30.5,
+   "score": 71.99,
+   "ssim": 0.5293,
+   "edge": 0.7821,
+   "hist": 0.9767,
+   "emd": 0.0058,
+   "lumaMine": 12.5,
+   "lumaRef": 14.1,
+   "scenes": [
+    "wd2-026.45-us-map",
+    "wd2-029.95-internet-of-things"
+   ]
+  },
+  {
+   "t": 31,
+   "score": 75.35,
+   "ssim": 0.5843,
+   "edge": 0.8258,
+   "hist": 0.9472,
+   "emd": 0.0132,
+   "lumaMine": 11.5,
+   "lumaRef": 14.9,
+   "scenes": [
+    "wd2-026.45-us-map",
+    "wd2-029.95-internet-of-things"
+   ]
+  },
+  {
+   "t": 31.5,
+   "score": 43.24,
+   "ssim": 0.2535,
+   "edge": 0.4267,
+   "hist": 0.8019,
+   "emd": 0.0495,
+   "lumaMine": 15.9,
+   "lumaRef": 3.9,
+   "scenes": [
+    "wd2-031.45-64-billion"
+   ]
+  },
+  {
+   "t": 32,
+   "score": 24.27,
+   "ssim": 0.0674,
+   "edge": 0.1694,
+   "hist": 0.7396,
+   "emd": 0.0651,
+   "lumaMine": 22.4,
+   "lumaRef": 38.9,
+   "scenes": [
+    "wd2-031.45-64-billion"
+   ]
+  },
+  {
+   "t": 32.5,
+   "score": 31.49,
+   "ssim": 0.1017,
+   "edge": 0.2795,
+   "hist": 0.8123,
+   "emd": 0.0469,
+   "lumaMine": 40.2,
+   "lumaRef": 35,
+   "scenes": [
+    "wd2-031.45-64-billion"
+   ]
+  },
+  {
+   "t": 33,
+   "score": 38.32,
+   "ssim": 0.1913,
+   "edge": 0.2977,
+   "hist": 0.9379,
+   "emd": 0.0155,
+   "lumaMine": 41,
+   "lumaRef": 42.5,
+   "scenes": [
+    "wd2-031.45-64-billion"
+   ]
+  },
+  {
+   "t": 33.5,
+   "score": 59.9,
+   "ssim": 0.4448,
+   "edge": 0.5797,
+   "hist": 0.9462,
+   "emd": 0.0135,
+   "lumaMine": 14.1,
+   "lumaRef": 16.5,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 34,
+   "score": 58.5,
+   "ssim": 0.4361,
+   "edge": 0.551,
+   "hist": 0.951,
+   "emd": 0.0123,
+   "lumaMine": 14.7,
+   "lumaRef": 16.5,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 34.5,
+   "score": 52.76,
+   "ssim": 0.3318,
+   "edge": 0.5076,
+   "hist": 0.9595,
+   "emd": 0.0101,
+   "lumaMine": 20.5,
+   "lumaRef": 23,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 35,
+   "score": 51.66,
+   "ssim": 0.324,
+   "edge": 0.4895,
+   "hist": 0.9559,
+   "emd": 0.011,
+   "lumaMine": 20.6,
+   "lumaRef": 23.5,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 35.5,
+   "score": 50.2,
+   "ssim": 0.3194,
+   "edge": 0.4592,
+   "hist": 0.9528,
+   "emd": 0.0118,
+   "lumaMine": 20.6,
+   "lumaRef": 23.7,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 36,
+   "score": 50.23,
+   "ssim": 0.3192,
+   "edge": 0.461,
+   "hist": 0.951,
+   "emd": 0.0122,
+   "lumaMine": 20.7,
+   "lumaRef": 23.8,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 36.5,
+   "score": 49.9,
+   "ssim": 0.3126,
+   "edge": 0.4594,
+   "hist": 0.9511,
+   "emd": 0.0122,
+   "lumaMine": 20.9,
+   "lumaRef": 23.9,
+   "scenes": [
+    "wd2-033.4-bay-area"
+   ]
+  },
+  {
+   "t": 37,
+   "score": 40.41,
+   "ssim": 0.3763,
+   "edge": 0.1858,
+   "hist": 0.8967,
+   "emd": 0.0258,
+   "lumaMine": 11.6,
+   "lumaRef": 15.1,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 37.5,
+   "score": 63.6,
+   "ssim": 0.5377,
+   "edge": 0.5865,
+   "hist": 0.9315,
+   "emd": 0.0171,
+   "lumaMine": 12.8,
+   "lumaRef": 8.4,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 38,
+   "score": 52.62,
+   "ssim": 0.4761,
+   "edge": 0.3639,
+   "hist": 0.9512,
+   "emd": 0.0122,
+   "lumaMine": 14.1,
+   "lumaRef": 10.9,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 38.5,
+   "score": 64.22,
+   "ssim": 0.4535,
+   "edge": 0.6686,
+   "hist": 0.9667,
+   "emd": 0.0083,
+   "lumaMine": 14.7,
+   "lumaRef": 12.7,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 39,
+   "score": 42.71,
+   "ssim": 0.363,
+   "edge": 0.269,
+   "hist": 0.8714,
+   "emd": 0.0322,
+   "lumaMine": 19.3,
+   "lumaRef": 11.1,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 39.5,
+   "score": 49.13,
+   "ssim": 0.3479,
+   "edge": 0.4522,
+   "hist": 0.8565,
+   "emd": 0.0359,
+   "lumaMine": 20.1,
+   "lumaRef": 10.9,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 40,
+   "score": 50.67,
+   "ssim": 0.3364,
+   "edge": 0.5045,
+   "hist": 0.8518,
+   "emd": 0.037,
+   "lumaMine": 20.9,
+   "lumaRef": 11.4,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 40.5,
+   "score": 50.1,
+   "ssim": 0.3236,
+   "edge": 0.5077,
+   "hist": 0.8423,
+   "emd": 0.0394,
+   "lumaMine": 21.8,
+   "lumaRef": 11.6,
+   "scenes": [
+    "wd2-036.9-peninsula"
+   ]
+  },
+  {
+   "t": 41,
+   "score": 43.36,
+   "ssim": 0.4367,
+   "edge": 0.1923,
+   "hist": 0.9101,
+   "emd": 0.0225,
+   "lumaMine": 7.6,
+   "lumaRef": 7.2,
+   "scenes": [
+    "wd2-040.7-bars3d"
+   ]
+  },
+  {
+   "t": 41.5,
+   "score": 61.03,
+   "ssim": 0.6963,
+   "edge": 0.4007,
+   "hist": 0.8575,
+   "emd": 0.0356,
+   "lumaMine": 0.9,
+   "lumaRef": 10.4,
+   "scenes": [
+    "wd2-041.25-waveforms"
+   ]
+  },
+  {
+   "t": 42,
+   "score": 67.91,
+   "ssim": 0.8841,
+   "edge": 0.3206,
+   "hist": 0.9861,
+   "emd": 0.0035,
+   "lumaMine": 2,
+   "lumaRef": 2.9,
+   "scenes": [
+    "wd2-041.25-waveforms"
+   ]
+  },
+  {
+   "t": 42.5,
+   "score": 89.51,
+   "ssim": 0.9121,
+   "edge": 0.8291,
+   "hist": 0.993,
+   "emd": 0.0017,
+   "lumaMine": 0.5,
+   "lumaRef": 0.7,
+   "scenes": [
+    "wd2-042.25-dark-grid"
+   ]
+  },
+  {
+   "t": 43,
+   "score": 98.92,
+   "ssim": 0.9736,
+   "edge": 1,
+   "hist": 0.9988,
+   "emd": 0.0003,
+   "lumaMine": 0,
+   "lumaRef": 0.1,
+   "scenes": [
+    "wd2-043-big-brother"
+   ]
+  },
+  {
+   "t": 43.5,
+   "score": 49.31,
+   "ssim": 0.7999,
+   "edge": 0.0466,
+   "hist": 0.7724,
+   "emd": 0.0569,
+   "lumaMine": 10.2,
+   "lumaRef": 24.6,
+   "scenes": [
+    "wd2-043-big-brother"
+   ]
+  },
+  {
+   "t": 44,
+   "score": 80.02,
+   "ssim": 0.8702,
+   "edge": 0.6406,
+   "hist": 0.9795,
+   "emd": 0.0051,
+   "lumaMine": 32.7,
+   "lumaRef": 33.8,
+   "scenes": [
+    "wd2-043-big-brother"
+   ]
+  },
+  {
+   "t": 44.5,
+   "score": 81.21,
+   "ssim": 0.8813,
+   "edge": 0.6662,
+   "hist": 0.9652,
+   "emd": 0.0087,
+   "lumaMine": 33.1,
+   "lumaRef": 35.2,
+   "scenes": [
+    "wd2-043-big-brother"
+   ]
+  },
+  {
+   "t": 45,
+   "score": 80.54,
+   "ssim": 0.8801,
+   "edge": 0.6508,
+   "hist": 0.9651,
+   "emd": 0.0087,
+   "lumaMine": 34.6,
+   "lumaRef": 36.6,
+   "scenes": [
+    "wd2-043-big-brother"
+   ]
+  },
+  {
+   "t": 45.5,
+   "score": 80.52,
+   "ssim": 0.8734,
+   "edge": 0.6603,
+   "hist": 0.9583,
+   "emd": 0.0104,
+   "lumaMine": 36.1,
+   "lumaRef": 38.6,
+   "scenes": [
+    "wd2-043-big-brother"
+   ]
+  },
+  {
+   "t": 46,
+   "score": 71.61,
+   "ssim": 0.6567,
+   "edge": 0.66,
+   "hist": 0.9467,
+   "emd": 0.0133,
+   "lumaMine": 37.9,
+   "lumaRef": 39.1,
+   "scenes": [
+    "wd2-045-chips"
+   ]
+  },
+  {
+   "t": 46.5,
+   "score": 52.08,
+   "ssim": 0.4797,
+   "edge": 0.3535,
+   "hist": 0.9377,
+   "emd": 0.0156,
+   "lumaMine": 20.4,
+   "lumaRef": 17.5,
+   "scenes": [
+    "wd2-045-chips"
+   ]
+  },
+  {
+   "t": 47,
+   "score": 50.21,
+   "ssim": 0.4484,
+   "edge": 0.3596,
+   "hist": 0.8942,
+   "emd": 0.0264,
+   "lumaMine": 27,
+   "lumaRef": 21.3,
+   "scenes": [
+    "wd2-045-chips"
+   ]
+  },
+  {
+   "t": 47.5,
+   "score": 54.13,
+   "ssim": 0.477,
+   "edge": 0.4187,
+   "hist": 0.9152,
+   "emd": 0.0212,
+   "lumaMine": 21.8,
+   "lumaRef": 20.3,
+   "scenes": [
+    "wd2-045-chips"
+   ]
+  },
+  {
+   "t": 48,
+   "score": 40.65,
+   "ssim": 0.4172,
+   "edge": 0.219,
+   "hist": 0.7601,
+   "emd": 0.06,
+   "lumaMine": 36.3,
+   "lumaRef": 51.7,
+   "scenes": [
+    "wd2-047-face-cards"
+   ]
+  },
+  {
+   "t": 48.5,
+   "score": 69.15,
+   "ssim": 0.6352,
+   "edge": 0.6399,
+   "hist": 0.9074,
+   "emd": 0.0232,
+   "lumaMine": 61.9,
+   "lumaRef": 56,
+   "scenes": [
+    "wd2-047-face-cards"
+   ]
+  },
+  {
+   "t": 49,
+   "score": 44.67,
+   "ssim": 0.5211,
+   "edge": 0.22,
+   "hist": 0.7514,
+   "emd": 0.0622,
+   "lumaMine": 61.1,
+   "lumaRef": 45.4,
+   "scenes": [
+    "wd2-047-face-cards"
+   ]
+  },
+  {
+   "t": 49.5,
+   "score": 40.8,
+   "ssim": 0.4797,
+   "edge": 0.1094,
+   "hist": 0.8615,
+   "emd": 0.0346,
+   "lumaMine": 57.9,
+   "lumaRef": 49.1,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 50,
+   "score": 41.97,
+   "ssim": 0.4961,
+   "edge": 0.1158,
+   "hist": 0.8748,
+   "emd": 0.0313,
+   "lumaMine": 59.3,
+   "lumaRef": 51.3,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 50.5,
+   "score": 43.51,
+   "ssim": 0.5104,
+   "edge": 0.1178,
+   "hist": 0.919,
+   "emd": 0.0202,
+   "lumaMine": 60.9,
+   "lumaRef": 56.2,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 51,
+   "score": 46.16,
+   "ssim": 0.5431,
+   "edge": 0.1495,
+   "hist": 0.9227,
+   "emd": 0.0193,
+   "lumaMine": 62,
+   "lumaRef": 61.5,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 51.5,
+   "score": 48.84,
+   "ssim": 0.56,
+   "edge": 0.214,
+   "hist": 0.894,
+   "emd": 0.0265,
+   "lumaMine": 63.1,
+   "lumaRef": 65.3,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 52,
+   "score": 52.51,
+   "ssim": 0.5647,
+   "edge": 0.3037,
+   "hist": 0.8887,
+   "emd": 0.0278,
+   "lumaMine": 66.1,
+   "lumaRef": 67.8,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 52.5,
+   "score": 87.13,
+   "ssim": 0.9807,
+   "edge": 0.7067,
+   "hist": 0.9817,
+   "emd": 0.0046,
+   "lumaMine": 1.3,
+   "lumaRef": 2.4,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 53,
+   "score": 93.62,
+   "ssim": 0.9882,
+   "edge": 0.8568,
+   "hist": 0.991,
+   "emd": 0.0022,
+   "lumaMine": 1.4,
+   "lumaRef": 1,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 53.5,
+   "score": 23.12,
+   "ssim": 0.4295,
+   "edge": 0.1485,
+   "hist": 0,
+   "emd": 0.2826,
+   "lumaMine": 73.6,
+   "lumaRef": 1.5,
+   "scenes": [
+    "wd2-049-profile"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-053.50.png"
+  },
+  {
+   "t": 54,
+   "score": 91.99,
+   "ssim": 0.9749,
+   "edge": 0.8567,
+   "hist": 0.9366,
+   "emd": 0.0158,
+   "lumaMine": 235.9,
+   "lumaRef": 236.3,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 54.5,
+   "score": 97.17,
+   "ssim": 0.9817,
+   "edge": 0.9503,
+   "hist": 0.9945,
+   "emd": 0.0014,
+   "lumaMine": 0.8,
+   "lumaRef": 0.7,
+   "scenes": [
+    "wd2-049-profile"
+   ]
+  },
+  {
+   "t": 55,
+   "score": 35.93,
+   "ssim": 0.669,
+   "edge": 0,
+   "hist": 0.4583,
+   "emd": 0.1354,
+   "lumaMine": 34.6,
+   "lumaRef": 0,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 55.5,
+   "score": 45.94,
+   "ssim": 0.302,
+   "edge": 0.4486,
+   "hist": 0.7958,
+   "emd": 0.051,
+   "lumaMine": 34.1,
+   "lumaRef": 28,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 56,
+   "score": 49.1,
+   "ssim": 0.294,
+   "edge": 0.5198,
+   "hist": 0.8273,
+   "emd": 0.0432,
+   "lumaMine": 31.2,
+   "lumaRef": 28.7,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 56.5,
+   "score": 49.96,
+   "ssim": 0.2634,
+   "edge": 0.5636,
+   "hist": 0.8441,
+   "emd": 0.039,
+   "lumaMine": 46.9,
+   "lumaRef": 41.5,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 57,
+   "score": 52.82,
+   "ssim": 0.2947,
+   "edge": 0.5746,
+   "hist": 0.9022,
+   "emd": 0.0244,
+   "lumaMine": 28.8,
+   "lumaRef": 26.9,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 57.5,
+   "score": 48.98,
+   "ssim": 0.4241,
+   "edge": 0.3476,
+   "hist": 0.9053,
+   "emd": 0.0237,
+   "lumaMine": 21.8,
+   "lumaRef": 17.9,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 58,
+   "score": 40.78,
+   "ssim": 0.3316,
+   "edge": 0.2455,
+   "hist": 0.8848,
+   "emd": 0.0288,
+   "lumaMine": 18.6,
+   "lumaRef": 11.9,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 58.5,
+   "score": 41.66,
+   "ssim": 0.3698,
+   "edge": 0.2119,
+   "hist": 0.9195,
+   "emd": 0.0201,
+   "lumaMine": 12.4,
+   "lumaRef": 7.5,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 59,
+   "score": 45.45,
+   "ssim": 0.4499,
+   "edge": 0.2272,
+   "hist": 0.9185,
+   "emd": 0.0204,
+   "lumaMine": 10.2,
+   "lumaRef": 5.2,
+   "scenes": [
+    "wd2-054-toys"
+   ]
+  },
+  {
+   "t": 59.5,
+   "score": 52.1,
+   "ssim": 0.527,
+   "edge": 0.3017,
+   "hist": 0.9474,
+   "emd": 0.0131,
+   "lumaMine": 7.5,
+   "lumaRef": 4.3,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 60,
+   "score": 54.85,
+   "ssim": 0.5929,
+   "edge": 0.2902,
+   "hist": 0.9763,
+   "emd": 0.0059,
+   "lumaMine": 10.7,
+   "lumaRef": 9.7,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 60.5,
+   "score": 39.48,
+   "ssim": 0.4193,
+   "edge": 0.1236,
+   "hist": 0.8882,
+   "emd": 0.028,
+   "lumaMine": 27.5,
+   "lumaRef": 25.8,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 61,
+   "score": 35.77,
+   "ssim": 0.3889,
+   "edge": 0.255,
+   "hist": 0.5006,
+   "emd": 0.1248,
+   "lumaMine": 5.5,
+   "lumaRef": 37.6,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 61.5,
+   "score": 37.77,
+   "ssim": 0.3636,
+   "edge": 0.1724,
+   "hist": 0.8166,
+   "emd": 0.0459,
+   "lumaMine": 6.3,
+   "lumaRef": 18.6,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 62,
+   "score": 37.42,
+   "ssim": 0.3524,
+   "edge": 0.1749,
+   "hist": 0.8162,
+   "emd": 0.046,
+   "lumaMine": 6.6,
+   "lumaRef": 19,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 62.5,
+   "score": 35.89,
+   "ssim": 0.2255,
+   "edge": 0.2471,
+   "hist": 0.8493,
+   "emd": 0.0377,
+   "lumaMine": 11.9,
+   "lumaRef": 22.1,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 63,
+   "score": 32.36,
+   "ssim": 0.1728,
+   "edge": 0.2305,
+   "hist": 0.8115,
+   "emd": 0.0471,
+   "lumaMine": 14,
+   "lumaRef": 26.7,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 63.5,
+   "score": 29.97,
+   "ssim": 0.1479,
+   "edge": 0.1991,
+   "hist": 0.8045,
+   "emd": 0.0489,
+   "lumaMine": 14.4,
+   "lumaRef": 27.5,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 64,
+   "score": 34.14,
+   "ssim": 0.1716,
+   "edge": 0.2315,
+   "hist": 0.9006,
+   "emd": 0.0249,
+   "lumaMine": 14.2,
+   "lumaRef": 21.1,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 64.5,
+   "score": 27.39,
+   "ssim": 0.1321,
+   "edge": 0.1217,
+   "hist": 0.8619,
+   "emd": 0.0345,
+   "lumaMine": 13.1,
+   "lumaRef": 21.7,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 65,
+   "score": 41.45,
+   "ssim": 0.3425,
+   "edge": 0.24,
+   "hist": 0.9077,
+   "emd": 0.0231,
+   "lumaMine": 10.6,
+   "lumaRef": 14.2,
+   "scenes": [
+    "wd2-059-room"
+   ]
+  },
+  {
+   "t": 65.5,
+   "score": 62.59,
+   "ssim": 0.6255,
+   "edge": 0.5105,
+   "hist": 0.8575,
+   "emd": 0.0356,
+   "lumaMine": 11.1,
+   "lumaRef": 12.1,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 66,
+   "score": 57.73,
+   "ssim": 0.5498,
+   "edge": 0.4354,
+   "hist": 0.9163,
+   "emd": 0.0209,
+   "lumaMine": 18.3,
+   "lumaRef": 19.7,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 66.5,
+   "score": 54.09,
+   "ssim": 0.5143,
+   "edge": 0.3806,
+   "hist": 0.9147,
+   "emd": 0.0213,
+   "lumaMine": 22.6,
+   "lumaRef": 23.7,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 67,
+   "score": 47.33,
+   "ssim": 0.5105,
+   "edge": 0.2099,
+   "hist": 0.9259,
+   "emd": 0.0185,
+   "lumaMine": 19.6,
+   "lumaRef": 22.1,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 67.5,
+   "score": 47.05,
+   "ssim": 0.5427,
+   "edge": 0.2029,
+   "hist": 0.8615,
+   "emd": 0.0346,
+   "lumaMine": 17.5,
+   "lumaRef": 20.8,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 68,
+   "score": 52.92,
+   "ssim": 0.4526,
+   "edge": 0.4313,
+   "hist": 0.878,
+   "emd": 0.0305,
+   "lumaMine": 21.4,
+   "lumaRef": 22.1,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 68.5,
+   "score": 52.64,
+   "ssim": 0.5199,
+   "edge": 0.3637,
+   "hist": 0.8651,
+   "emd": 0.0337,
+   "lumaMine": 27.7,
+   "lumaRef": 25.3,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 69,
+   "score": 42.34,
+   "ssim": 0.4094,
+   "edge": 0.2279,
+   "hist": 0.8425,
+   "emd": 0.0394,
+   "lumaMine": 25.7,
+   "lumaRef": 24.3,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 69.5,
+   "score": 45.57,
+   "ssim": 0.4757,
+   "edge": 0.2369,
+   "hist": 0.8535,
+   "emd": 0.0366,
+   "lumaMine": 24.4,
+   "lumaRef": 22.4,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 70,
+   "score": 44.53,
+   "ssim": 0.4995,
+   "edge": 0.1664,
+   "hist": 0.8947,
+   "emd": 0.0263,
+   "lumaMine": 22.3,
+   "lumaRef": 19.1,
+   "scenes": [
+    "wd2-065-vin"
+   ]
+  },
+  {
+   "t": 70.5,
+   "score": 38.6,
+   "ssim": 0.3117,
+   "edge": 0.2538,
+   "hist": 0.799,
+   "emd": 0.0502,
+   "lumaMine": 13.6,
+   "lumaRef": 16.9,
+   "scenes": [
+    "wd2-070-hijack"
+   ]
+  },
+  {
+   "t": 71,
+   "score": 40.1,
+   "ssim": 0.5276,
+   "edge": 0.0272,
+   "hist": 0.8954,
+   "emd": 0.0261,
+   "lumaMine": 16.4,
+   "lumaRef": 15,
+   "scenes": [
+    "wd2-070-oak"
+   ]
+  },
+  {
+   "t": 71.5,
+   "score": 44.65,
+   "ssim": 0.4923,
+   "edge": 0.18,
+   "hist": 0.8881,
+   "emd": 0.028,
+   "lumaMine": 17.5,
+   "lumaRef": 15.7,
+   "scenes": [
+    "wd2-070-oak"
+   ]
+  },
+  {
+   "t": 72,
+   "score": 43.38,
+   "ssim": 0.496,
+   "edge": 0.1414,
+   "hist": 0.8941,
+   "emd": 0.0265,
+   "lumaMine": 13,
+   "lumaRef": 16.1,
+   "scenes": [
+    "wd2-070-oak"
+   ]
+  },
+  {
+   "t": 72.5,
+   "score": 44.7,
+   "ssim": 0.4464,
+   "edge": 0.2136,
+   "hist": 0.9149,
+   "emd": 0.0213,
+   "lumaMine": 17.6,
+   "lumaRef": 14.1,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 73,
+   "score": 56.07,
+   "ssim": 0.4573,
+   "edge": 0.4792,
+   "hist": 0.9304,
+   "emd": 0.0174,
+   "lumaMine": 16,
+   "lumaRef": 14,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 73.5,
+   "score": 39.48,
+   "ssim": 0.3715,
+   "edge": 0.1567,
+   "hist": 0.9179,
+   "emd": 0.0205,
+   "lumaMine": 15.2,
+   "lumaRef": 15.2,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 74,
+   "score": 36.92,
+   "ssim": 0.3526,
+   "edge": 0.1126,
+   "hist": 0.9154,
+   "emd": 0.0211,
+   "lumaMine": 14.5,
+   "lumaRef": 14.7,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 74.5,
+   "score": 39.3,
+   "ssim": 0.3671,
+   "edge": 0.1598,
+   "hist": 0.9113,
+   "emd": 0.0222,
+   "lumaMine": 15.1,
+   "lumaRef": 13.8,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 75,
+   "score": 38.48,
+   "ssim": 0.363,
+   "edge": 0.1419,
+   "hist": 0.9139,
+   "emd": 0.0215,
+   "lumaMine": 15.9,
+   "lumaRef": 13.3,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 75.5,
+   "score": 41.48,
+   "ssim": 0.3946,
+   "edge": 0.1804,
+   "hist": 0.9238,
+   "emd": 0.019,
+   "lumaMine": 13.1,
+   "lumaRef": 9.1,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 76,
+   "score": 43.9,
+   "ssim": 0.4342,
+   "edge": 0.1864,
+   "hist": 0.9537,
+   "emd": 0.0116,
+   "lumaMine": 9.2,
+   "lumaRef": 6.7,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 76.5,
+   "score": 53.71,
+   "ssim": 0.6564,
+   "edge": 0.2051,
+   "hist": 0.9625,
+   "emd": 0.0094,
+   "lumaMine": 5.1,
+   "lumaRef": 4.4,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 77,
+   "score": 58.08,
+   "ssim": 0.787,
+   "edge": 0.1771,
+   "hist": 0.9755,
+   "emd": 0.0061,
+   "lumaMine": 5,
+   "lumaRef": 3.7,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 77.5,
+   "score": 55.74,
+   "ssim": 0.7601,
+   "edge": 0.1401,
+   "hist": 0.9866,
+   "emd": 0.0034,
+   "lumaMine": 4.8,
+   "lumaRef": 4.5,
+   "scenes": [
+    "wd2-072-hood"
+   ]
+  },
+  {
+   "t": 78,
+   "score": 53.22,
+   "ssim": 0.6877,
+   "edge": 0.15,
+   "hist": 0.9859,
+   "emd": 0.0035,
+   "lumaMine": 6.1,
+   "lumaRef": 5.9,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 78.5,
+   "score": 41.08,
+   "ssim": 0.3849,
+   "edge": 0.159,
+   "hist": 0.9662,
+   "emd": 0.0084,
+   "lumaMine": 9,
+   "lumaRef": 6.8,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 79,
+   "score": 39.87,
+   "ssim": 0.3524,
+   "edge": 0.1605,
+   "hist": 0.9675,
+   "emd": 0.0081,
+   "lumaMine": 10,
+   "lumaRef": 8.8,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 79.5,
+   "score": 39,
+   "ssim": 0.2883,
+   "edge": 0.2117,
+   "hist": 0.9501,
+   "emd": 0.0125,
+   "lumaMine": 11.6,
+   "lumaRef": 13.6,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 80,
+   "score": 36.08,
+   "ssim": 0.2325,
+   "edge": 0.2499,
+   "hist": 0.8391,
+   "emd": 0.0402,
+   "lumaMine": 13.3,
+   "lumaRef": 23.9,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 80.5,
+   "score": 31.09,
+   "ssim": 0.2162,
+   "edge": 0.2377,
+   "hist": 0.6468,
+   "emd": 0.0883,
+   "lumaMine": 12.6,
+   "lumaRef": 35.5,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 81,
+   "score": 26.37,
+   "ssim": 0.1309,
+   "edge": 0.2118,
+   "hist": 0.6332,
+   "emd": 0.0917,
+   "lumaMine": 41.2,
+   "lumaRef": 54.2,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 81.5,
+   "score": 50.42,
+   "ssim": 0.3066,
+   "edge": 0.5793,
+   "hist": 0.7489,
+   "emd": 0.0628,
+   "lumaMine": 50.2,
+   "lumaRef": 48.7,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 82,
+   "score": 61.96,
+   "ssim": 0.4931,
+   "edge": 0.5917,
+   "hist": 0.928,
+   "emd": 0.018,
+   "lumaMine": 43.8,
+   "lumaRef": 41.2,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 82.5,
+   "score": 69.76,
+   "ssim": 0.6586,
+   "edge": 0.6571,
+   "hist": 0.8566,
+   "emd": 0.0359,
+   "lumaMine": 27,
+   "lumaRef": 36.1,
+   "scenes": [
+    "wd2-077-brain"
+   ]
+  },
+  {
+   "t": 83,
+   "score": 65.49,
+   "ssim": 0.747,
+   "edge": 0.4227,
+   "hist": 0.935,
+   "emd": 0.0162,
+   "lumaMine": 19.5,
+   "lumaRef": 22.8,
+   "scenes": [
+    "wd2-077-brain",
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 83.5,
+   "score": 47.8,
+   "ssim": 0.6881,
+   "edge": 0.1529,
+   "hist": 0.7079,
+   "emd": 0.073,
+   "lumaMine": 39.6,
+   "lumaRef": 21.2,
+   "scenes": [
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 84,
+   "score": 40.64,
+   "ssim": 0.5157,
+   "edge": 0.1743,
+   "hist": 0.6523,
+   "emd": 0.0869,
+   "lumaMine": 38,
+   "lumaRef": 15.7,
+   "scenes": [
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 84.5,
+   "score": 48.58,
+   "ssim": 0.5446,
+   "edge": 0.2772,
+   "hist": 0.7856,
+   "emd": 0.0536,
+   "lumaMine": 24.3,
+   "lumaRef": 10.5,
+   "scenes": [
+    "wd2-084-universe-world",
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 85,
+   "score": 51.04,
+   "ssim": 0.5702,
+   "edge": 0.2477,
+   "hist": 0.9159,
+   "emd": 0.021,
+   "lumaMine": 12.8,
+   "lumaRef": 7.4,
+   "scenes": [
+    "wd2-084-universe-world",
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 85.5,
+   "score": 46.95,
+   "ssim": 0.5092,
+   "edge": 0.2004,
+   "hist": 0.9283,
+   "emd": 0.0179,
+   "lumaMine": 9.1,
+   "lumaRef": 4.5,
+   "scenes": [
+    "wd2-084-universe-world",
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 86,
+   "score": 43.14,
+   "ssim": 0.4294,
+   "edge": 0.1908,
+   "hist": 0.9164,
+   "emd": 0.0209,
+   "lumaMine": 8.8,
+   "lumaRef": 3.6,
+   "scenes": [
+    "wd2-084-universe-world",
+    "wd2-082-pixel-face"
+   ]
+  },
+  {
+   "t": 86.5,
+   "score": 40.22,
+   "ssim": 0.4228,
+   "edge": 0.098,
+   "hist": 0.9691,
+   "emd": 0.0077,
+   "lumaMine": 8.3,
+   "lumaRef": 6.8,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 87,
+   "score": 39.64,
+   "ssim": 0.4044,
+   "edge": 0.1071,
+   "hist": 0.9589,
+   "emd": 0.0103,
+   "lumaMine": 8.3,
+   "lumaRef": 6.1,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 87.5,
+   "score": 38.69,
+   "ssim": 0.3613,
+   "edge": 0.1241,
+   "hist": 0.9634,
+   "emd": 0.0092,
+   "lumaMine": 8.7,
+   "lumaRef": 6.7,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 88,
+   "score": 38.15,
+   "ssim": 0.3307,
+   "edge": 0.1483,
+   "hist": 0.9491,
+   "emd": 0.0127,
+   "lumaMine": 9,
+   "lumaRef": 6.3,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 88.5,
+   "score": 39.42,
+   "ssim": 0.347,
+   "edge": 0.1628,
+   "hist": 0.9514,
+   "emd": 0.0122,
+   "lumaMine": 8.9,
+   "lumaRef": 6.3,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 89,
+   "score": 37.95,
+   "ssim": 0.3384,
+   "edge": 0.126,
+   "hist": 0.9689,
+   "emd": 0.0078,
+   "lumaMine": 9,
+   "lumaRef": 7.7,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 89.5,
+   "score": 38.58,
+   "ssim": 0.3356,
+   "edge": 0.1436,
+   "hist": 0.9704,
+   "emd": 0.0074,
+   "lumaMine": 9,
+   "lumaRef": 7.8,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 90,
+   "score": 37.32,
+   "ssim": 0.322,
+   "edge": 0.1251,
+   "hist": 0.9719,
+   "emd": 0.007,
+   "lumaMine": 9.3,
+   "lumaRef": 8.3,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 90.5,
+   "score": 38.97,
+   "ssim": 0.3128,
+   "edge": 0.1803,
+   "hist": 0.9623,
+   "emd": 0.0094,
+   "lumaMine": 10.3,
+   "lumaRef": 8.6,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 91,
+   "score": 51.14,
+   "ssim": 0.4763,
+   "edge": 0.3343,
+   "hist": 0.9361,
+   "emd": 0.016,
+   "lumaMine": 9.3,
+   "lumaRef": 5.6,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 91.5,
+   "score": 68.9,
+   "ssim": 0.6773,
+   "edge": 0.5713,
+   "hist": 0.9481,
+   "emd": 0.013,
+   "lumaMine": 6.3,
+   "lumaRef": 3.3,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 92,
+   "score": 81.14,
+   "ssim": 0.7994,
+   "edge": 0.7411,
+   "hist": 0.9759,
+   "emd": 0.006,
+   "lumaMine": 3.2,
+   "lumaRef": 2.1,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 92.5,
+   "score": 88.39,
+   "ssim": 0.8399,
+   "edge": 0.8747,
+   "hist": 0.9902,
+   "emd": 0.0025,
+   "lumaMine": 1.9,
+   "lumaRef": 1.8,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 93,
+   "score": 89.83,
+   "ssim": 0.8493,
+   "edge": 0.9008,
+   "hist": 0.9915,
+   "emd": 0.0021,
+   "lumaMine": 1.6,
+   "lumaRef": 1.9,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 93.5,
+   "score": 90.45,
+   "ssim": 0.8581,
+   "edge": 0.9073,
+   "hist": 0.9919,
+   "emd": 0.002,
+   "lumaMine": 1.6,
+   "lumaRef": 1.8,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 94,
+   "score": 90.67,
+   "ssim": 0.8608,
+   "edge": 0.9099,
+   "hist": 0.992,
+   "emd": 0.002,
+   "lumaMine": 1.6,
+   "lumaRef": 1.8,
+   "scenes": [
+    "wd2-084-universe-world"
+   ]
+  },
+  {
+   "t": 94.5,
+   "score": 34.76,
+   "ssim": 0.268,
+   "edge": 0.1916,
+   "hist": 0.819,
+   "emd": 0.0453,
+   "lumaMine": 176.4,
+   "lumaRef": 170.9,
+   "scenes": [
+    "wd2-094-currency"
+   ]
+  },
+  {
+   "t": 95,
+   "score": 21.51,
+   "ssim": 0.3721,
+   "edge": 0.1657,
+   "hist": 0,
+   "emd": 0.3413,
+   "lumaMine": 203.2,
+   "lumaRef": 118,
+   "scenes": [
+    "wd2-094-currency"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-095.00.png"
+  },
+  {
+   "t": 95.5,
+   "score": 32.27,
+   "ssim": 0.2187,
+   "edge": 0.1686,
+   "hist": 0.839,
+   "emd": 0.0402,
+   "lumaMine": 116,
+   "lumaRef": 121.6,
+   "scenes": [
+    "wd2-094-currency"
+   ]
+  },
+  {
+   "t": 96,
+   "score": 41.65,
+   "ssim": 0.4236,
+   "edge": 0.2571,
+   "hist": 0.7212,
+   "emd": 0.0697,
+   "lumaMine": 197,
+   "lumaRef": 214.2,
+   "scenes": [
+    "wd2-094-currency"
+   ]
+  },
+  {
+   "t": 96.5,
+   "score": 69.09,
+   "ssim": 0.5539,
+   "edge": 0.7622,
+   "hist": 0.8224,
+   "emd": 0.0444,
+   "lumaMine": 218.7,
+   "lumaRef": 229.9,
+   "scenes": [
+    "wd2-094-currency"
+   ]
+  },
+  {
+   "t": 97,
+   "score": 94.98,
+   "ssim": 0.9586,
+   "edge": 0.9527,
+   "hist": 0.9264,
+   "emd": 0.0184,
+   "lumaMine": 199.8,
+   "lumaRef": 194.8,
+   "scenes": [
+    "wd2-094-currency"
+   ]
+  },
+  {
+   "t": 97.5,
+   "score": 99.79,
+   "ssim": 0.9972,
+   "edge": 0.9987,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.6,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-094-currency"
+   ]
+  },
+  {
+   "t": 98,
+   "score": 97.2,
+   "ssim": 0.9813,
+   "edge": 0.9506,
+   "hist": 0.9964,
+   "emd": 0.0009,
+   "lumaMine": 1.6,
+   "lumaRef": 1.3,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 98.5,
+   "score": 90.43,
+   "ssim": 0.952,
+   "edge": 0.8162,
+   "hist": 0.9852,
+   "emd": 0.0037,
+   "lumaMine": 7.3,
+   "lumaRef": 6.4,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 99,
+   "score": 91.06,
+   "ssim": 0.9155,
+   "edge": 0.8731,
+   "hist": 0.9759,
+   "emd": 0.006,
+   "lumaMine": 14,
+   "lumaRef": 12.5,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 99.5,
+   "score": 91.06,
+   "ssim": 0.9155,
+   "edge": 0.8731,
+   "hist": 0.9759,
+   "emd": 0.006,
+   "lumaMine": 14,
+   "lumaRef": 12.5,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 100,
+   "score": 87.31,
+   "ssim": 0.9057,
+   "edge": 0.7924,
+   "hist": 0.9692,
+   "emd": 0.0077,
+   "lumaMine": 14,
+   "lumaRef": 12.1,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 100.5,
+   "score": 78.96,
+   "ssim": 0.8854,
+   "edge": 0.6025,
+   "hist": 0.9721,
+   "emd": 0.007,
+   "lumaMine": 14,
+   "lumaRef": 12.2,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 101,
+   "score": 76.99,
+   "ssim": 0.8856,
+   "edge": 0.5697,
+   "hist": 0.9385,
+   "emd": 0.0154,
+   "lumaMine": 9.5,
+   "lumaRef": 13.4,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 101.5,
+   "score": 88.35,
+   "ssim": 0.8969,
+   "edge": 0.824,
+   "hist": 0.9756,
+   "emd": 0.0061,
+   "lumaMine": 15.4,
+   "lumaRef": 13.9,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 102,
+   "score": 76.88,
+   "ssim": 0.859,
+   "edge": 0.5741,
+   "hist": 0.9777,
+   "emd": 0.0056,
+   "lumaMine": 13,
+   "lumaRef": 14.1,
+   "scenes": [
+    "wd2-097-new-reality"
+   ]
+  },
+  {
+   "t": 102.5,
+   "score": 78.79,
+   "ssim": 0.931,
+   "edge": 0.5413,
+   "hist": 0.9948,
+   "emd": 0.0013,
+   "lumaMine": 6.5,
+   "lumaRef": 6.6,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 103,
+   "score": 77.67,
+   "ssim": 0.7648,
+   "edge": 0.7312,
+   "hist": 0.8911,
+   "emd": 0.0272,
+   "lumaMine": 158.8,
+   "lumaRef": 165.7,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 103.5,
+   "score": 94.32,
+   "ssim": 0.9786,
+   "edge": 0.9712,
+   "hist": 0.8163,
+   "emd": 0.0459,
+   "lumaMine": 225.4,
+   "lumaRef": 237.2,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 104,
+   "score": 93.07,
+   "ssim": 0.9775,
+   "edge": 0.9412,
+   "hist": 0.8162,
+   "emd": 0.0459,
+   "lumaMine": 225.4,
+   "lumaRef": 237.1,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 104.5,
+   "score": 93.56,
+   "ssim": 0.9784,
+   "edge": 0.9524,
+   "hist": 0.8167,
+   "emd": 0.0458,
+   "lumaMine": 225.4,
+   "lumaRef": 237.2,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 105,
+   "score": 93.41,
+   "ssim": 0.9779,
+   "edge": 0.9494,
+   "hist": 0.8162,
+   "emd": 0.046,
+   "lumaMine": 225.4,
+   "lumaRef": 237.1,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 105.5,
+   "score": 90.68,
+   "ssim": 0.9403,
+   "edge": 0.918,
+   "hist": 0.8177,
+   "emd": 0.0456,
+   "lumaMine": 224.5,
+   "lumaRef": 236.3,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 106,
+   "score": 62.7,
+   "ssim": 0.6978,
+   "edge": 0.4465,
+   "hist": 0.8466,
+   "emd": 0.0384,
+   "lumaMine": 217.5,
+   "lumaRef": 227,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 106.5,
+   "score": 60.14,
+   "ssim": 0.6349,
+   "edge": 0.4745,
+   "hist": 0.7879,
+   "emd": 0.053,
+   "lumaMine": 213,
+   "lumaRef": 226.4,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 107,
+   "score": 52.48,
+   "ssim": 0.5247,
+   "edge": 0.4782,
+   "hist": 0.6181,
+   "emd": 0.0955,
+   "lumaMine": 195.5,
+   "lumaRef": 219.4,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 107.5,
+   "score": 45.57,
+   "ssim": 0.4666,
+   "edge": 0.2604,
+   "hist": 0.8244,
+   "emd": 0.0439,
+   "lumaMine": 212,
+   "lumaRef": 220.3,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 108,
+   "score": 37.14,
+   "ssim": 0.2984,
+   "edge": 0.2063,
+   "hist": 0.8475,
+   "emd": 0.0381,
+   "lumaMine": 172.1,
+   "lumaRef": 162.2,
+   "scenes": [
+    "wd2-102-execute"
+   ]
+  },
+  {
+   "t": 108.5,
+   "score": 42.84,
+   "ssim": 0.3259,
+   "edge": 0.3236,
+   "hist": 0.8427,
+   "emd": 0.0393,
+   "lumaMine": 216,
+   "lumaRef": 209,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 109,
+   "score": 36.54,
+   "ssim": 0.2985,
+   "edge": 0.1828,
+   "hist": 0.8644,
+   "emd": 0.0339,
+   "lumaMine": 207.3,
+   "lumaRef": 205.1,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 109.5,
+   "score": 35.82,
+   "ssim": 0.3183,
+   "edge": 0.1767,
+   "hist": 0.801,
+   "emd": 0.0498,
+   "lumaMine": 197.5,
+   "lumaRef": 203.3,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 110,
+   "score": 33.16,
+   "ssim": 0.2654,
+   "edge": 0.1895,
+   "hist": 0.7482,
+   "emd": 0.063,
+   "lumaMine": 176.2,
+   "lumaRef": 163.4,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 110.5,
+   "score": 25.78,
+   "ssim": 0.0993,
+   "edge": 0.1138,
+   "hist": 0.8629,
+   "emd": 0.0343,
+   "lumaMine": 102.6,
+   "lumaRef": 103.9,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 111,
+   "score": 26.72,
+   "ssim": 0.0795,
+   "edge": 0.1756,
+   "hist": 0.8259,
+   "emd": 0.0435,
+   "lumaMine": 107,
+   "lumaRef": 99.3,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 111.5,
+   "score": 22.91,
+   "ssim": 0.0712,
+   "edge": 0.1935,
+   "hist": 0.616,
+   "emd": 0.096,
+   "lumaMine": 129.8,
+   "lumaRef": 105.2,
+   "scenes": [
+    "wd2-108-dedsec"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-111.50.png"
+  },
+  {
+   "t": 112,
+   "score": 23.88,
+   "ssim": 0.1144,
+   "edge": 0.1104,
+   "hist": 0.7442,
+   "emd": 0.064,
+   "lumaMine": 141.7,
+   "lumaRef": 149.8,
+   "scenes": [
+    "wd2-108-dedsec"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-112.00.png"
+  },
+  {
+   "t": 112.5,
+   "score": 21.06,
+   "ssim": 0.1479,
+   "edge": 0.0286,
+   "hist": 0.6998,
+   "emd": 0.075,
+   "lumaMine": 144.9,
+   "lumaRef": 145,
+   "scenes": [
+    "wd2-108-dedsec"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-112.50.png"
+  },
+  {
+   "t": 113,
+   "score": 27.87,
+   "ssim": 0.41,
+   "edge": 0.1077,
+   "hist": 0.3579,
+   "emd": 0.1605,
+   "lumaMine": 133.2,
+   "lumaRef": 92.2,
+   "scenes": [
+    "wd2-108-dedsec"
+   ]
+  },
+  {
+   "t": 113.5,
+   "score": 29.85,
+   "ssim": 0.2195,
+   "edge": 0.1585,
+   "hist": 0.7363,
+   "emd": 0.0659,
+   "lumaMine": 90,
+   "lumaRef": 86,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 114,
+   "score": 23.38,
+   "ssim": 0.1237,
+   "edge": 0.118,
+   "hist": 0.6857,
+   "emd": 0.0786,
+   "lumaMine": 54.4,
+   "lumaRef": 40.9,
+   "scenes": [
+    "wd2-113-skull"
+   ],
+   "snap": "snaps/score/v2-g1-wd2-114.00.png"
+  },
+  {
+   "t": 114.5,
+   "score": 37.31,
+   "ssim": 0.2192,
+   "edge": 0.2557,
+   "hist": 0.9156,
+   "emd": 0.0211,
+   "lumaMine": 29.7,
+   "lumaRef": 24.6,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 115,
+   "score": 32.04,
+   "ssim": 0.1028,
+   "edge": 0.2341,
+   "hist": 0.9283,
+   "emd": 0.0179,
+   "lumaMine": 66.4,
+   "lumaRef": 62.2,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 115.5,
+   "score": 34.36,
+   "ssim": 0.1225,
+   "edge": 0.2973,
+   "hist": 0.8788,
+   "emd": 0.0303,
+   "lumaMine": 66.4,
+   "lumaRef": 65.6,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 116,
+   "score": 42.58,
+   "ssim": 0.1594,
+   "edge": 0.4584,
+   "hist": 0.8937,
+   "emd": 0.0266,
+   "lumaMine": 53.4,
+   "lumaRef": 53.1,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 116.5,
+   "score": 44.19,
+   "ssim": 0.1974,
+   "edge": 0.4966,
+   "hist": 0.8216,
+   "emd": 0.0446,
+   "lumaMine": 51.1,
+   "lumaRef": 40.3,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 117,
+   "score": 38.15,
+   "ssim": 0.2802,
+   "edge": 0.3486,
+   "hist": 0.6499,
+   "emd": 0.0875,
+   "lumaMine": 71.5,
+   "lumaRef": 50.5,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 117.5,
+   "score": 99.81,
+   "ssim": 0.9975,
+   "edge": 0.9989,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.5,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 118,
+   "score": 99.81,
+   "ssim": 0.9975,
+   "edge": 0.9989,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.5,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 118.5,
+   "score": 99.81,
+   "ssim": 0.9975,
+   "edge": 0.9989,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.5,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 119,
+   "score": 99.81,
+   "ssim": 0.9975,
+   "edge": 0.9989,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.5,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 119.5,
+   "score": 99.81,
+   "ssim": 0.9975,
+   "edge": 0.9989,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.5,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 120,
+   "score": 99.81,
+   "ssim": 0.9975,
+   "edge": 0.9989,
+   "hist": 0.9979,
+   "emd": 0.0005,
+   "lumaMine": 0.5,
+   "lumaRef": 0.4,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  },
+  {
+   "t": 120.5,
+   "score": 100,
+   "ssim": 1,
+   "edge": 1,
+   "hist": 1,
+   "emd": 0,
+   "lumaMine": 0,
+   "lumaRef": 0,
+   "scenes": [
+    "wd2-113-skull"
+   ]
+  }
+ ]
+}
