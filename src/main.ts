@@ -10,6 +10,8 @@ import type { Film } from './engine/types'
 import { H, W, activeScenes, renderFrame } from './engine/render'
 import { ThreeHost } from './engine/three-host'
 import { FONT } from './fx/text'
+import { drawCompare } from './compare'
+import { offscreen } from './fx/canvas'
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const canvas = $<HTMLCanvasElement>('out')
@@ -145,7 +147,9 @@ declare global {
   interface Window {
     __wd: {
       ready: Promise<void>
-      renderAt(id: Film['id'], time: number): string
+      renderAt(id: Film['id'], time: number, format?: 'png' | 'jpeg'): string
+      /** 对比视频帧：左复刻、右留黑给原片 */
+      compareAt(id: Film['id'], time: number): string
       duration(id: Film['id']): number
       fps(id: Film['id']): number
     }
@@ -155,11 +159,19 @@ declare global {
 const ready = loadFonts()
 window.__wd = {
   ready,
-  renderAt(id, time) {
+  renderAt(id, time, format = 'png') {
     film = films[id]
     t = time
     draw()
-    return canvas.toDataURL('image/png')
+    return format === 'jpeg' ? canvas.toDataURL('image/jpeg', 0.95) : canvas.toDataURL('image/png')
+  },
+  compareAt(id, time) {
+    film = films[id]
+    t = time
+    draw()
+    const o = offscreen('compare-out', W, H)
+    drawCompare(o.ctx, film, time, canvas)
+    return o.canvas.toDataURL('image/jpeg', 0.95)
   },
   duration: (id) => films[id].duration,
   fps: (id) => films[id].fps,

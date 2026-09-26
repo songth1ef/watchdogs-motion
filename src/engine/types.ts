@@ -32,7 +32,7 @@ export interface Scene {
 }
 
 export interface Film {
-  id: 'wd1' | 'wd2'
+  id: 'wd1' | 'wd2' | 'intro'
   title: string
   duration: number
   /** 原片帧率，导出与逐帧步进用 */

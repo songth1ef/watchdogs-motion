@@ -20,6 +20,7 @@ export async function openHarness() {
   await page.evaluate(() => window.__wd.ready)
   return {
     errors,
+    page,
     /** 返回 PNG Buffer */
     async render(film, t) {
       const dataUrl = await page.evaluate(([f, tt]) => window.__wd.renderAt(f, tt), [film, t])
