@@ -21,12 +21,27 @@ function ffmpeg(args) {
   return { stdin: p.stdin, done }
 }
 
-async function pump(h, enc, fn, start, end, label) {
+async function pump(_h, enc, fn, start, end, label) {
   const total = Math.round((end - start) * FPS)
   const t0 = Date.now()
   for (let i = 0; i < total; i++) {
     const t = start + i / FPS
-    const jpg = await fn(t)
+    // 无头页面在重 3D + 后期镜头可能崩溃重载（Execution context was destroyed）：重开浏览器后从这一帧续渲，最多重试 3 次
+    let jpg
+    for (let attempt = 0; ; attempt++) {
+      try {
+        jpg = await fn(t)
+        break
+      } catch (err) {
+        if (attempt >= 3) throw err
+        process.stdout.write(`\n${label} ${t.toFixed(2)}s 页面崩溃，重开浏览器续渲（第 ${attempt + 1} 次）\n`)
+        try {
+          await h.close()
+        } catch {}
+        h = await openHarness()
+        page = h.page
+      }
+    }
     if (!enc.stdin.write(jpg)) await new Promise((r) => enc.stdin.once('drain', r))
     if (i % 15 === 0) {
       const el = (Date.now() - t0) / 1000
@@ -39,9 +54,9 @@ async function pump(h, enc, fn, start, end, label) {
   process.stdout.write('\n')
 }
 
-const h = await openHarness()
+let h = await openHarness()
 const dataUrlToBuf = (u) => Buffer.from(u.split(',')[1], 'base64')
-const page = h.page
+let page = h.page
 const parts = []
 try {
   if (!only || only === 'intro') {
