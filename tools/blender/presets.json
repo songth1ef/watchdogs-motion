@@ -1,0 +1,221 @@
+{
+  "comment": "各 3D 镜头的反求参数（pnpm solve preset <name>）。grade 是本次记录时的评级，重跑结果会有小幅波动（libmv 自动选关键帧不完全确定）。共享 --frames-dir 的几个预设先跟踪整段、再按 --sub 分段解；加 --reuse-tracks 可跳过跟踪只重解。",
+  "presets": [
+    {
+      "name": "wd1-pylons",
+      "film": "wd1",
+      "start": 21.75,
+      "end": 23.75,
+      "args": [
+        "--search",
+        "51"
+      ],
+      "grade": "good",
+      "comment": "电塔阵列：俯视→压低推进，一个连续镜头；23.75 后推到桁架特写即出画"
+    },
+    {
+      "name": "wd1-gray-city-a",
+      "film": "wd1",
+      "start": 34.4,
+      "end": 38.2,
+      "args": [],
+      "grade": "poor",
+      "comment": "暗色扫描线 + 逐帧切片故障，轨迹连不起来"
+    },
+    {
+      "name": "wd1-gray-city-b",
+      "film": "wd1",
+      "start": 38.2,
+      "end": 50,
+      "args": [
+        "--frames-dir",
+        "/tmp/wd-solve/wd1-gray-city",
+        "--sub",
+        "38.2,42.8"
+      ],
+      "grade": "good",
+      "comment": "低空飞越 → 远景城市板块"
+    },
+    {
+      "name": "wd1-gray-city-c",
+      "film": "wd1",
+      "start": 38.2,
+      "end": 50,
+      "args": [
+        "--frames-dir",
+        "/tmp/wd-solve/wd1-gray-city",
+        "--sub",
+        "42.8,48.3"
+      ],
+      "grade": "usable",
+      "comment": "抬高旋转成斜俯视；48.3 后青色线路/标签盖满画面解不出"
+    },
+    {
+      "name": "wd1-ctos-objects-a",
+      "film": "wd1",
+      "start": 98.3,
+      "end": 104.4,
+      "args": [],
+      "grade": "poor",
+      "comment": "大面积纯黑/渐变天幕 + 物件逐个弹出，特征过少"
+    },
+    {
+      "name": "wd1-clay-city-a",
+      "film": "wd1",
+      "start": 124.3,
+      "end": 133.4,
+      "args": [
+        "--detect-every",
+        "10"
+      ],
+      "grade": "good",
+      "comment": "素模城市俯拍旋转 → 抬成斜俯视（123.4–124.3 虚焦俯冲不解）"
+    },
+    {
+      "name": "wd1-clay-city-b",
+      "film": "wd1",
+      "start": 133.4,
+      "end": 139.0,
+      "args": [
+        "--detect-every",
+        "10",
+        "--ignore",
+        "0,0,1,0.42"
+      ],
+      "grade": "good",
+      "comment": "压低后拉露出手机；上方天际线/大字区域不检测特征（大字是贴在 3D 空间里的，会被解成一组浮空点）"
+    },
+    {
+      "name": "wd1-skyline",
+      "film": "wd1",
+      "start": 133.4,
+      "end": 139.3,
+      "args": [
+        "--roi",
+        "0,0.03,1,0.4",
+        "--ignore",
+        "0,0.4,1,1"
+      ],
+      "grade": "poor",
+      "comment": "远处天际线（背景层）：虚焦光斑无角点、137.6 才对焦、随后窗灯闪烁熄灭，特征过少"
+    },
+    {
+      "name": "wd2-ctos-grid-a",
+      "film": "wd2",
+      "start": 4.35,
+      "end": 8.3,
+      "args": [
+        "--fps",
+        "29.97",
+        "--ignore",
+        "0.78,0,1,0.2",
+        "--ignore",
+        "0,0.85,1,1",
+        "--frames-dir",
+        "/tmp/wd-solve/wd2-ctos-grid",
+        "--sub",
+        "4.35,6.3"
+      ],
+      "grade": "good",
+      "comment": "低空前滑；焦距约束不住（fov 取初值）"
+    },
+    {
+      "name": "wd2-ctos-grid-b",
+      "film": "wd2",
+      "start": 4.35,
+      "end": 8.3,
+      "args": [
+        "--fps",
+        "29.97",
+        "--ignore",
+        "0.78,0,1,0.2",
+        "--ignore",
+        "0,0.85,1,1",
+        "--frames-dir",
+        "/tmp/wd-solve/wd2-ctos-grid",
+        "--sub",
+        "6.2,8.3"
+      ],
+      "grade": "poor",
+      "comment": "抬升到正俯视：细线网格重复、跟踪频繁跳格"
+    },
+    {
+      "name": "wd2-bay-a",
+      "film": "wd2",
+      "start": 33.4,
+      "end": 34.15,
+      "args": [
+        "--fps",
+        "29.97"
+      ],
+      "grade": "degenerate",
+      "comment": "湾区地形（2D 平面图缓推）"
+    },
+    {
+      "name": "wd2-bay-b",
+      "film": "wd2",
+      "start": 34.3,
+      "end": 36.75,
+      "args": [
+        "--fps",
+        "29.97"
+      ],
+      "grade": "degenerate",
+      "comment": "34.2 硬切后推近的湾区（2D 平面）"
+    },
+    {
+      "name": "wd2-bay-c",
+      "film": "wd2",
+      "start": 37.05,
+      "end": 38.68,
+      "args": [
+        "--fps",
+        "29.97"
+      ],
+      "grade": "good",
+      "comment": "旧金山半岛（多层 2.5D 图层，有真实视差）"
+    },
+    {
+      "name": "wd2-bay-d",
+      "film": "wd2",
+      "start": 38.75,
+      "end": 40.55,
+      "args": [
+        "--fps",
+        "29.97"
+      ],
+      "grade": "good",
+      "comment": "38.7 硬切推近 + 40.3 起后倒（多次运行在 good / degenerate 间摇摆）"
+    },
+    {
+      "name": "wd2-room",
+      "film": "wd2",
+      "start": 59.4,
+      "end": 65.4,
+      "args": [
+        "--fps",
+        "29.97",
+        "--frames-dir",
+        "/tmp/wd-solve/wd2-room"
+      ],
+      "grade": "poor",
+      "comment": "线框客厅整段：59.4–61.3 物件逐个闪入、65 前右侧颗粒噪点，覆盖只有 78% 且点云贴墙退化"
+    },
+    {
+      "name": "wd2-room-b",
+      "film": "wd2",
+      "start": 59.4,
+      "end": 65.4,
+      "args": [
+        "--fps",
+        "29.97",
+        "--frames-dir",
+        "/tmp/wd-solve/wd2-room",
+        "--sub",
+        "61.3,64.6"
+      ],
+      "grade": "good",
+      "comment": "闪入结束后的客厅拉远段；RANSAC 地面会选中后墙（点最多），接入时用 alignTrack 转正"
+    }
+  ]
+}

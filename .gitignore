@@ -5,3 +5,6 @@ snaps/
 public/reference/
 reference/
 dist-video/
+# 反求相机（docs/camera-solve.md）：Blender 工程旁边的原片抽帧是版权素材，不入库。
+# .blend 本身很小（<1MB，只引用 //<名>.frames/），可以入库；换机后用 `pnpm solve preset <名> --blend` 重新生成抽帧。
+assets/blender/*.frames/
