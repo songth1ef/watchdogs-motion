@@ -1,0 +1,59 @@
+# watchdogs-motion
+
+用代码逐镜头复刻两支 Watch Dogs 宣传动画，作为可二次开发的动态图形工程：
+
+| id  | 原片 | 时长 | 帧率 |
+| --- | --- | --- | --- |
+| wd1 | [Watch Dogs · E3 Introduction Trailer](https://www.youtube.com/watch?v=Qs4OcQNOM34) | 151s | 30 |
+| wd2 | [Watch Dogs 2 · ctOS Introduction Scene](https://www.youtube.com/watch?v=scyA9cnbja4) | 121s | 60 |
+
+技术栈：Vite + TypeScript + Canvas 2D（排版/图形）+ three.js（3D 城市等）。
+
+## 快速开始
+
+```bash
+pnpm install
+pnpm dev                    # 打开播放器：拖时间轴、逐帧、与原片并排/叠加/差值对照
+pnpm snap wd1 12 13.5       # 无头渲染指定时刻，输出 snaps/：左复刻 | 右原片
+pnpm export wd1 0 20        # 逐帧精确导出 MP4 到 dist-video/（加 --audio 混入原片音轨，仅本地）
+pnpm typecheck
+```
+
+### 原片参考（不入库）
+
+`public/reference/wd1.mp4`、`wd2.mp4` 是对照用原片，`reference/frames/<film>/NNN.jpg` 是 1fps 参考帧（第 N 张 ≈ 第 N-1 秒）。
+两者都有版权，已被 `.gitignore` 排除。换机器时重新下载：
+
+```bash
+yt-dlp --cookies-from-browser chrome -f "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b" --merge-output-format mp4 \
+  -o public/reference/wd1.mp4 "https://www.youtube.com/watch?v=Qs4OcQNOM34"
+yt-dlp --cookies-from-browser chrome -f "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b" --merge-output-format mp4 \
+  -o public/reference/wd2.mp4 "https://www.youtube.com/watch?v=scyA9cnbja4"
+for f in wd1 wd2; do mkdir -p reference/frames/$f; ffmpeg -i public/reference/$f.mp4 -vf "fps=1,scale=960:-2" -q:v 3 reference/frames/$f/%03d.jpg; done
+```
+
+## 结构
+
+```
+src/
+  engine/      时间轴与渲染（types.ts 定义 Scene/Film；render.ts 按时间合成镜头）
+  fx/          共享 2D 效果：text（高亮底块/标签/乱码）、glitch、dot-matrix、grid、network、image（马赛克/半调/斜纹）
+  three/       程序化 3D 资产（city.ts：素模城市 / 线框城市）
+  films/wd1/   part1.ts 0–50s · part2.ts 50–100s · part3.ts 100–151s
+  films/wd2/   part1.ts 0–43s · part2.ts 43–94s · part3.ts 94–121s
+  theme.ts     两片的取色
+docs/shots/    每段的镜头表（时间码、元素、实现位置、与原片的差异）
+scripts/       snap / export 无头渲染
+```
+
+## 二次开发约定
+
+- **渲染是时间的纯函数**：`render(f)` 只依赖 `f.t / f.lt / f.p`。禁止 `Math.random()`、`Date.now()`；随机用 `rng(seed)` 或 `hash(n)`。这样拖动、逐帧导出、截图对照才一致。
+- 坐标系固定 1920×1080（原片 1280×720 × 1.5）。
+- 改一个镜头：在 `docs/shots/` 找时间码 → 到对应 `part*.ts` 改 → `pnpm snap` 对照。
+- 3D 场景用 `memo(key, build)` 缓存，共用 `f.three` 一个 WebGLRenderer。
+- 换成真实素材：镜头里凡是「程序化替代品」都在镜头表里标了 `ASSET`，把对应函数换成加载模型/图片即可。
+
+## 版权说明
+
+Watch Dogs、ctOS、DedSec 及原片设计归 Ubisoft 所有。本工程为学习与技术复刻，品牌文字和原片音轨不要用于商业发布。

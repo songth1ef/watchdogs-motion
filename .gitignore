@@ -1,0 +1,7 @@
+node_modules/
+dist/
+snaps/
+# 原片与参考帧：版权素材，只在本地做 1:1 对照，不入库
+public/reference/
+reference/
+dist-video/
