@@ -1,6 +1,6 @@
 /**
  * 102.45–108.35s：
- *  - 102.45–103.1 黑白横条纹擦除转场（黑条里还能看到上一镜头的 "option"）
+ *  - 102.45–103.2 黑白横条纹擦除转场（102.55 起白条线性变宽）（黑条里还能看到上一镜头的 "option"）
  *  - 103.1–105.4 白纸底 + 左侧 "+" 列 + 像素字 "execute?"，块光标闪烁 → 换行 → 敲入 "Y"
  *  - 105.4–107.4 PowerShell 代码逐行打印并整体上滚，窗口（路径栏 usr/thishere/thathere/test_773.cgi）叠加，
  *    灰色马赛克块、国防部公章 + "DTFN Estimates for Nano Domestic Quell"
@@ -406,8 +406,8 @@ function terminal(f: FrameCtx) {
 function stripes(f: FrameCtx) {
   const { ctx, t } = f
   terminal(f)
-  const p = ease.inOutCubic(clamp((t - 102.45) / 0.62))
-  const black = lerp(0.82, 0, p)
+  // 原片逐帧量平均亮度：102.55 前全黑，之后白条占比线性增长，103.2 全白
+  const black = 1 - clamp((t - 102.55) / 0.65)
   if (black <= 0.01) return
   const period = 156
   ctx.save()
@@ -427,6 +427,6 @@ function stripes(f: FrameCtx) {
 }
 
 export function drawS3(f: FrameCtx) {
-  if (f.t < 103.1) return stripes(f)
+  if (f.t < 103.2) return stripes(f)
   terminal(f)
 }

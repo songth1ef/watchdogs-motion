@@ -9,60 +9,78 @@ import { sliceGlitch } from '../../../fx/glitch'
 import { WD2 } from '../../../theme'
 import { ctosPanel, faceCard, fr } from './common'
 
-// ---------- 镜头 A：卡片翻飞 47.92–49.25 ----------
-interface Card {
-  x: number
-  y: number
-  size: number
-  rot: number
-  vr: number
-  tumble: number
-  seed: number
-  res: number
-}
-let cardsA: Card[] | null = null
-function makeCardsA() {
-  if (cardsA) return cardsA
-  const R = rng(777)
-  const out: Card[] = []
-  for (let i = 0; i < 34; i++) {
-    const size = R.range(110, 330) * (R.chance(0.2) ? 1.3 : 1)
-    out.push({
-      x: R.range(-100, 2000),
-      y: R.range(-120, 1180),
-      size,
-      rot: R.range(-0.7, 0.7),
-      vr: R.range(-0.15, 0.15),
-      tumble: R.range(0.55, 1),
-      seed: R.int(1, 500),
-      res: R.pick([10, 12, 12, 14, 24]),
-    })
-  }
-  // 大卡往中下方靠
-  out.sort((a, b) => a.size - b.size)
-  cardsA = out
-  return out
+// ---------- 镜头 A：卡片翻飞 47.99–49.25（影片时间） ----------
+/**
+ * part2.ts 统一把镜头平移了 DT=0.07s；本文件逐帧核对（seek 取帧，与 score/snap 同语义）后发现
+ * 卡片镜头的切点并不需要这个平移，所以镜头内部一律换算回影片时间 T = f.t + DT 来写时间码。
+ */
+const DT = 0.07
+/**
+ * 卡片布局：按原片 48.5s 帧逐张量的位置（1280 宽坐标 → ×1.5），[cx, cy, 边长, 旋转°, 景深模糊 px, 慢漂 vx, vy]。
+ * 旋转 +90 的卡片是原片里遮挡条竖着的那几张。只取位置/尺寸，头像仍是程序化 ASSET。
+ */
+const LAYOUT: [number, number, number, number, number, number, number][] = [
+  [320, 28, 110, -10, 2.5, 4, -6],
+  [680, 55, 160, -25, 1.5, 6, -8],
+  [870, 45, 195, 65, 0.5, 5, -6],
+  [1195, 62, 165, -30, 1, 8, -5],
+  [1043, 162, 122, -27, 0.5, 6, -4],
+  [910, 232, 152, 66, 0, 5, -3],
+  [290, 393, 154, -30, 1.2, -4, 2],
+  [621, 366, 214, -28, 0, 3, 4],
+  [896, 418, 90, -10, 0.5, 4, 2],
+  [1077, 403, 123, -30, 0.5, 6, 0],
+  [1240, 450, 118, 0, 1.5, 7, 2],
+  [792, 533, 74, -27, 1.5, 3, 5],
+  [675, 607, 74, -27, 1.5, 2, 6],
+  [1225, 545, 80, -20, 2, 5, 6],
+  [170, 662, 190, 24, 2.5, -6, 8],
+  [465, 668, 145, -9, 1.5, 0, 9],
+  [905, 682, 250, 10, 2, 3, 12],
+  [1168, 655, 190, -20, 2.5, 6, 10],
+  [1032, 708, 50, -15, 2, 2, 8],
+]
+
+/** 画整组卡片（intro 为推入进度 0..1，1 = 落位） */
+function drawCardLayout(ctx: CanvasRenderingContext2D, T: number, intro: number, skip = -1) {
+  const lt = T - 48.05
+  const z = (0.55 + 0.45 * intro) * (1 + 0.012 * Math.max(0, lt))
+  ctx.save()
+  ctx.translate(930, 560)
+  ctx.scale(z, z)
+  ctx.translate(-930, -560)
+  LAYOUT.forEach(([x, y, s, rot, blur, vx, vy], i) => {
+    if (i === skip) return
+    ctx.save()
+    ctx.translate(x * 1.5 + vx * 1.5 * lt, y * 1.5 + vy * 1.5 * lt)
+    ctx.rotate(((rot + 2 * lt * (i % 3 === 0 ? 1 : -0.5)) * Math.PI) / 180)
+    const b = 0.8 + blur + (1 - intro) * 6
+    if (b > 0.3) ctx.filter = `blur(${b.toFixed(1)}px)`
+    // 卡片在 3D 里微微翻转：水平方向轻微压缩
+    ctx.scale(0.94 + 0.06 * Math.cos(i * 1.7 + lt * 0.8), 1)
+    faceCard(ctx, 40 + i * 7, s * 1.5, i % 4 === 0 ? 10 : 12)
+    ctx.restore()
+  })
+  ctx.restore()
 }
 
+/** 49.117–49.25 四色故障帧：每色 2 帧（天蓝 → 黄绿 → 紫 → 品红），整屏单色化 + 横向切片错位 */
+const GLITCH_COLS = [WD2.sky, WD2.lime, WD2.purple, WD2.magenta]
+
 function renderCardsA(f: FrameCtx) {
-  const { ctx, lt } = f
-  const z = 1 + 0.12 * lt
-  ctx.save()
-  ctx.translate(960, 540)
-  ctx.scale(z, z)
-  ctx.translate(-960 - 40 * lt, -540 + 60 * lt)
-  for (const c of makeCardsA()) {
+  const { ctx } = f
+  const T = f.t + DT
+  const intro = ease.outCubic(seg(T, 47.99, 48.07))
+  drawCardLayout(ctx, T, intro)
+  if (T >= 49.117) {
+    const k = Math.min(3, Math.floor((T - 49.117) / 0.0334))
     ctx.save()
-    ctx.translate(c.x, c.y - 30 * lt * (c.size / 200))
-    ctx.rotate(c.rot + c.vr * lt)
-    ctx.scale(c.tumble, 1)
-    ctx.shadowColor = 'rgba(0,0,0,0.6)'
-    ctx.shadowBlur = 20
-    faceCard(ctx, c.seed, c.size, c.res)
+    ctx.globalCompositeOperation = 'multiply'
+    ctx.fillStyle = GLITCH_COLS[k]
+    ctx.fillRect(0, 0, f.W, f.H)
     ctx.restore()
+    sliceGlitch(ctx, { amount: 1, seed: 4911 + k * 17, maxShift: 140, slices: 12 })
   }
-  ctx.restore()
-  bgLines(ctx, lt, 0.08)
 }
 
 /** 背景里几条贯穿的细白线（带刻度点） */
@@ -87,33 +105,33 @@ function bgLines(ctx: CanvasRenderingContext2D, lt: number, alpha: number) {
 
 // ---------- 镜头 B：主卡 + ctOS 面板 49.25–53.71（中间穿插闪字） ----------
 const MAIN_SEED = 23
+/** 主卡在 LAYOUT 里的下标 */
+const MAIN_IDX = 7
 
-function mainCard(ctx: CanvasRenderingContext2D, t: number, zoomBoost = 1) {
+function mainCard(ctx: CanvasRenderingContext2D, t: number, zoomBoost = 1, coarse = 0) {
   const p = seg(t, 49.25, 53.7)
   const q = seg(t, 49.25, 52.05)
   const size = (lerp(560, 830, q) + 70 * seg(t, 52.05, 53.7)) * zoomBoost
   const rot = lerp(-0.3, -0.1, q) + 0.04 * seg(t, 52.05, 53.7)
   const cx = lerp(905, 880, p)
   const cy = lerp(560, 530, p)
-  // 周围的小卡
-  const R = rng(31)
-  for (let i = 0; i < 7; i++) {
-    const ang = R.range(0, Math.PI * 2)
-    const dist = R.range(0.8, 1.25) * size
-    const s = R.range(0.22, 0.42) * size
-    ctx.save()
-    ctx.translate(cx + Math.cos(ang) * dist * 1.25, cy + Math.sin(ang) * dist * 0.85 - (t - 49.25) * 10)
-    ctx.rotate(rot + R.range(-0.3, 0.3))
-    faceCard(ctx, R.int(1, 300), s, R.pick([10, 14, 24]))
-    ctx.restore()
-  }
+  // 周围的卡：沿用镜头 A 的同一组卡片布局（原片是同一场景继续推近主卡），主卡 = LAYOUT[MAIN_IDX]
+  const [mx, my, ms, mr] = LAYOUT[MAIN_IDX]
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(rot - (mr * Math.PI) / 180)
+  ctx.scale(size / (ms * 1.5), size / (ms * 1.5))
+  ctx.translate(-mx * 1.5, -my * 1.5)
+  ctx.globalAlpha = 0.85
+  drawCardLayout(ctx, 48.05, 1, MAIN_IDX)
+  ctx.restore()
   ctx.save()
   ctx.translate(cx, cy)
   ctx.rotate(rot)
   ctx.shadowColor = 'rgba(0,0,0,0.7)'
   ctx.shadowBlur = 30
   // 推近到脸部时马赛克变粗
-  const res = zoomBoost > 1.2 ? 10 : 14
+  const res = coarse || (zoomBoost > 1.2 ? 10 : 14)
   faceCard(ctx, MAIN_SEED, size, res)
   ctx.shadowBlur = 0
   // 档案面板：卡片右侧，略高
@@ -136,10 +154,10 @@ interface Flash {
   mid?: string
 }
 const FLASHES: Flash[] = [
-  { word: 'you', t0: 51.63, t1: 51.92, x: 955, y: 535, box: WD2.magenta },
-  { word: 'bought', t0: 52.29, t1: 52.56, x: 648, y: 520, box: WD2.sky, mid: WD2.purple },
-  { word: 'sold', t0: 52.875, t1: 53.12, x: 985, y: 520, box: WD2.lime },
-  { word: 'stolen', t0: 53.42, t1: 53.71, x: 1295, y: 525, box: WD2.lime, mid: WD2.magenta },
+  { word: 'you', t0: 51.63, t1: 51.865, x: 955, y: 535, box: WD2.magenta },
+  { word: 'bought', t0: 52.3, t1: 52.535, x: 648, y: 520, box: WD2.sky, mid: WD2.purple },
+  { word: 'sold', t0: 52.833, t1: 53.066, x: 985, y: 520, box: WD2.lime },
+  { word: 'stolen', t0: 53.433, t1: 53.667, x: 1295, y: 525, box: WD2.lime, mid: WD2.magenta },
 ]
 
 /** 原片色块/彩字颜色每隔几帧在几种品牌色之间跳变 */
@@ -243,7 +261,7 @@ function skullIcon(ctx: CanvasRenderingContext2D, color: string) {
 function renderProfile(f: FrameCtx) {
   const { ctx, t, W, H } = f
   // 白底图标段
-  if (t >= 53.71 && t < 54.46) {
+  if (t >= 53.667 && t < 54.43) {
     const g = ctx.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, W * 0.62)
     g.addColorStop(0, '#f5f4f0')
     g.addColorStop(0.6, '#efeeea')
@@ -260,8 +278,8 @@ function renderProfile(f: FrameCtx) {
     ctx.restore()
     return
   }
-  if (t >= 54.46) {
-    const a = 1 - seg(t, 54.46, 54.66)
+  if (t >= 54.43) {
+    const a = 1 - seg(t, 54.43, 54.63)
     if (a > 0) {
       ctx.save()
       ctx.globalAlpha = a * 0.5
@@ -271,7 +289,7 @@ function renderProfile(f: FrameCtx) {
     }
     return
   }
-  // 闪字
+  // 闪字（起止按原片逐帧亮度跳变量得，内部时间 = 影片时间 − DT）
   const fl = FLASHES.find((x) => t >= x.t0 && t < x.t1)
   if (fl) {
     drawFlash(ctx, fl, t)
@@ -279,9 +297,11 @@ function renderProfile(f: FrameCtx) {
   }
   // 卡片（含 52.58–52.83 推到脸部的特写、53.12–53.46 故障）
   bgLines(ctx, t - 49.25, 0.1)
-  const boost = t >= 52.56 && t < 52.875 ? 1.55 : 1
-  mainCard(ctx, t, boost)
-  if (t >= 53.12 && t < 53.46) {
+  // 52.535–52.833 原片不是推近特写，而是主卡马赛克突然变粗（约 6 格）
+  mainCard(ctx, t, 1, t >= 52.535 && t < 52.833 ? 6 : 0)
+  // 49.283–49.35（影片时间）切入后的白色切片错位
+  if (t >= 49.213 && t < 49.28) sliceGlitch(ctx, { amount: 1, seed: 4928 + (fr(t) >> 1), maxShift: 180, slices: 10 })
+  if (t >= 53.066 && t < 53.433) {
     const k = fr(t) >> 2
     sliceGlitch(ctx, { amount: 0.8 + hash(k) * 0.2, seed: k * 13 + 1, maxShift: 160, slices: 14 })
     const R = rng(k * 7 + 3)
@@ -295,14 +315,14 @@ function renderProfile(f: FrameCtx) {
 export const faces: Scene[] = [
   {
     id: 'wd2-047-face-cards',
-    start: 47.92,
-    end: 49.25,
+    start: 47.99 - DT,
+    end: 49.25 - DT,
     note: '马赛克人脸档案卡（白边 + 眼部白条）漫天翻飞，镜头缓推',
     render: renderCardsA,
   },
   {
     id: 'wd2-049-profile',
-    start: 49.25,
+    start: 49.25 - DT,
     end: 54.9,
     note: '主卡 + ctOS 档案面板逐层展开；you/bought/sold/stolen 彩色底块闪字；白底骷髅图标；暗红残影',
     render: renderProfile,

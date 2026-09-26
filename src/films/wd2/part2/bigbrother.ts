@@ -168,9 +168,10 @@ function renderChips(f: FrameCtx) {
     const wy = (c.y - CY) * (1 + 0.2 * e) + c.vy * e * 1.5 + c.vy * 0.15 * tau
     // 46.5 起云团像被镜头绕着转：水平收拢、整体右移，字形被打散
     const squeeze = lerp(1, 0.62, ease.inOutCubic(seg(t, 46.4, 47.6)))
-    const jit = seg(t, 46.2, 47.4)
-    const jx = (hash(i * 3 + 1) - 0.5) * 260 * jit
-    const jy = (hash(i * 3 + 2) - 0.5) * 200 * jit
+    // 原片 45.95–46.5 字形就已打散（46.2 BIG 只剩轮廓痕迹），这里把打散提前并加大
+    const jit = ease.outCubic(seg(t, 45.95, 46.7))
+    const jx = (hash(i * 3 + 1) - 0.5) * 320 * jit
+    const jy = (hash(i * 3 + 2) - 0.5) * 260 * jit
     const sx = CX + 170 * seg(t, 46.4, 47.6) + (wx * squeeze + jx) * k
     const sy = CY + (wy + jy) * k
     const size = 18 * shrink * k

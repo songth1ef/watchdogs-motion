@@ -8,8 +8,9 @@ import { memo } from '../../../engine/three-host'
 import { ease, lerp, seg } from '../../../engine/math'
 import { wireCity } from '../../../three/city'
 import { FONT, font, tracking } from '../../../fx/text'
-import { pixelate } from '../../../fx/image'
 import { WD2 } from '../../../theme'
+import { drawCtosMap } from './citymap2d'
+import { faceTex } from '../part2/common'
 import { cached, ctosLogo, fbm, fr, h2, makeCanvas, wordReveal } from './lib'
 
 // ───────────────────────── 城市街道地图纹理 ─────────────────────────
@@ -398,16 +399,8 @@ export function mapCam(t: number) {
 }
 
 export function drawCityMap(ctx: CanvasRenderingContext2D, t: number, alpha = 1) {
-  const tex = cityMapTexture()
-  const c = mapCam(t)
-  ctx.save()
-  ctx.globalAlpha = alpha
-  ctx.translate(960, 540)
-  ctx.rotate(c.rot)
-  ctx.scale(c.s, c.s)
-  ctx.translate(-c.x, -c.y)
-  ctx.drawImage(tex, 0, 0)
-  ctx.restore()
+  // V2：换成按原片 10.6s 标定的 ctOS 地图（citymap2d.ts）；旧 cityMapTexture 仍供 bay.ts 使用
+  drawCtosMap(ctx, t, alpha)
 }
 
 export const cityTopDown: Scene = {
@@ -421,42 +414,6 @@ export const cityTopDown: Scene = {
 }
 
 // ───────────────────────── 马赛克人脸档案卡 ─────────────────────────
-
-/** ASSET 程序化人脸（灰度，低分辨率后再马赛克）。替换：返回一张真实证件照 canvas */
-function faceCanvas() {
-  return cached('wd2p1:face', () => {
-    const { canvas, ctx } = makeCanvas(160, 170)
-    ctx.fillStyle = '#e8e8e6'
-    ctx.fillRect(0, 0, 160, 170)
-    // 肩膀/衣服
-    ctx.fillStyle = '#2a2a2a'
-    ctx.beginPath()
-    ctx.ellipse(80, 185, 78, 52, 0, 0, Math.PI * 2)
-    ctx.fill()
-    // 脖子
-    ctx.fillStyle = '#6a6a6a'
-    ctx.fillRect(64, 110, 32, 30)
-    // 脸
-    ctx.fillStyle = '#8a8a8a'
-    ctx.beginPath()
-    ctx.ellipse(80, 80, 34, 44, 0, 0, Math.PI * 2)
-    ctx.fill()
-    // 头发
-    ctx.fillStyle = '#1c1c1c'
-    ctx.beginPath()
-    ctx.ellipse(80, 50, 38, 24, 0, Math.PI, Math.PI * 2)
-    ctx.fill()
-    ctx.fillRect(42, 44, 76, 12)
-    // 眼、嘴、胡子
-    ctx.fillStyle = '#262626'
-    ctx.fillRect(60, 74, 14, 6)
-    ctx.fillRect(87, 74, 14, 6)
-    ctx.fillRect(68, 106, 24, 5)
-    ctx.fillStyle = '#4a4a4a'
-    ctx.fillRect(58, 100, 44, 20)
-    return canvas
-  })
-}
 
 /** ASSET 程序化指纹（同心椭圆纹） */
 function fingerprint(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
@@ -478,42 +435,79 @@ function fingerprint(ctx: CanvasRenderingContext2D, x: number, y: number, w: num
 
 const DOSSIER_ROWS = ['NAME       DUNCAN', 'DOB        09 14 81', 'OCCUPATION  NETWORK ADMIN', 'SSN     4478-8804-2267-226', 'STATUS            NORTH', 'HEIGHT 6 0     EYES BLUE', 'AFFILIATION', 'FINGER']
 
-function drawDossier(ctx: CanvasRenderingContext2D, t: number) {
-  const x = 70
-  const y = 70
-  const w = 310
+/**
+ * 档案卡逐帧状态（原片 30fps，8.35 + i/30 逐帧核对）。每个字符一帧：
+ * 大写字母 = 人像（不同人）+ 红扫描线，小写 = 无红线，'~' = 该帧人像上有红/黑错位横条，
+ * '#' = 大方块马赛克，'0' = 照片框空黑，'*' = 碎片故障帧，'.' = 无档案卡。
+ */
+const DOS_SEQ = '.AAAbccddCC**EEf~g~g##H*II****0JK0LL##'
+const DOS_FACE: Record<string, number> = { a: 11, b: 23, c: 37, d: 45, e: 41, f: 53, g: 59, h: 67, i: 71, j: 83, k: 89, l: 97 }
+type DosState = { face: number; red: number; block?: boolean; empty?: boolean; glitch?: boolean; band?: boolean }
+function dosState(t: number): DosState | null {
+  const i = Math.floor((t - 8.35) * 30 + 1e-6)
+  const c = DOS_SEQ[i] ?? '.'
+  if (c === '.') return null
+  // 向前找最近的人像字母，决定 '~' '#' 等帧用哪张脸
+  let k = i
+  while (k > 0 && !/[a-z]/i.test(DOS_SEQ[k])) k--
+  const face = DOS_FACE[DOS_SEQ[k].toLowerCase()] ?? 11
+  if (c === '*') return { face, red: 0, glitch: true }
+  if (c === '#') return { face, red: 1, block: true }
+  if (c === '0') return { face, red: 0, empty: true }
+  if (c === '~') return { face, red: 1, band: true }
+  return { face, red: c === c.toUpperCase() ? 1 : 0 }
+}
+
+function drawDossier(ctx: CanvasRenderingContext2D, t: number, st: DosState) {
+  const x = 78
+  const y = 76
+  const w = 298
   ctx.save()
   // 照片框
   ctx.strokeStyle = 'rgba(255,255,255,0.35)'
   ctx.lineWidth = 1.5
   ctx.strokeRect(x - 6, y - 6, w + 12, w + 12)
-  pixelate(ctx, faceCanvas(), x, y, w, w, 19)
-  // 扫描红线（8.7s 起）
-  if (t > 8.65) {
+  if (!st.empty) {
+    // ASSET 程序化证件照（part2 的 faceTex，不同 seed = 不同人），原片每 0.1s 换一个人
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(faceTex(st.face, st.block ? 4 : 18), x, y, w, w)
+    ctx.imageSmoothingEnabled = true
+    ctx.fillStyle = 'rgba(0,0,0,0.12)'
+    ctx.fillRect(x, y, w, w)
+  }
+  // 红扫描线
+  if (st.red > 0) {
     ctx.fillStyle = WD2.red
-    ctx.fillRect(x - 4, y + 100, w + 8, 4)
+    ctx.fillRect(x - 4, y + w * 0.38, (w + 8) * st.red, 7)
+  }
+  // 错位横条帧：照片里一条黑带 + 右移的红条
+  if (st.band) {
+    ctx.fillStyle = '#000'
+    ctx.fillRect(x, y + w * 0.3, w, 16)
+    ctx.fillStyle = WD2.red
+    ctx.fillRect(x + w * 0.4, y + w * 0.42, w * 0.7, 6)
   }
   // 字段栏：上方一行小标签 + 下方描边小框
   font(ctx, 10, 400, FONT.mono)
   tracking(ctx, 3)
   for (let i = 0; i < DOSSIER_ROWS.length; i++) {
-    const ry = y + 350 + i * 56
+    const ry = y + 340 + i * 58
     if (t < 8.45 + i * 0.03) continue
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'
     ctx.strokeRect(x, ry, w, i === 7 ? 70 : 26)
-    ctx.fillStyle = 'rgba(255,255,255,0.45)'
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'
     ctx.fillText('LAST    FIRST    MI', x + 4, ry - 8)
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'
     ctx.fillText(DOSSIER_ROWS[i], x + 10, ry + 17)
   }
   tracking(ctx, 0)
   // 指纹 + 右侧小表格
   ctx.strokeStyle = 'rgba(255,255,255,0.35)'
-  ctx.strokeRect(x - 6, 856, 172, 184)
-  fingerprint(ctx, x + 4, 866, 150, 164)
+  ctx.strokeRect(x - 6, 870, 160, 150)
+  fingerprint(ctx, x + 4, 880, 140, 130)
   for (let i = 0; i < 4; i++) {
     ctx.strokeStyle = 'rgba(255,255,255,0.4)'
-    ctx.strokeRect(x + 180, 876 + i * 42, 130, 24)
+    ctx.strokeRect(x + 170, 890 + i * 34, 128, 22)
   }
   ctx.restore()
 }
@@ -521,31 +515,33 @@ function drawDossier(ctx: CanvasRenderingContext2D, t: number) {
 export const dossier: Scene = {
   id: 'wd2-008.4-dossier',
   start: 8.38,
-  end: 9.4,
-  note: 'ASSET 左侧马赛克人脸档案卡（程序化人脸/指纹），8.4 硬切出现，9.0 起碎成若干错位碎片后消失',
+  end: 9.6,
+  note: 'V2：左侧马赛克人脸档案卡，按原片 30fps 逐帧序列换脸（多数带红扫描线），夹杂碎片故障帧、大方块马赛克帧、照片空黑帧，9.58 消失',
   render({ ctx, t }) {
     const f = fr(t)
-    if (t < 9.15) {
+    const st = dosState(t)
+    if (!st) return
+    if (!st.glitch) {
       // 档案卡所在的左栏是纯黑底（地图被挡住）
       ctx.fillStyle = '#000'
-      ctx.fillRect(0, 0, 455, 1080)
-      drawDossier(ctx, t)
+      ctx.fillRect(0, 0, 480, 1080)
+      drawDossier(ctx, t, st)
       return
     }
-    // 碎裂：把档案卡切成随机矩形块，逐帧跳到不同位置
-    const k = seg(t, 9.15, 9.4)
-    const src = cached('wd2p1:dossier-snap', () => makeCanvas(420, 1080))
-    src.ctx.clearRect(0, 0, 420, 1080)
-    drawDossier(src.ctx, 9.0)
-    const n = 14
-    for (let i = 0; i < n; i++) {
-      if (h2(i, f, 5) < k * 0.9) continue
-      const sx = h2(i, 1, 6) * 320
+    // 碎片故障帧：左栏大半露出地图，档案卡切成随机矩形块散到全屏
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 380, 480, 700)
+    const src = cached('wd2p1:dossier-snap', () => makeCanvas(480, 1080))
+    src.ctx.fillStyle = '#000'
+    src.ctx.fillRect(0, 0, 480, 1080)
+    drawDossier(src.ctx, 9.0, { face: st.face, red: 0 })
+    for (let i = 0; i < 16; i++) {
+      const sx = h2(i, 1, 6) * 380
       const sy = h2(i, 2, 6) * 1000
-      const sw = 40 + h2(i, 3, 6) * 160
-      const sh = 20 + h2(i, 4, 6) * 120
-      const dx = sx + (h2(i, f >> 1, 7) - 0.3) * 900 * k
-      const dy = sy + (h2(i, f >> 1, 8) - 0.5) * 300 * k
+      const sw = 40 + h2(i, 3, 6) * 180
+      const sh = 20 + h2(i, 4, 6) * 110
+      const dx = h2(i, f >> 2, 7) * 1800
+      const dy = h2(i, f >> 2, 8) * 1000
       ctx.drawImage(src.canvas, sx, sy, sw, sh, dx, dy, sw, sh)
     }
   },

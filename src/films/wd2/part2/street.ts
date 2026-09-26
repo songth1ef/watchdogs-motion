@@ -10,7 +10,10 @@ import { clamp, ease, hash, lerp, rng, seg } from '../../../engine/math'
 import { FONT, font, tracking } from '../../../fx/text'
 import { dotMatrix } from '../../../fx/dot-matrix'
 import { WD2 } from '../../../theme'
+import { sliceGlitch } from '../../../fx/glitch'
+import { offscreen } from '../../../fx/canvas'
 import { dataCard, drawFace, fr, mono } from './common'
+import { screamerSprite } from '../part3/art'
 
 const LINE = 'rgba(235,235,235,0.92)'
 const ROAD = '#18191b'
@@ -222,33 +225,34 @@ function makeCarWorld() {
   if (carWorld) return carWorld
   const R = rng(66)
   const houses: [number, number, number, number][] = []
-  for (let x = -5200; x < 5200; x += R.range(900, 1300)) {
-    if (x > -1700 && x < 1100) continue
-    houses.push([x, bandTop(x) - R.range(250, 450), R.range(900, 1250), R.int(1, 999)])
-    houses.push([x + 300, bandTop(x) + BAND_W + R.range(700, 1000), R.range(500, 800), R.int(1, 999)])
-  }
+  // 路北侧一排小房子（原片 68.8–70.3 路上方那排等距线稿房子）
+  for (let x = -4200; x < 4800; x += R.range(650, 900)) houses.push([x, bandTop(x) - 90 - R.range(0, 60), R.range(480, 620), R.int(1, 999)])
+  // 路南侧地块里零散的房子
+  for (let x = -4000; x < 4800; x += R.range(900, 1400)) houses.push([x, bandTop(x) + BAND_W + R.range(500, 800), R.range(260, 340), R.int(1, 999)])
   const parcels: number[][] = []
-  for (let x = -5400; x < 5400; x += R.range(700, 1200)) {
+  for (let x = -5400; x < 5400; x += R.range(380, 700)) {
     const y0 = bandTop(x) - 60
-    parcels.push([x, y0, x + R.range(-200, 200), y0 - R.range(900, 1600)])
+    parcels.push([x, y0, x + R.range(-200, 200), y0 - R.range(500, 900)])
     const y1 = bandTop(x) + BAND_W + 60
-    parcels.push([x, y1, x + R.range(-300, 300), y1 + R.range(900, 1600)])
+    parcels.push([x, y1, x + R.range(-400, 400), y1 + R.range(600, 1400)])
   }
   carWorld = { houses, parcels }
   return carWorld
 }
 
-function drawBand(ctx: CanvasRenderingContext2D, top: (x: number) => number, w: number, x0: number, x1: number, lw: number) {
+function drawBand(ctx: CanvasRenderingContext2D, top: (x: number) => number, w: number, x0: number, x1: number, lw: number, fillA = 1) {
   ctx.beginPath()
   ctx.moveTo(x0, top(x0))
   for (let x = x0; x <= x1; x += 100) ctx.lineTo(x, top(x))
   for (let x = x1; x >= x0; x -= 100) ctx.lineTo(x, top(x) + w)
   ctx.closePath()
   const g = ctx.createLinearGradient(0, top(0), 0, top(0) + w)
-  g.addColorStop(0, '#34373b')
-  g.addColorStop(1, '#1d1f21')
+  g.addColorStop(0, '#2c2f35')
+  g.addColorStop(1, '#15171a')
   ctx.fillStyle = g
+  ctx.globalAlpha = fillA
   ctx.fill()
+  ctx.globalAlpha = 1
   ctx.strokeStyle = LINE
   ctx.lineWidth = lw
   ctx.beginPath()
@@ -259,30 +263,35 @@ function drawBand(ctx: CanvasRenderingContext2D, top: (x: number) => number, w: 
   ctx.stroke()
 }
 
-function renderCar(f: FrameCtx) {
-  const { ctx, t } = f
-  const z = keyed([[65.35, 1.18], [66.6, 1.0], [67.1, 0.9], [68.0, 0.64], [69.0, 0.44], [70.3, 0.32]], t)
-  const sx = keyed([[66.6, 1360], [68.0, 1320], [69.0, 1290], [70.3, 1600]], t)
-  const sy = keyed([[65.35, 1300], [65.9, 820], [66.6, 790], [68.0, 700], [69.0, 900], [70.3, 1050]], t)
-  const rot = keyed([[66.6, 0], [68.0, -0.05], [70.3, -0.1]], t)
-  const px = 1 / z
-  ctx.save()
-  camera(ctx, 0, 0, sx, sy, z, rot)
-  const W = makeCarWorld()
-  drawBand(ctx, bandTop, BAND_W, -6000, 6000, 2.2 * px)
+/**
+ * 影片时间 = 内部时间 + DT。part2.ts 统一平移了 0.07s；本镜头的关键帧是按 seek 取帧（与 snap/score 同语义）
+ * 逐张量的影片时间，所以内部统一换回影片时间 T 再查表。
+ */
+const DT = 0.07
+const lin = (x: number) => x
+
+/**
+ * 原片是 3D 透视下摇 + 拉远，车卡 / 门窗 / 路面三者的视差差别很大，一个正交相机对不上。
+ * 这里拆成三层各自一套相机（关键帧从原片逐帧量：车卡按面板宽度与定位针位置，门按门框宽度，路面按路沿线位置与路宽）。
+ */
+// 车卡层（VIN 面板 + 顶视车 + 定位针 + 近景房子轮廓）：世界 (0,0) 落在屏幕 (sx,sy)，缩放 z
+const CARD_SX: K[] = [[65.45, 3340], [66.0, 2285], [66.6, 1360], [67.2, 1146], [67.5, 1065], [67.8, 1140], [68.0, 1209], [68.3, 1290], [68.8, 1350], [69.3, 1344], [69.8, 1365], [70.1, 1400], [70.35, 1420]]
+const CARD_SY: K[] = [[65.45, 536], [66.0, 788], [66.6, 790], [67.2, 829], [67.5, 787], [67.8, 751], [68.0, 680], [68.3, 650], [68.8, 774], [69.3, 916], [69.8, 1004], [70.1, 1050], [70.35, 1062]]
+const CARD_Z: K[] = [[65.45, 1.35], [66.0, 1.23], [66.6, 1.0], [67.2, 1.16], [67.5, 1.22], [67.8, 0.85], [68.0, 0.63], [68.3, 0.48], [68.8, 0.33], [69.3, 0.28], [69.8, 0.26], [70.1, 0.27], [70.35, 0.27]]
+// 门窗层（从客厅下摇出来时的落地窗 + 双开门）：同上，按门框量
+const FAC_SX: K[] = [[65.45, 2919], [66.0, 2672], [66.6, 1266], [67.2, 1146]]
+const FAC_SY: K[] = [[65.45, 822], [66.0, 953], [66.6, 762], [67.2, 829]]
+const FAC_Z: K[] = [[65.45, 1.63], [66.0, 1.81], [66.6, 0.91], [67.2, 1.16]]
+// 路面层：世界点 (0, bandTop(0)) 落在屏幕 (960, gy)，缩放 gz，旋转 gr
+const GRD_Y: K[] = [[65.45, 1250], [66.0, 1150], [66.6, 990], [67.2, 820], [67.8, 705], [68.3, 490], [68.8, 595], [69.3, 410], [69.8, 195], [70.1, 150], [70.35, 140]]
+const GRD_Z: K[] = [[65.45, 2.4], [66.6, 2.0], [67.2, 1.9], [67.8, 1.8], [68.3, 1.5], [68.8, 1.3], [69.3, 0.87], [69.8, 0.71], [70.1, 0.62], [70.35, 0.6]]
+const GRD_R: K[] = [[68.3, 0], [68.8, -0.05], [69.3, -0.02], [70.35, 0]]
+
+/** 门窗层：三扇落地窗 + 双开门（门框世界坐标与旧版一致：x −1128..−880） */
+function facade(ctx: CanvasRenderingContext2D, T: number, px: number) {
   ctx.strokeStyle = LINE
-  ctx.lineWidth = 2 * px
-  ctx.beginPath()
-  for (const p of W.parcels) {
-    ctx.moveTo(p[0], p[1])
-    ctx.lineTo(p[2], p[3])
-  }
-  ctx.stroke()
-  ctx.lineWidth = 3 * px
-  for (const [x, y, s, seed] of W.houses) isoHouse(ctx, x, y, s, seed)
-  // 近景：门、人字屋外轮廓、人行道线
-  ctx.lineWidth = Math.max(4, 2.5 * px)
-  ctx.strokeStyle = LINE
+  ctx.lineWidth = Math.max(3, 2.5 * px)
+  // 双开门
   ctx.strokeRect(-1128, -228, 248, 278)
   ctx.strokeRect(-1110, -210, 105, 110)
   ctx.strokeRect(-995, -210, 105, 110)
@@ -290,41 +299,136 @@ function renderCar(f: FrameCtx) {
   ctx.beginPath()
   ctx.moveTo(-1160, 55)
   ctx.lineTo(-840, 55)
-  ctx.moveTo(-1700, 110)
-  ctx.lineTo(-300, 110)
-  ctx.lineTo(-250, 70)
-  ctx.lineTo(900, 70)
-  // 右侧房子轮廓
-  ctx.moveTo(40, -720)
-  ctx.lineTo(140, -720)
-  ctx.lineTo(140, -650)
-  ctx.lineTo(560, -300)
-  ctx.lineTo(520, -300)
-  ctx.lineTo(520, -160)
-  ctx.lineTo(760, -160)
-  ctx.lineTo(760, 60)
-  ctx.moveTo(-1700, -200)
-  ctx.lineTo(-1500, -200)
-  ctx.lineTo(-1500, 110)
+  ctx.moveTo(-1175, 80)
+  ctx.lineTo(-825, 80)
   ctx.stroke()
-  vinPanel(ctx, t >= 70.05)
-  pin(ctx, 0, 230, 150)
-  // 70.0 起路面上出现 "N. Oak St." 字样
-  if (t > 69.6) {
+  // 落地窗：离门的间距随视差收窄（原片 65.45 ≈ 240，66.0 ≈ 130 世界单位），66.5 前移出画面
+  const a = 1 - seg(T, 66.3, 66.6)
+  if (a <= 0) return
+  const gap = keyed([[65.45, 240], [66.0, 130]], T, lin)
+  ctx.globalAlpha = a
+  for (let i = 0; i < 3; i++) {
+    const x1 = -1128 - gap - i * 145
+    ctx.strokeRect(x1 - 130, -300, 130, 292)
+    ctx.beginPath()
+    ctx.moveTo(x1 - 65, -300)
+    ctx.lineTo(x1 - 65, -8)
+    for (let k = 1; k < 4; k++) {
+      ctx.moveTo(x1 - 130, -300 + k * 73)
+      ctx.lineTo(x1, -300 + k * 73)
+    }
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
+}
+
+function renderCar(f: FrameCtx) {
+  const { ctx } = f
+  const T = f.t + DT
+  const W = makeCarWorld()
+  const red = T >= 70.26
+
+  // ---- 路面层 ----
+  const gz = keyed(GRD_Z, T, lin)
+  let px = 1 / gz
+  ctx.save()
+  ctx.translate(960, keyed(GRD_Y, T, lin))
+  ctx.rotate(keyed(GRD_R, T))
+  ctx.scale(gz, gz)
+  ctx.translate(0, -bandTop(0))
+  // 近景段原片路面是黑底白线，67.7 起拉远才显出灰色路面
+  drawBand(ctx, bandTop, BAND_W, -6000, 6000, 2.2 * px, seg(T, 67.7, 68.2))
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2 * px
+  ctx.globalAlpha = seg(T, 67.9, 68.3)
+  ctx.beginPath()
+  for (const p of W.parcels) {
+    ctx.moveTo(p[0], p[1])
+    ctx.lineTo(p[2], p[3])
+  }
+  ctx.stroke()
+  // 零星暗青地块线
+  ctx.strokeStyle = 'rgba(70,150,190,0.55)'
+  ctx.beginPath()
+  for (let i = 0; i < W.parcels.length; i += 5) {
+    const p = W.parcels[i]
+    ctx.moveTo(p[0] + 60, p[1])
+    ctx.lineTo(p[2] + 160, p[3])
+  }
+  ctx.stroke()
+  ctx.globalAlpha = 1
+  // 路两侧的房子：近景段（门窗、车卡特写）原片看不到，67.9 起随拉远浮现
+  const ha = seg(T, 67.9, 68.3)
+  if (ha > 0) {
+    ctx.globalAlpha = ha
+    ctx.strokeStyle = LINE
+    ctx.lineWidth = 3 * px
+    for (const [x, y, s, seed] of W.houses) isoHouse(ctx, x, y, s, seed)
+    ctx.globalAlpha = 1
+  }
+  // 69.6 起路面上出现 "N. Oak St." 字样
+  if (T > 69.6) {
     ctx.save()
-    ctx.translate(1500, bandTop(1500) + 330)
+    ctx.translate(1150, bandTop(1150) + 500)
     ctx.rotate(-0.2)
-    roadLabel(ctx, 'N. Oak St.', 300, seg(t, 69.6, 70))
+    roadLabel(ctx, 'N. Oak St.', 210, seg(T, 69.6, 69.8))
     ctx.restore()
   }
   ctx.restore()
+
+  // ---- 门窗层 ----
+  if (T < 67.2) {
+    const fz = keyed(FAC_Z, T, lin)
+    ctx.save()
+    ctx.translate(keyed(FAC_SX, T, lin), keyed(FAC_SY, T, lin))
+    ctx.scale(fz, fz)
+    facade(ctx, T, 1 / fz)
+    ctx.restore()
+  }
+
+  // ---- 车卡层 ----
+  const z = keyed(CARD_Z, T, lin)
+  px = 1 / z
+  ctx.save()
+  ctx.translate(keyed(CARD_SX, T, lin), keyed(CARD_SY, T, lin))
+  ctx.scale(z, z)
+  // 近景：右侧房子轮廓与人行道线（拉远后淡出，交给路面层）
+  const near = 1 - seg(T, 67.8, 68.2)
+  if (near > 0) {
+    ctx.globalAlpha = near
+    ctx.lineWidth = Math.max(4, 2.5 * px)
+    ctx.strokeStyle = LINE
+    ctx.beginPath()
+    ctx.moveTo(40, -720)
+    ctx.lineTo(140, -720)
+    ctx.lineTo(140, -650)
+    ctx.lineTo(560, -300)
+    ctx.lineTo(520, -300)
+    ctx.lineTo(520, -160)
+    ctx.lineTo(760, -160)
+    ctx.lineTo(760, 60)
+    ctx.stroke()
+    ctx.globalAlpha = 1
+  }
+  // 车 + 面板的黑色衬底（原片拉远后是一张完整的黑卡）
+  const back = seg(T, 67.6, 68.2)
+  if (back > 0) {
+    ctx.fillStyle = `rgba(6,6,6,${0.95 * back})`
+    ctx.fillRect(-1320, -915, 1318, 660)
+  }
+  vinPanel(ctx, red)
+  pin(ctx, 0, 230, 150)
+  ctx.restore()
+
+  // 70.30–70.333 切片错位（进 DedSec 劫持帧前）
+  if (T >= 70.3) sliceGlitch(ctx, { amount: 1, seed: 7030 + fr(T), maxShift: 220, slices: 9 })
 }
 
 function roadLabel(ctx: CanvasRenderingContext2D, text: string, size: number, a = 1) {
   font(ctx, size, 700, FONT.sans)
   tracking(ctx, -size * 0.02)
   ctx.globalAlpha = a
-  ctx.lineWidth = size * 0.05
+  ctx.lineWidth = size * 0.035
   ctx.strokeStyle = 'rgba(240,240,240,0.95)'
   ctx.fillStyle = '#44474b'
   ctx.fillText(text, 0, 0)
@@ -333,117 +437,172 @@ function roadLabel(ctx: CanvasRenderingContext2D, text: string, size: number, a 
   tracking(ctx, 0)
 }
 
-// ---------------- DedSec 故障三帧（70.25–70.55） ----------------
-/** ASSET 三张 DedSec 劫持画面，用程序化图形近似 */
-function renderHijack(f: FrameCtx) {
-  const { ctx, t, W, H } = f
-  const frame = fr(t)
-  if (t < 70.38) {
-    // 青色像素螺旋
-    ctx.fillStyle = '#020608'
-    ctx.fillRect(0, 0, W, H)
-    font(ctx, 18, 400, FONT.pixel)
-    for (let i = 0; i < 2600; i++) {
-      const a = i * 0.021
-      const r = 30 + a * 58
-      const x = 960 + Math.cos(a) * r * 1.1
-      const y = 380 + Math.sin(a) * r * 0.8
-      const th = 28 + (i % 7) * 4
-      for (let k = 0; k < 3; k++) {
-        ctx.fillStyle = `rgba(80,200,215,${0.4 + hash(i * 3 + k + frame) * 0.6})`
-        ctx.fillText(hash(i * 7 + k) > 0.5 ? '1' : '0', x + k * 10 * Math.sin(a), y - (k * th) / 3)
-      }
-    }
-    mono(ctx, '1GNCST8Z44M0112674', 1240, 520, 16, 'rgba(80,200,215,0.9)')
-    mono(ctx, '1GNCST8Z44M0112674', 1270, 600, 16, 'rgba(80,200,215,0.9)')
-  } else if (t < 70.46) {
-    // 红色 LOADING + 红车红叉
-    ctx.fillStyle = '#1a0306'
-    ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = 'rgba(160,20,40,0.6)'
-    ctx.fillRect(0, 0, W, 300)
-    dotMatrix(ctx, { text: 'LOADING', x: 420, y: 90, cell: 10, rows: 12, color: '#e0242b', shape: 'square' })
-    ctx.strokeStyle = 'rgba(224,36,43,0.8)'
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.moveTo(0, 520)
-    ctx.quadraticCurveTo(900, 300, 1920, 380)
-    ctx.stroke()
-    for (const [x, y, s] of [[1230, 300, 1], [1640, 560, 0.9]]) {
-      ctx.save()
-      ctx.translate(x, y)
-      ctx.scale(s, s)
-      carTop(ctx, 60, 110, true)
-      ctx.strokeStyle = WD2.red
-      ctx.lineWidth = 16
-      ctx.beginPath()
-      ctx.moveTo(90, 10)
-      ctx.lineTo(190, 100)
-      ctx.moveTo(190, 10)
-      ctx.lineTo(90, 100)
-      ctx.stroke()
-      ctx.restore()
-    }
-    for (let i = 0; i < 6; i++) {
-      ctx.fillStyle = 'rgba(120,20,30,0.7)'
-      ctx.beginPath()
-      ctx.arc(250 + i * 220, 950, 70, Math.PI, 0)
-      ctx.fill()
-    }
-  } else {
-    // 洋红漫画帧
-    ctx.fillStyle = '#b8155f'
-    ctx.fillRect(0, 0, W, H)
-    const R = rng(frame)
-    ctx.fillStyle = 'rgba(40,0,15,0.55)'
-    for (let i = 0; i < 90; i++) ctx.fillRect(R.range(0, W), R.range(500, H), R.range(20, 120), R.range(10, 50))
-    ctx.strokeStyle = '#20000a'
-    ctx.lineWidth = 6
-    ctx.beginPath()
-    ctx.arc(1050, 330, 220, 0.2, 2.8)
-    ctx.moveTo(900, 150)
-    ctx.quadraticCurveTo(1200, 60, 1350, 260)
-    ctx.stroke()
-    ctx.save()
-    ctx.translate(250, 250)
-    ctx.rotate(-0.08)
-    font(ctx, 120, 700, FONT.pixel)
-    ctx.fillStyle = '#1a0008'
-    ctx.fillText('OMG!!!', 0, 0)
-    ctx.fillText("IT'S DEDSEC!", -40, 140)
-    ctx.restore()
-    ctx.fillStyle = '#1a0008'
-    for (let i = 0; i < 14; i++) {
-      ctx.beginPath()
-      ctx.moveTo(i * 140, 760)
-      ctx.lineTo(i * 140 + 70, 640 + (i % 2) * 40)
-      ctx.lineTo(i * 140 + 140, 760)
-      ctx.fill()
+// ---------------- DedSec 劫持快切（影片 70.333–70.567，每帧 2 个原片帧） ----------------
+/** ASSET 漫画帧：尖叫眼镜男（借用 part3 的 screamerSprite 剪影）+ "OMG!!! IT'S DEDSEC!"，整帧按 tint 单色化 */
+function comicFrame(ctx: CanvasRenderingContext2D, W: number, H: number, tint: string, omg: boolean) {
+  ctx.fillStyle = '#f2f2ee'
+  ctx.fillRect(0, 0, W, H)
+  // 背景网点
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'
+  for (let y = 0; y < H; y += 14) for (let x = (y / 14) % 2 ? 7 : 0; x < W; x += 14) ctx.fillRect(x, y, 5, 5)
+  const img = screamerSprite(620)
+  ctx.drawImage(img, omg ? 1080 : 420, omg ? 60 : 40, 620, 775)
+  ctx.save()
+  font(ctx, omg ? 130 : 150, 700, FONT.pixel)
+  ctx.fillStyle = '#111'
+  ctx.translate(omg ? 330 : 1150, omg ? 330 : 260)
+  ctx.rotate(-0.1)
+  if (omg) ctx.fillText('OMG!!!', 0, 0)
+  ctx.fillText("IT'S DEDSEC", omg ? -40 : 0, omg ? 150 : 0)
+  ctx.restore()
+  ctx.save()
+  ctx.globalCompositeOperation = 'multiply'
+  ctx.fillStyle = tint
+  ctx.fillRect(0, 0, W, H)
+  ctx.restore()
+}
+
+/** 红车 + 红叉（劫持帧与 N. Oak St. 共用），(x,y) 为车左上角 */
+function redCarX(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.scale(s, s)
+  carTop(ctx, 60, 110, true)
+  ctx.strokeStyle = WD2.red
+  ctx.lineWidth = 16
+  ctx.beginPath()
+  ctx.moveTo(90, 10)
+  ctx.lineTo(190, 100)
+  ctx.moveTo(190, 10)
+  ctx.lineTo(90, 100)
+  ctx.stroke()
+  ctx.restore()
+}
+
+function spiralFrame(ctx: CanvasRenderingContext2D, W: number, H: number, frame: number) {
+  ctx.fillStyle = '#020608'
+  ctx.fillRect(0, 0, W, H)
+  font(ctx, 18, 400, FONT.pixel)
+  for (let i = 0; i < 2600; i++) {
+    const a = i * 0.021
+    const r = 30 + a * 58
+    const x = 960 + Math.cos(a) * r * 1.1
+    const y = 380 + Math.sin(a) * r * 0.8
+    const th = 28 + (i % 7) * 4
+    for (let k = 0; k < 3; k++) {
+      ctx.fillStyle = `rgba(80,200,215,${0.4 + hash(i * 3 + k + frame) * 0.6})`
+      ctx.fillText(hash(i * 7 + k) > 0.5 ? '1' : '0', x + k * 10 * Math.sin(a), y - (k * th) / 3)
     }
   }
+  mono(ctx, '1GNCST8Z44M0112674', 1240, 520, 16, 'rgba(80,200,215,0.9)')
+  mono(ctx, '1GNCST8Z44M0112674', 1270, 600, 16, 'rgba(80,200,215,0.9)')
+}
+
+function loadingFrame(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  ctx.fillStyle = '#1a0306'
+  ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = 'rgba(160,20,40,0.6)'
+  ctx.fillRect(0, 0, W, 300)
+  dotMatrix(ctx, { text: 'LOADING', x: 420, y: 90, cell: 10, rows: 12, color: '#e0242b', shape: 'square' })
+  ctx.strokeStyle = 'rgba(224,36,43,0.8)'
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.moveTo(0, 520)
+  ctx.quadraticCurveTo(900, 300, 1920, 380)
+  ctx.stroke()
+  redCarX(ctx, 1230, 300, 1)
+  redCarX(ctx, 1640, 560, 0.9)
+  for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = 'rgba(120,20,30,0.7)'
+    ctx.beginPath()
+    ctx.arc(250 + i * 220, 950, 70, Math.PI, 0)
+    ctx.fill()
+  }
+}
+
+/** 暗色街道 + 红车红叉（紫色切片帧的下半） */
+function darkStreet(ctx: CanvasRenderingContext2D, W: number, H: number, tint: string) {
+  ctx.fillStyle = '#050307'
+  ctx.fillRect(0, 0, W, H)
+  ctx.strokeStyle = tint
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.moveTo(0, 700)
+  ctx.quadraticCurveTo(900, 520, 1920, 600)
+  ctx.moveTo(0, 820)
+  ctx.quadraticCurveTo(900, 640, 1920, 720)
+  ctx.stroke()
+  redCarX(ctx, 1000, 560, 1)
+}
+
+/**
+ * 原片逐帧（影片时间）：70.333 青色 0/1 螺旋 → 70.367 黄绿漫画 → 70.4 紫色漫画切片 + 暗街红车
+ * → 70.433 红色 LOADING → 70.467 暗红切片 → 70.5 品红切片 → 70.533 品红 "OMG!!! IT'S DEDSEC!" 漫画。
+ */
+function renderHijack(f: FrameCtx) {
+  const { ctx, W, H } = f
+  const T = f.t + DT
+  const frame = fr(T)
+  const k = Math.floor((T - 70.333) / 0.0334 + 1e-6)
+  if (k <= 0) return spiralFrame(ctx, W, H, frame)
+  if (k === 1) return comicFrame(ctx, W, H, '#93b02c', false)
+  if (k === 2) {
+    darkStreet(ctx, W, H, 'rgba(150,60,200,0.7)')
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(0, 0, W, 460)
+    ctx.clip()
+    comicFrame(ctx, W, H, '#8e35c8', false)
+    ctx.restore()
+    return sliceGlitch(ctx, { amount: 1, seed: 7040, maxShift: 260, slices: 10 })
+  }
+  if (k === 3) return loadingFrame(ctx, W, H)
+  if (k === 4) {
+    loadingFrame(ctx, W, H)
+    ctx.save()
+    ctx.globalAlpha = 0.6
+    comicFrame(ctx, W, H, '#6a0c22', false)
+    ctx.restore()
+    return sliceGlitch(ctx, { amount: 1, seed: 7047, maxShift: 300, slices: 12 })
+  }
+  if (k === 5) {
+    // 原片这一帧整体很暗（均亮约 17）：暗品红漫画碎片
+    comicFrame(ctx, W, H, '#c21a6a', true)
+    ctx.save()
+    ctx.globalCompositeOperation = 'multiply'
+    ctx.fillStyle = '#3a0a1e'
+    ctx.fillRect(0, 0, W, H)
+    ctx.restore()
+    return sliceGlitch(ctx, { amount: 1, seed: 7050, maxShift: 320, slices: 12 })
+  }
+  comicFrame(ctx, W, H, '#cc1f72', true)
 }
 
 // ---------------- 镜头 2：N. Oak St. 特写（70.55–72.3） ----------------
 const nTop = (x: number) => 330 - 0.16 * x + 0.00004 * (x - 900) * (x - 900) * 0.4
 function renderOak1(f: FrameCtx) {
   const { ctx, t } = f
-  const z = keyed([[70.55, 1.18], [72.3, 0.92]], t, ease.outCubic)
+  const T = t + DT
+  const z = keyed([[70.55, 1.18], [71.45, 1.08], [71.95, 0.75], [72.3, 0.66]], t, lin)
   const rot = keyed([[70.55, 0.04], [72.3, -0.02]], t)
   const px = 1 / z
+  // 71.35 起镜头上摇：世界整体下移（按原片路沿线位置量，影片时间）
+  const dy = 80 + keyed([[71.5, 0], [71.6, 180], [71.8, 330], [72.0, 330], [72.37, 380]], T, lin)
   ctx.save()
+  ctx.translate(0, dy)
   camera(ctx, 1020, 740, 1020, 740, z, rot)
-  drawBand(ctx, nTop, 290, -1500, 3500, 2.5 * px)
+  drawBand(ctx, nTop, 210, -2500, 4500, 2.5 * px)
   ctx.save()
-  ctx.translate(1350, nTop(1350) + 230)
+  ctx.translate(1450, nTop(1450) + 185)
   ctx.rotate(-0.17)
-  roadLabel(ctx, 'N. Oak St.', 150)
+  roadLabel(ctx, 'N. Oak St.', 118)
   ctx.restore()
   // 地块线：白、青、黄
   const R = rng(71)
   for (let i = 0; i < 16; i++) {
     const x = R.range(-600, 2600)
     const y = nTop(x) + 300
-    const col = i % 5 === 0 ? 'rgba(80,190,210,0.8)' : i % 7 === 0 ? 'rgba(210,190,60,0.8)' : LINE
+    const col = i % 6 === 0 ? 'rgba(80,160,210,0.6)' : LINE
     ctx.strokeStyle = col
     ctx.lineWidth = 2.5 * px
     ctx.beginPath()
@@ -451,8 +610,8 @@ function renderOak1(f: FrameCtx) {
     let cx = x
     let cy = y
     for (let k = 0; k < 3; k++) {
-      cx += R.range(-250, 250)
-      cy += R.range(150, 450)
+      cx += R.range(-520, 520)
+      cy += R.range(120, 380)
       ctx.lineTo(cx, cy)
     }
     ctx.stroke()
@@ -465,9 +624,25 @@ function renderOak1(f: FrameCtx) {
     ctx.lineTo(x + 30, nTop(x) - 400)
   }
   ctx.stroke()
+  // 路北侧的房子 + 另一辆白车的小卡片（71.5 起随上摇进入画面）
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 3 * px
+  for (const [x, s2, seed] of [[-250, 200, 5], [120, 170, 17], [560, 260, 29], [1150, 230, 41], [1700, 200, 53]] as const)
+    isoHouse(ctx, x, nTop(x) - 200, s2, seed)
+  ctx.save()
+  ctx.translate(430, nTop(430) - 520)
+  carTop(ctx, 34, 80)
+  ctx.fillStyle = '#0b0b0b'
+  ctx.fillRect(40, 0, 90, 80)
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'
+  ctx.lineWidth = 1
+  ctx.strokeRect(40, 0, 90, 80)
+  mono(ctx, '1GNCST8Z44M0112674', 46, 56, 7, '#ddd')
+  ctx.restore()
+  pin(ctx, 600, nTop(600) - 360, 22)
   // 红车 + 红叉卡
   ctx.save()
-  ctx.translate(885, 650)
+  ctx.translate(1075, 650)
   carTop(ctx, 72, 180, true)
   ctx.fillStyle = '#0b0b0b'
   ctx.fillRect(88, 0, 190, 180)
@@ -489,20 +664,22 @@ function renderOak1(f: FrameCtx) {
   ctx.lineTo(115, 165)
   ctx.stroke()
   ctx.restore()
-  pin(ctx, 1165, 950, 38)
+  pin(ctx, 1355, 950, 38)
   pin(ctx, 1060, nTop(1060) - 90, 30)
-  ctx.restore()
-  // 右侧个人资料列表（71.6 起逐行打出）
-  const la = seg(t, 71.55, 71.9)
+  // 个人资料列表（原片 70.9 起在车卡右侧逐行打出，随镜头一起移动）
+  const la = seg(T, 70.9, 71.0)
   if (la > 0) {
     const labels = ['LAST NAME', 'FIRST NAME', 'MIDDLE NAME', 'SUFFIX', 'BROWSER SEARCH', 'STATUS', 'DOB', 'AGE', 'SEX', 'RACE', 'HEIGHT', 'WEIGHT', 'EYES', 'HAIR', 'STREET ADDRESS', 'CITY', 'STATE', 'ZIP', 'SSN', 'PHONE', 'EMAIL', 'EMPLOYER', 'INCOME', 'CREDIT SCORE', 'ARREST REC', 'VEHICLE']
     const vals = ['CARTER', 'JILL', 'ANN', '-', '42,088', 'MARRIED', '03/11/81', '35', 'F', 'W', "5'6", '128', 'BRN', 'BRN', '1423 N OAK ST', 'MENLO PARK', 'CA', '94025', '***-**-5521', '650-***-0192', 'jcarter@', 'NUDLE', '$84,000', '712', 'NONE', 'CHEVROLET']
-    const n = Math.floor(labels.length * seg(t, 71.55, 72.2))
+    const n = Math.floor(labels.length * seg(T, 70.9, 71.35))
     for (let i = 0; i < n; i++) {
-      mono(ctx, labels[i], 1595, 455 + i * 24, 17, `rgba(235,235,235,${0.85 * la})`, 1)
-      mono(ctx, vals[i], 1830, 455 + i * 24, 17, `rgba(235,235,235,${0.85 * la})`, 1)
+      mono(ctx, labels[i], 1740, 440 + i * 22, 15, `rgba(235,235,235,${0.8 * la})`, 1)
+      mono(ctx, vals[i], 1905, 440 + i * 22, 15, `rgba(235,235,235,${0.8 * la})`, 1)
     }
   }
+  ctx.restore()
+  // 70.567–70.6 切入时的切片错位
+  if (T < 70.6) sliceGlitch(ctx, { amount: 1, seed: 7057, maxShift: 240, slices: 10 })
 }
 
 // ---------------- 镜头 3：更大的街区 + 数据卡片（72.3–77.6） ----------------
@@ -513,29 +690,61 @@ interface Hood {
   reds: [number, number, number][]
 }
 let hood: Hood | null = null
+/**
+ * 街区世界坐标 = 原片 73.0s 画面的屏幕坐标（1920×1080，z=1 时一一对应），道路 / 湖 / 房子位置按该帧逐项量。
+ */
 function makeHood(): Hood {
   if (hood) return hood
   const R = rng(73)
   const roads: Hood['roads'] = [
-    { pts: [-2600, 1500, -600, 1100, 900, 980, 2400, 900, 4200, 1050], w: 240, label: 'N. Oak St.', lx: 1120, ly: 1030, lr: -0.03 },
-    { pts: [1600, -1400, 1700, -300, 1760, 200, 1880, 700, 1900, 950], w: 160, label: '12th Ave', lx: 1790, ly: 260, lr: 1.35 },
-    { pts: [1700, -300, 1200, -600, 700, -500, 400, -900, -200, -1200], w: 130 },
-    { pts: [1760, 200, 2400, 150, 2800, -300, 3300, -600, 3800, -500], w: 130 },
-    { pts: [700, -500, 900, -150, 600, 50, 350, -200, 700, -500], w: 100 },
-    { pts: [-600, 1100, -900, 400, -1400, 0, -2000, -300], w: 120 },
-    { pts: [2400, 900, 2700, 1600, 3100, 2100, 3600, 2400], w: 120 },
+    // N. Oak St.：沿画面底边，左端向下弯出画面
+    { pts: [-1400, 2200, -300, 1500, 500, 1150, 1100, 1060, 1900, 1000, 3200, 980], w: 150, label: 'N. Oak St.', lx: 1110, ly: 1062, lr: -0.03 },
+    // 12th Ave：从底部中间向右上弧形上行
+    { pts: [1080, 1300, 1150, 1080, 1400, 880, 1620, 700, 1720, 450, 1650, 200, 1480, 0, 1300, -400], w: 110, label: '12th Ave', lx: 1668, ly: 400, lr: 1.35 },
+    // 与 12th Ave 平行的内侧细路
+    { pts: [780, 1150, 900, 1000, 1200, 820, 1480, 580, 1580, 320, 1520, 60, 1400, -300], w: 44 },
+    // 右侧外圈大弯路
+    { pts: [1500, 1200, 1800, 900, 2000, 500, 1950, 100, 1800, -200, 1500, -500], w: 70 },
+    { pts: [1950, 100, 2300, -100, 2700, 0, 3000, 300], w: 60 },
+    { pts: [2000, 500, 2400, 700, 2800, 650, 3200, 900], w: 60 },
+    { pts: [300, -700, 700, -350, 1100, -250, 1480, 0], w: 60 },
+    { pts: [-1400, 300, -800, 450, -300, 800, 100, 1250], w: 60 },
+    { pts: [-1300, -600, -900, -300, -500, -250, 0, -500, 300, -700], w: 60 },
   ]
   const houses: Hood['houses'] = [
-    [940, 880, 230, 5],
-    [1330, 600, 220, 9],
-    [1260, 330, 200, 12],
-    [660, 830, 150, 21],
+    [960, 800, 240, 5],
+    [1100, 790, 200, 9],
+    [690, 930, 130, 21],
+    [1300, 420, 160, 12],
+    [1380, 250, 150, 33],
+    [1420, 130, 170, 44],
+    [1620, 100, 150, 47],
+    [220, 1020, 160, 51],
   ]
-  for (let i = 0; i < 50; i++) houses.push([R.range(-2400, 4000), R.range(-1500, 2300), R.range(180, 300), R.int(1, 999)])
+  // 沿道路两侧撒房子（原片 74–76s 拉远后路边密密一排）
+  for (const r of roads) {
+    for (let i = 0; i + 3 < r.pts.length; i += 2) {
+      const [x0, y0, x1, y1] = [r.pts[i], r.pts[i + 1], r.pts[i + 2], r.pts[i + 3]]
+      const n = Math.floor(Math.hypot(x1 - x0, y1 - y0) / 380)
+      for (let k = 0; k < n; k++) {
+        const u = (k + 0.5) / n
+        const side = R.chance(0.5) ? 1 : -1
+        const dx = x1 - x0
+        const dy = y1 - y0
+        const l = Math.hypot(dx, dy) || 1
+        const off = side * (r.w / 2 + R.range(90, 200))
+        const x = lerp(x0, x1, u) - (dy / l) * off
+        const y = lerp(y0, y1, u) + (dx / l) * off
+        if (x > 200 && x < 1250 && y > 350 && y < 1000) continue // 中央卡片区留空
+        if (x > 200 && x < 1050 && y > -20 && y < 320) continue // 湖
+        houses.push([x, y, R.range(90, 140), R.int(1, 999)])
+      }
+    }
+  }
   const cards: Hood['cards'] = []
-  for (let i = 0; i < 70; i++) cards.push({ x: R.range(-2400, 4000), y: R.range(-1500, 2300), w: R.range(110, 240), seed: R.int(1, 9999), delay: R.range(72.5, 75.5) })
-  const reds: Hood['reds'] = [[640, 790, 1]]
-  for (let i = 0; i < 9; i++) reds.push([R.range(-2000, 3600), R.range(-1200, 2000), R.range(0.8, 1.3)])
+  for (let i = 0; i < 70; i++) cards.push({ x: R.range(-1400, 3300), y: R.range(-900, 2000), w: R.range(110, 240), seed: R.int(1, 9999), delay: R.range(73.8, 76.3) })
+  const reds: Hood['reds'] = [[640, 890, 1]]
+  for (let i = 0; i < 3; i++) reds.push([R.range(-1200, 3000), R.range(-800, 1800), R.range(0.8, 1.3)])
   hood = { roads, houses, cards, reds }
   return hood
 }
@@ -567,85 +776,103 @@ function redMark(ctx: CanvasRenderingContext2D, x: number, y: number, s: number)
   ctx.restore()
 }
 
+/** 画街区地图（湖 / 等高线 / 道路 / 房子）；在离屏层上画，整体淡出时不会叠出灰色路面 */
+function hoodMap(ctx: CanvasRenderingContext2D, H: Hood, px: number) {
+  // 等高线（暗青）
+  ctx.strokeStyle = 'rgba(60,110,150,0.3)'
+  ctx.lineWidth = 1.5 * px
+  for (let i = 0; i < 14; i++) {
+    ctx.beginPath()
+    ctx.moveTo(-1500, -900 + i * 260)
+    ctx.bezierCurveTo(-300, -700 + i * 240, 900, -1300 + i * 300, 3300, -500 + i * 240)
+    ctx.stroke()
+  }
+  // 湖（左上）
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2.5 * px
+  ctx.fillStyle = '#0d0e10'
+  ctx.beginPath()
+  ctx.moveTo(280, 40)
+  ctx.bezierCurveTo(500, 0, 900, 20, 1000, 120)
+  ctx.bezierCurveTo(1050, 220, 900, 270, 660, 280)
+  ctx.bezierCurveTo(480, 290, 300, 300, 250, 200)
+  ctx.bezierCurveTo(220, 120, 230, 60, 280, 40)
+  ctx.fill()
+  ctx.stroke()
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (const r of H.roads) {
+    roadPath(ctx, r.pts)
+    ctx.strokeStyle = LINE
+    ctx.lineWidth = r.w + 5 * px
+    ctx.stroke()
+  }
+  for (const r of H.roads) {
+    roadPath(ctx, r.pts)
+    ctx.strokeStyle = ROAD
+    ctx.lineWidth = r.w
+    ctx.stroke()
+  }
+  ctx.lineCap = 'butt'
+  for (const r of H.roads) {
+    if (!r.label) continue
+    ctx.save()
+    ctx.translate(r.lx!, r.ly!)
+    ctx.rotate(r.lr!)
+    roadLabel(ctx, r.label, r.w * 0.5)
+    ctx.restore()
+  }
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2.5 * px
+  for (const [x, y, s, seed] of H.houses) isoHouse(ctx, x, y, s, seed)
+}
+
 function renderHood(f: FrameCtx) {
   const { ctx, t } = f
-  const z = keyed([[72.3, 1.0], [73.3, 0.62], [74.5, 0.46], [77.6, 0.3]], t, ease.outCubic)
-  const rot = keyed([[72.3, 0], [77.6, -0.08]], t)
-  const ax = keyed([[72.3, 960], [73.3, 1050], [77.6, 900]], t)
-  const ay = keyed([[72.3, 560], [73.3, 350], [77.6, 400]], t)
+  const T = t + DT
+  // 相机关键帧（影片时间）：按原片 72.5 / 73.0 / 74.8 帧里卡片、湖、路名的位置反算
+  const z = keyed([[72.37, 1.5], [72.5, 1.36], [73.0, 1.0], [74.8, 0.64], [77.67, 0.4]], T, lin)
+  const ax = keyed([[72.37, 965], [72.5, 965], [73.0, 960], [74.8, 959], [77.67, 960]], T, lin)
+  const ay = keyed([[72.37, 800], [72.5, 779], [73.0, 540], [74.8, 320], [77.67, 380]], T, lin)
+  const rot = 0
   const px = 1 / z
   const mapA = 1 - seg(t, 75.1, 76.4)
   const H = makeHood()
+  if (mapA > 0) {
+    const L = offscreen('wd2-hood-map', f.W, f.H)
+    L.ctx.setTransform(1, 0, 0, 1, 0, 0)
+    L.ctx.clearRect(0, 0, f.W, f.H)
+    L.ctx.save()
+    camera(L.ctx, ax, ay, 960, 540, z, rot)
+    hoodMap(L.ctx, H, px)
+    L.ctx.restore()
+    ctx.save()
+    ctx.globalAlpha = mapA
+    ctx.drawImage(L.canvas, 0, 0)
+    ctx.restore()
+  }
   ctx.save()
   camera(ctx, ax, ay, 960, 540, z, rot)
-  if (mapA > 0) {
-    ctx.globalAlpha = mapA
-    // 湖
-    ctx.strokeStyle = LINE
-    ctx.lineWidth = 2.5 * px
-    ctx.fillStyle = '#141517'
-    ctx.beginPath()
-    ctx.moveTo(-100, -350)
-    ctx.bezierCurveTo(300, -520, 1050, -380, 1000, -80)
-    ctx.bezierCurveTo(960, 130, 250, 180, 120, 60)
-    ctx.bezierCurveTo(-40, -80, -300, -250, -100, -350)
-    ctx.fill()
-    ctx.stroke()
-    // 等高线（暗青）
-    ctx.strokeStyle = 'rgba(60,120,140,0.35)'
-    ctx.lineWidth = 1.5 * px
-    for (let i = 0; i < 12; i++) {
-      ctx.beginPath()
-      ctx.moveTo(-2600, -1400 + i * 330)
-      ctx.bezierCurveTo(-800, -1000 + i * 300, 1500, -1700 + i * 380, 4200, -900 + i * 300)
-      ctx.stroke()
-    }
-    // 道路
-    for (const r of H.roads) {
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      roadPath(ctx, r.pts)
-      ctx.strokeStyle = LINE
-      ctx.lineWidth = r.w + 4 * px
-      ctx.stroke()
-      roadPath(ctx, r.pts)
-      ctx.strokeStyle = ROAD
-      ctx.lineWidth = r.w
-      ctx.stroke()
-    }
-    for (const r of H.roads) {
-      if (!r.label) continue
-      ctx.save()
-      ctx.translate(r.lx!, r.ly!)
-      ctx.rotate(r.lr!)
-      roadLabel(ctx, r.label, r.w * 0.5)
-      ctx.restore()
-    }
-    ctx.lineCap = 'butt'
-    ctx.strokeStyle = LINE
-    ctx.lineWidth = 2.5 * px
-    for (const [x, y, s, seed] of H.houses) isoHouse(ctx, x, y, s, seed)
-    ctx.globalAlpha = 1
-  }
   // 数据卡片（地图淡出后仍在，并逐渐变多、变亮）
-  // 主卡：BROWSER SEARCH HISTORY / SOCIAL MEDIA HISTORY / 马赛克头像 / 文本块
-  const hero = seg(t, 72.3, 72.5)
+  // 主卡：BROWSER SEARCH HISTORY / SOCIAL MEDIA HISTORY / 马赛克头像 / 文本块（位置按原片 73.0s）
+  const hero = seg(t, 72.3, 72.4)
   ctx.globalAlpha = hero
-  heroCard(ctx, 660, 480, 250, 290, 'BROWSER SEARCH HISTORY')
-  heroCard(ctx, 980, 350, 230, 300, 'SOCIAL MEDIA HISTORY')
-  drawFace(ctx, 88, 7, 470, 810, 130, 90)
+  heroCard(ctx, 700, 580, 220, 220, 'BROWSER SEARCH HISTORY')
+  heroCard(ctx, 980, 455, 220, 240, 'SOCIAL MEDIA HISTORY')
+  drawFace(ctx, 88, 7, 540, 870, 120, 70)
+  for (let i = 0; i < 3; i++) dataCard(ctx, 400 + i, 30, 160 + i * 55, 190)
   ctx.fillStyle = 'rgba(12,12,12,0.9)'
-  ctx.fillRect(160, 800, 180, 240)
-  for (let i = 0; i < 14; i++) {
+  ctx.fillRect(260, 870, 240, 150)
+  for (let i = 0; i < 10; i++) {
     ctx.fillStyle = 'rgba(200,200,200,0.5)'
-    ctx.fillRect(170, 812 + i * 16, 40 + hash(i) * 40, 3)
-    ctx.fillRect(240, 812 + i * 16, 30 + hash(i + 50) * 60, 3)
+    ctx.fillRect(270, 882 + i * 13, 40 + hash(i) * 40, 3)
+    ctx.fillRect(360, 882 + i * 13, 30 + hash(i + 50) * 60, 3)
   }
   ctx.globalAlpha = 1
   for (const c of H.cards) {
     const a = seg(t, c.delay, c.delay + 0.15)
     if (a <= 0) continue
-    dataCard(ctx, c.seed, c.x, c.y, c.w, a)
+    dataCard(ctx, c.seed, c.x, c.y, c.w, a * 0.8)
   }
   for (const [x, y, s] of H.reds) redMark(ctx, x, y, s)
   ctx.restore()
@@ -680,20 +907,20 @@ export const streetScenes: Scene[] = [
   {
     id: 'wd2-065-vin',
     start: 65.35,
-    end: 70.3,
+    end: 70.333 - DT,
     note: '下摇到顶视车 + VIN 面板 + 定位针，随后一路拉远成街区线稿；70.05 车变红打叉',
     render: renderCar,
   },
   {
     id: 'wd2-070-hijack',
-    start: 70.3,
-    end: 70.55,
+    start: 70.333 - DT,
+    end: 70.567 - DT,
     note: 'DedSec 劫持三帧：青色像素螺旋 / 红色 LOADING / 洋红漫画 "OMG!!! IT\'S DEDSEC!"',
     render: renderHijack,
   },
   {
     id: 'wd2-070-oak',
-    start: 70.55,
+    start: 70.567 - DT,
     end: 72.3,
     note: 'N. Oak St. 特写：红车 + 红叉卡、定位针、彩色地块线；右侧个人资料列表逐行打出',
     render: renderOak1,

@@ -28,14 +28,14 @@
 | 1.50–4.30 | `wd2-001.5-chicago-sat` | 芝加哥夜景卫星图（东侧湖面）缓旋推近，红色飞机 + 红色虚线航迹 + AF-338 标签，3.55s 起淡出 | `intro.ts chicagoSat` | 构图接近；**ASSET** `chicagoTexture()` |
 | 3.60–8.75 | `wd2-003.6-ctos-grid` | 3D 透视街网 + 远处青色点云天际线，相机低空前滑；ROUTE 19L/77H/07F/29G 悬空标签、青色节点椭圆环、红色折角框、贴地青色主干道；7.3s 起抬升俯仰到正俯视 | `ctos-city.ts ctosGrid`（three.js，`wireCity` + 点云） | 运镜/元素接近；城市 **ASSET** `buildGrid()` |
 | 4.00–10.95 | `wd2-004.0-ctos-logo` | 右上角 ctOS 标志（青底黑字、O 为白芯黑圈）4.0–4.9 逐块打出，下方数据细纹，10.75 起闪烁消失 | `ctos-city.ts ctosBadge` / `lib.ts ctosLogo` | 接近 1:1 |
-| 8.30–14.30 | `wd2-008.3-city-map` | 俯拍芝加哥街道地图（左上是湖），缓慢平移 | `ctos-city.ts cityTopDown` | **ASSET** `cityMapTexture()` |
-| 8.38–9.40 | `wd2-008.4-dossier` | 左侧黑栏马赛克人脸档案卡（字段框、指纹），8.65 红色扫描线，9.15 起碎片化消失 | `ctos-city.ts dossier` | 版式近似；人脸/指纹 **ASSET** `faceCanvas()`/`fingerprint()` |
+| 8.30–14.30 | `wd2-008.3-city-map` | V2：俯拍 ctOS 地图按原片 10.6s 重画——黑底 + 6px 灰马赛克街区 + 密集轴向街道（白/青/黄）+ 长直网络连线与节点圆 + 红色方框，湖岸从左 y≈340 斜升到右上；9.7s 起绕焦点持续推近，12.4 起轻微压暗，14.2 起随网格以 124px/s 上移 | `citymap2d.ts drawCtosMap`（经 `ctos-city.ts drawCityMap`） | 构图/线条密度接近；**ASSET** `ctosMapTexture()`（旧 `cityMapTexture` 仅 bay.ts 64 billion 还在用） |
+| 8.38–9.58 | `wd2-008.4-dossier` | V2：左侧黑栏（到 x≈480）档案卡，按原片 30fps 逐帧序列（`DOS_SEQ`）每 2–3 帧换一张人脸，多数带红扫描线，夹杂红/黑错位横条帧、8.72/9.08/9.2–9.3 碎片故障帧、9.0/9.5 大方块马赛克、9.32/9.42 照片空黑；9.58 消失 | `ctos-city.ts dossier` | 时序逐帧 1:1；人脸用 part2 `faceTex()` 程序化（**ASSET**） |
 | 11.10–13.00 | `wd2-011.1-with-a-few-hundred` | "with / a / few / hundred" 逐词白块擦出、错落排布 → 12.1 归行、few 上移 → 12.4 with 跳到顶部 | `ctos-city.ts fewHundred` | 接近 |
-| 12.35–14.35 | `wd2-012.35-code-storm` | execute? Y + 带 + 号的白色代码列；12.6 起 PowerShell 脚本白纸条、黑条、暗红/青色条逐帧闪现铺满（"$script:AgentDelay"、"$Retries = 1" 等） | `hack.ts codeStorm`（`PS_LINES`） | 节奏与密度近似；纸条排布为随机 |
-| 14.20–19.45 | `wd2-014.2-grid-collapse` | 地图 + 白色「骰子点」簇 + 红色疏排字 WEST SIDE；15.3 起 155px 带 X 对角线的方格逐格翻出黑块/白块/白三角并每 3 帧跳变；17.4 起地图淡出，18.0 后方块退去只剩网格与点 | `hack.ts gridCollapse` | 接近 |
-| 19.35–19.65 | `wd2-019.35-shards` | 两块巨大白色斜向碎片一闪扫过 | `hack.ts shards` | 近似 |
-| 19.40–22.90 | `wd2-019.4-scatter` | 黑底散落白色小方块/小三角/少量红块，逐帧闪烁、逐渐变少 | `hack.ts scatter` | 接近 |
-| 21.35–22.90 | `wd2-021.35-they-were-wrong` | 像素字 "they were wrong." 乱码逐字解出 + 块光标，22.3 起只留光标闪烁 | `hack.ts theyWereWrong` | 接近 |
+| 12.35–14.75 | `wd2-012.35-code-storm` | V2：execute? Y + 白色代码列；竖向白纸条（PowerShell 代码纸截条）按原片逐帧 32×12 分区亮度（`storm-luma.ts`）决定覆盖率，越铺越满，13.35–13.9 几乎全白，14.0 退去、14.3–14.7 顶部残留；13.1–13.4 黄绿染色条、13.2 暗红竖条 | `hack.ts codeStorm` | 明暗分布/节奏逐帧对齐；纸条内容与精确位置为程序化 |
+| 14.20–19.45 | `wd2-014.2-grid-collapse` | V2：地图 + 稀疏白色小方点；155px 带 X 对角线网格（整体以 124px/s 上移，18.6 起拉远到 132px），每格 4 个三角象限的黑/白状态按原片逐帧实测（`grid-tiles.ts`）；WEST SIDE 红色疏排字；17.4–18.1 地图淡出 | `hack.ts gridCollapse` | 方块位置/时序逐帧对齐 |
+| 19.35–19.65 | `wd2-019.35-shards` | V2：白色斜条按原片每 0.05s 关键形：左下三角 + 右臂 → 交叉 K/V 形 → 单条右移 → 右缘残片 | `hack.ts shards` | 接近 1:1 |
+| 19.40–22.90 | `wd2-019.4-scatter` | V2：19.4–21.38 白色小方块/点簇位置按原片逐帧亮块检测数据（`scatter-dots.ts`）；之后程序化稀疏方块渐少 | `hack.ts scatter` | 19.4–21.4 接近 1:1 |
+| 21.35–22.90 | `wd2-021.35-they-were-wrong` | V2：像素字乱码逐字解出 "they were wrong." + 块光标；整行从字宽 97px 缩到 43px（原片逐 0.1s 量），17 格以 x≈955 居中；22.35 起只留光标（x≈1272）闪烁 | `hack.ts theyWereWrong` | 位置/字宽/解字进度接近；VT323 比原片字形略粗 |
 | 22.85–27.05 | `wd2-022.85-bar-chart` | 城市部署柱状图：右端几根矮柱长出 → 拉远露出 57 根灰白双色柱 + 旋转城市名 + 边框；24.35 起 56%→100%；25.15 起 ctOS 2.0 标志；26.45 起百分比乱跳、柱子塌成一排矮柱、边框擦除 | `usa.ts barChart` | 接近；柱高数据为程序化 |
 | 26.45–31.45 | `wd2-026.45-us-map` | SAN JOSE 放射细线 + 虚线大圆 + 红色虚线航线，SACRAMENTO / CARSON CITY 方框地标；连续拉远经 NEVADA / UTAH / COLORADO 等疏排州名与西部州界；29.3 起全美轮廓点阵 + 青色星状网络（中心城市星芒） | `usa.ts usMap`（经纬度投影） | 运镜近似；美国轮廓/州界为简化折线 |
 | 29.95–31.20 | `wd2-029.95-internet-of-things` | "the internet / of things." 两行白字逐词白块擦出 | `usa.ts internetWords` | 接近 |
@@ -77,6 +77,21 @@ import { subtitleScene, type SubCue } from './part1/subtitles'
 const SUBS: SubCue[] = [{ start: 43.3, end: 46.1, text: '...' }]
 export const part2 = [...shots, subtitleScene('wd2-part2-subs', 43, 94, SUBS)]  // 放在数组最后
 ```
+
+## V2 精修记录（G2）
+
+测量数据文件（只存版面/时序数值，由 1080p 原片抽帧统计得到，不含原片图像）：
+
+| 文件 | 内容 | 用途 |
+| --- | --- | --- |
+| `part1/storm-luma.ts` | 12.35–14.8s 每 1/30s 的 32×12 分区平均亮度 | 代码风暴纸条覆盖率 |
+| `part1/grid-tiles.ts` | 14.2–19.4s 每 1/30s、14×9 格 × 4 三角象限的 无/黑/白 状态 | 网格碎裂方块 |
+| `part1/scatter-dots.ts` | 19.4–21.38s 每 1/30s 的亮块位置/尺寸 | 散落方块 |
+| `part1/citymap2d.ts` | 新的 2D ctOS 地图纹理 + 相机 | 8.3–18.4 地图 |
+
+评分（`pnpm score wd2 8 23 --tag tmp`，step 0.5）：city-map 31.9→39.8、dossier 46.7→56.8、code-storm 16.0→26.1、grid-collapse 23.7→40.2、shards 44.0→约 70（逐 0.05s）、scatter 57.8→77.0、they-were-wrong 62.8→71.0。
+
+字幕（`subtitles.ts`）：用字幕带亮度跳变复核后修正 4.63 / 9.95 / 11.03 / 15.42 / 21.2 / 35.27 / 38.05 等起止点。
 
 ## ASSET 替换清单
 
