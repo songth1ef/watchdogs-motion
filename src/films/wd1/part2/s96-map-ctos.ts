@@ -1,9 +1,11 @@
 /**
- * 95.95–100  白底世界地图（青色网络连线 + 细框）"INFLUENCE YOUR WORLD VIEWS" 从下方升起并缓推；
+ * 95.95–98.2  白底世界地图（青色网络连线 + 细框）"INFLUENCE YOUR WORLD VIEWS" 从下方升起并缓推；
  * 97.55 起镜头从 ctOS 字标 "O" 的内孔里向后拉出：地图留在 O 的孔中 → 孔变白 → 字标缩小悬在暗色展台上方；
- * 98.0 起暗色展台（白色发光边线的地台）上摆着汽车、卫星天线、卫星、ATM，镜头后退并缓慢偏转（接 part3 的设备台）。
- * ASSET：CONTINENTS（大陆粗轮廓）、drawCar/drawDish/drawSatellite/drawATM（设备线框剪影）都是手写近似，
- *        换成真实地图图片 / 3D 模型渲染图分别替换 drawWorld() 与这几个 draw* 函数即可。
+ * 97.9 暗色展台（白色发光边线的主平板 + 后方一辆车）出现。
+ * 98.2 交接给 part3/objects.ts（wd1-098-ctos-objects）：它用同一套针孔相机参数（D/H/yaw、f=900、地平线 380）、
+ * 同样的字标画法与天幕渐变接着画 3D 展台、其余设备与后续绕转，98.2 这一帧两边构图一致。
+ * ASSET：CONTINENTS（大陆粗轮廓）、drawCar（汽车剪影）是手写近似，
+ *        换成真实地图图片 / 模型渲染图分别替换 drawWorld() 与 drawCar() 即可。
  */
 import type { Scene } from '../../../engine/types'
 import { rng } from '../../../engine/math'
@@ -102,7 +104,7 @@ function drawWorld(ctx: CanvasRenderingContext2D, t: number) {
   ctx.letterSpacing = '0px'
 }
 
-/* ---------- 展台设备（ASSET 线框剪影，局部坐标：底部中心为原点，高度约 1） ---------- */
+/* ---------- 展台上的汽车（ASSET 剪影，局部坐标：底部中心为原点）；其余设备 98.2 起由 part3 objects 画 ---------- */
 function drawCar(g: CanvasRenderingContext2D) {
   g.fillStyle = '#d8d8d8'
   g.beginPath()
@@ -111,66 +113,13 @@ function drawCar(g: CanvasRenderingContext2D) {
   g.fillStyle = '#9a9a9a'
   g.fillRect(-0.45, -0.1, 0.9, 0.08)
 }
-function drawDish(g: CanvasRenderingContext2D) {
-  g.strokeStyle = 'rgba(235,235,235,0.9)'
-  g.lineWidth = 0.012
-  g.beginPath()
-  g.ellipse(0, -0.55, 0.42, 0.3, -0.5, 0, Math.PI * 2)
-  for (let i = 1; i < 6; i++) g.ellipse(0, -0.55, 0.42 * (i / 6), 0.3 * (i / 6), -0.5, 0, Math.PI * 2)
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2
-    g.moveTo(0, -0.55)
-    g.lineTo(Math.cos(a) * 0.42 * Math.cos(-0.5) - Math.sin(a) * 0.3 * Math.sin(-0.5), -0.55 + Math.cos(a) * 0.42 * Math.sin(-0.5) + Math.sin(a) * 0.3 * Math.cos(-0.5))
-  }
-  g.moveTo(0, -0.55)
-  g.lineTo(-0.1, 0)
-  g.moveTo(0, -0.55)
-  g.lineTo(0.12, 0)
-  g.stroke()
-}
-function drawSatellite(g: CanvasRenderingContext2D) {
-  g.save()
-  g.translate(0, -0.9)
-  g.rotate(0.45)
-  g.fillStyle = '#e6e6e6'
-  g.fillRect(-0.5, -0.015, 1, 0.03)
-  g.fillRect(-0.1, -0.08, 0.2, 0.16)
-  g.strokeStyle = 'rgba(230,230,230,0.8)'
-  g.lineWidth = 0.01
-  g.strokeRect(-0.45, -0.07, 0.25, 0.14)
-  g.strokeRect(0.2, -0.07, 0.25, 0.14)
-  g.restore()
-}
-function drawATM(g: CanvasRenderingContext2D) {
-  g.strokeStyle = 'rgba(230,230,230,0.8)'
-  g.lineWidth = 0.012
-  g.beginPath()
-  g.moveTo(-0.15, 0)
-  g.lineTo(-0.12, -0.55)
-  g.lineTo(-0.2, -0.95)
-  g.lineTo(0.12, -1.0)
-  g.lineTo(0.15, -0.55)
-  g.lineTo(0.12, 0)
-  g.closePath()
-  g.stroke()
-  g.strokeRect(-0.1, -0.85, 0.2, 0.18)
-  g.font = '700 0.1px sans-serif'
-  g.fillStyle = '#eee'
-  g.fillText('ATM', -0.08, -0.9)
-}
-
-const PROPS: [(g: CanvasRenderingContext2D) => void, number, number, number][] = [
-  [drawCar, 0.1, -1.2, 0.5],
-  [drawDish, -0.5, -0.3, 1.1],
-  [drawSatellite, 0.8, 0.2, 0.9],
-  [drawATM, -2.6, 1.3, 1.0],
-]
+const PROPS: [(g: CanvasRenderingContext2D) => void, number, number, number][] = [[drawCar, 0.1, -1.2, 0.5]]
 
 export const s96MapCtos: Scene = {
   id: 'wd1-096-world-views-ctos-stage',
   start: 95.95,
-  end: 100,
-  note: 'INFLUENCE YOUR WORLD VIEWS 世界地图 → 从 ctOS 的 O 中拉出 → 暗色设备展台',
+  end: 98.2,
+  note: 'INFLUENCE YOUR WORLD VIEWS 世界地图 → 从 ctOS 的 O 中拉出 → 暗色展台出现（98.2 交接 part3 objects）',
   render({ ctx, t }) {
     ref(ctx)
     // 地图层（白底）：96.0 从下方升起，缓推
@@ -226,7 +175,7 @@ export const s96MapCtos: Scene = {
     ctx.fillStyle = '#000'
     ctx.fillRect(0, hy, 1280, 720 - hy)
 
-    // 展台（地面透视）
+    // 展台（地面透视）。98.2 之后的关键帧保留：它们决定 98.2 之前曲线的切线，且与 part3 objects 的 KEYS_A 同值
     if (t > 97.9) {
       const D = track(t, [
         [97.9, 4.6],
@@ -279,7 +228,6 @@ export const s96MapCtos: Scene = {
         if (s[2] <= 0.3) continue
         const k = (f * size) / s[2] / 1.0
         ctx.save()
-        if (draw !== drawCar) ctx.globalAlpha = span(t, 98.4, 98.7)
         ctx.translate(s[0], s[1])
         ctx.scale(k, k)
         draw(ctx)

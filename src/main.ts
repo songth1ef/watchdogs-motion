@@ -24,7 +24,8 @@ const playBtn = $<HTMLButtonElement>('play')
 
 const params = new URLSearchParams(location.search)
 let film: Film = films[(params.get('film') as Film['id']) ?? 'wd1'] ?? films.wd1
-let t = Number(params.get('t') ?? 0)
+// 默认停在 1.5s（0s 是黑场，PEGI 卡还没淡入）
+let t = Number(params.get('t') ?? 1.5)
 let playing = false
 let last = 0
 

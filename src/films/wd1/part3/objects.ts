@@ -1,7 +1,9 @@
 /**
- * WD1 100s–111s：ctOS 物件网络（接 part2 91.3s 起的同一个连续镜头）。
- * 100–104.5 低机位绕着地面上四块发光边的黑色平板转，上面散落卫星锅、卫星、汽车、飞机、全息人形；
- *   远处是由暗到亮的灰色天幕，"ctOS" 字样 100.3 起淡出 →
+ * WD1 98.2s–111s：ctOS 物件网络（原片 97.9–104.5 是同一个连续镜头）。
+ * 98.2 从 part2 s96 交接：相机（针孔 D/H/yaw 换算成轨道相机）、ctOS 字标（同一画法与轨迹）、天幕竖直渐变、
+ *   主平板四边与车的位置都与 s96 在 98.2 那一帧一致；其余平板与设备 98.2–98.7 淡入/弹出。
+ * 98.2–104.5 低机位绕着地面上发光边的黑色平板转，上面散落卫星锅、卫星、汽车、飞机、ATM、全息人形；
+ *   天幕 98.4–99.6 由竖直渐变过渡到斜向渐变，"ctOS" 字样 100.3 起淡出 →
  * 104.5–105.5 灯光熄灭、平板消失，相机升高 → 物件浮起重新排成一圈：汽车、笔记本、飞机、卫星锅、ATM，
  *   之间长出细线与小方点 → 108.2 左上角空心字 "Data is interconnected" 逐字打出，连线越来越多、
  *   带小字说明 → 108.8 起相机后拉，物件变暗，只剩网络与空心字 → 111 交给 NETWORK 镜头。
@@ -17,6 +19,19 @@ import { FONT } from '../../../fx/text'
 import { keyed } from './network'
 import { applyOrbit, orbitAt, project, type Orbit } from './three-util'
 import { S } from './util'
+
+/** part2 s96 展台坐标（米级小单位）→ 本镜头 three.js 单位的比例 */
+const K = 36.7
+const PLATE_T = 2.2
+/** 平板（s96 展台坐标，x0,x1,z0,z1）：中间主平板与 s96 画的四边形重合，左右各一块 */
+const PLATES: [number, number, number, number][] = [
+  [-1.5, 1.5, -1.5, 2.5],
+  [-4.85, -1.65, -1.5, 2.5],
+  [1.65, 4.85, -1.5, 2.5],
+  [-1.5, 1.5, -5.65, -1.65],
+  [-4.85, -1.65, -5.65, -1.65],
+  [1.65, 4.85, -5.65, -1.65],
+]
 
 const GREY = new THREE.MeshStandardMaterial({ color: 0xbdbdbd, roughness: 0.45, metalness: 0.2 })
 const WIRE = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.55 })
@@ -121,6 +136,8 @@ interface Obj {
   o: THREE.Object3D
   /** 地面段位置 */
   a: [number, number, number]
+  /** 地面段缩放 */
+  sa: number
   /** 浮起后的位置 */
   b: [number, number, number]
   /** 出现时间 */
@@ -142,33 +159,32 @@ function buildScene() {
   floor.rotation.x = -Math.PI / 2
   scene.add(floor)
 
-  // 四块平板：侧面白色发光、顶面黑、顶面边缘细灰线
+  // 平板：三块并排（中间那块 = part2 s96 展台的主平板），侧面白色发光、顶面黑；顶面描边在 2D 里画（线宽可控）
   const plates = new THREE.Group()
   const side = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true })
+  // 非主平板的亮边：98.2 交接时 s96 只画了主平板，其余平板 98.2–98.6 淡入，避免交接帧多出线条
+  const sideB = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true })
   const topMat = new THREE.MeshStandardMaterial({ color: 0x030303, roughness: 0.3, transparent: true })
-  const lineMat = new THREE.LineBasicMaterial({ color: 0x9a9a9a, transparent: true })
-  const P = 110
-  for (const sx of [-1, 1])
-    for (const sz of [-1, 1]) {
-      const geo = new THREE.BoxGeometry(P, 1.6, P)
-      const m = new THREE.Mesh(geo, [side, side, topMat, topMat, side, side])
-      m.position.set(sx * (P / 2 + 3), 3, sz * (P / 2 + 3))
-      plates.add(m)
-      const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo), lineMat)
-      e.position.copy(m.position)
-      plates.add(e)
-    }
+  for (const [x0, x1, z0, z1] of PLATES) {
+    const sd = x0 === -1.5 && z0 === -1.5 ? side : sideB
+    const geo = new THREE.BoxGeometry((x1 - x0) * K, PLATE_T, (z1 - z0) * K)
+    // 只有朝 ±z 的侧面发白光（原片平板的前沿是亮条，左右侧面只是细线）
+    const m = new THREE.Mesh(geo, [topMat, topMat, topMat, topMat, sd, sd])
+    m.position.set(((x0 + x1) / 2) * K, PLATE_T / 2, ((z0 + z1) / 2) * K)
+    plates.add(m)
+  }
   scene.add(plates)
 
+  // a = 展台上的位置（part2 展台坐标 × K），sa = 展台上的缩放；b = 浮起后的位置（缩放 1）
   const objs: Obj[] = [
-    { o: makeDish(), a: [-14, 9, 6], b: [30, 24, -4], show: 0 },
-    { o: makeSatellite(), a: [-2, 13, -2], b: [39, 28, -8], show: 0 },
-    { o: makeHolo(), a: [-32, 9, -26], b: [-10, 40, -40], show: 0, hide: 105.2 },
-    { o: makeCar(), a: [28, 7, 18], b: [-32, 20, 2], show: 0 },
-    { o: makePlane(), a: [-36, 7, 22], b: [0, 30, -6], show: 0 },
-    { o: makeHolo(), a: [40, 9, -20], b: [60, 45, -40], show: 0, hide: 105.2 },
-    { o: makeATM(), a: [36, 12, 34], b: [8, 2, 14], show: 104.4 },
-    { o: makeLaptop(), a: [4, 8, 4], b: [0, 18, 0], show: 105.2 },
+    { o: makeDish(), a: [-0.5 * K, 26, -0.3 * K], sa: 3.4, b: [30, 24, -4], show: 98.4 },
+    { o: makeSatellite(), a: [0.8 * K, 34, 0.2 * K], sa: 2.4, b: [39, 28, -8], show: 98.4 },
+    { o: makeHolo(), a: [-1.6 * K, 24, -2.8 * K], sa: 3.6, b: [-10, 40, -40], show: 98.4, hide: 105.2 },
+    { o: makeCar(), a: [0.1 * K, 5, -1.2 * K], sa: 1.1, b: [-32, 20, 2], show: 0 },
+    { o: makePlane(), a: [-2.2 * K, 8, 0.5 * K], sa: 2.4, b: [0, 30, -6], show: 98.4 },
+    { o: makeHolo(), a: [2.4 * K, 24, -2.2 * K], sa: 3.6, b: [60, 45, -40], show: 98.4, hide: 105.2 },
+    { o: makeATM(), a: [-2.6 * K, 20, 1.3 * K], sa: 2.4, b: [8, 2, 14], show: 98.4 },
+    { o: makeLaptop(), a: [4, 8, 4], sa: 1, b: [0, 18, 0], show: 105.2 },
   ]
   for (const k of objs) scene.add(k.o)
 
@@ -195,38 +211,102 @@ function buildScene() {
   scene.add(net)
 
   const cam = new THREE.PerspectiveCamera(40, 1920 / 1080, 0.5, 8000)
-  return { scene, cam, objs, plates, side, topMat, lineMat, nodes, edges, pos, lineGeo, netMat, floorMat }
+  return { scene, cam, objs, plates, side, sideB, topMat, nodes, edges, pos, lineGeo, netMat, floorMat }
 }
 
-const KEYS: [number, Orbit][] = [
-  [100.0, { tx: 0, ty: 8, tz: 0, d: 95, az: -40, el: 6, fov: 40, shift: -0.12 }],
-  [102.0, { tx: 0, ty: 8, tz: 0, d: 95, az: -8, el: 6, fov: 40, shift: -0.12 }],
-  [103.5, { tx: 0, ty: 8, tz: 0, d: 95, az: 28, el: 7, fov: 40, shift: -0.12 }],
-  [104.5, { tx: 0, ty: 8, tz: 0, d: 140, az: 50, el: 20, fov: 40, shift: 0 }],
-  [105.3, { tx: 0, ty: 12, tz: 0, d: 150, az: 40, el: 30, fov: 40, shift: 0 }],
-  [106.2, { tx: 0, ty: 20, tz: 0, d: 88, az: 5, el: 22, fov: 40, shift: 0 }],
-  [108.2, { tx: 0, ty: 20, tz: 0, d: 85, az: -12, el: 16, fov: 40, shift: 0 }],
-  [110.0, { tx: 0, ty: 20, tz: 0, d: 150, az: -25, el: 22, fov: 40, shift: 0 }],
-  [111.0, { tx: 0, ty: 20, tz: 0, d: 190, az: -30, el: 24, fov: 40, shift: 0 }],
+/**
+ * 98.2–100：与 part2 s96 的展台相机严格对齐。s96 用针孔投影 x = 640 + 900·X/d、y = 380 + 900·H/d（1280 坐标），
+ * 相机高 H、距原点 D、绕 y 轴偏转 yaw；换算成这里的轨道相机：d = D·K、ty = H·K、az = yaw、el = 0、
+ * 垂直 fov = 2·atan(360/900) = 43.6°、地平线在 380/720 → 移轴 shift = -20/720。这一段线性插值（保持 s96 交接时的速度）。
+ */
+const FOV = 43.6
+const SH = -20 / 720
+const KEYS_A: [number, Orbit][] = [
+  [98.2, { tx: 0, ty: 1.2 * 36.7, tz: 0, d: 5.25 * 36.7, az: 0, el: 0, fov: FOV, shift: SH }],
+  [98.8, { tx: 0, ty: 1.25 * 36.7, tz: 0, d: 6.4 * 36.7, az: 6.9, el: 0, fov: FOV, shift: SH }],
+  [99.4, { tx: 0, ty: 1.3 * 36.7, tz: 0, d: 7.1 * 36.7, az: 20, el: 0, fov: FOV, shift: SH }],
+  [100.0, { tx: 0, ty: 1.3 * 36.7, tz: 0, d: 7.7 * 36.7, az: 28.6, el: 0, fov: FOV, shift: SH }],
+]
+/** 100 起继续绕转（az 一直增加，浮起后的关键帧 +360° 保持同向），104.5 熄灯时升高 */
+const KEYS_B: [number, Orbit][] = [
+  [100.0, { tx: 0, ty: 1.3 * 36.7, tz: 0, d: 7.7 * 36.7, az: 28.6, el: 0, fov: FOV, shift: SH }],
+  [101.0, { tx: 0, ty: 44, tz: 0, d: 250, az: 42, el: 0.5, fov: FOV, shift: SH }],
+  [102.5, { tx: 0, ty: 40, tz: 0, d: 215, az: 68, el: 1.5, fov: FOV, shift: -0.08 }],
+  [103.8, { tx: 0, ty: 34, tz: 0, d: 195, az: 98, el: 4, fov: FOV, shift: -0.14 }],
+  [104.5, { tx: 0, ty: 20, tz: 0, d: 230, az: 125, el: 18, fov: 42, shift: 0 }],
+  [105.3, { tx: 0, ty: 12, tz: 0, d: 150, az: 400, el: 30, fov: 40, shift: 0 }],
+  [106.2, { tx: 0, ty: 20, tz: 0, d: 88, az: 365, el: 22, fov: 40, shift: 0 }],
+  [108.2, { tx: 0, ty: 20, tz: 0, d: 85, az: 348, el: 16, fov: 40, shift: 0 }],
+  [110.0, { tx: 0, ty: 20, tz: 0, d: 150, az: 335, el: 22, fov: 40, shift: 0 }],
+  [111.0, { tx: 0, ty: 20, tz: 0, d: 190, az: 330, el: 24, fov: 40, shift: 0 }],
 ]
 
+/** ctOS 字标（与 part2 s96 同一画法；1280 坐标，局部总宽 580、基线 0、O 中心 (35,-100)） */
+function drawCtos(ctx: CanvasRenderingContext2D, t: number) {
+  const [lw, lx, ly] = keyed(
+    t,
+    [
+      [98.2, 580, 610, 440],
+      [98.8, 256, 628, 370],
+      [99.4, 210, 631, 350],
+      [100.0, 190, 632, 345],
+      [100.75, 180, 632, 340],
+    ],
+    ease.linear,
+  )
+  const k = lw / 580
+  ctx.save()
+  ctx.scale(S, S)
+  ctx.translate(lx, ly)
+  ctx.scale(k, k)
+  ctx.globalAlpha = 1 - seg(t, 100.3, 100.75)
+  ctx.font = `500 168px ${FONT.sans}`
+  ctx.letterSpacing = `${(168 * -0.02).toFixed(2)}px`
+  ctx.fillStyle = '#fff'
+  ctx.fillText('CT', -292, 0)
+  ctx.font = `500 270px ${FONT.sans}`
+  ctx.fillText('S', 132, 0)
+  ctx.beginPath()
+  ctx.ellipse(35, -100, 95, 100, 0, 0, Math.PI * 2)
+  ctx.fill()
+  // 内孔：98.3–98.6 由白变成透明（与 s96 一样用黑色按透明度盖）
+  const holeWhite = 1 - seg(t, 98.3, 98.6)
+  if (holeWhite < 1) {
+    ctx.beginPath()
+    ctx.ellipse(35, -100, 60, 76, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#000'
+    ctx.globalAlpha *= 1 - holeWhite
+    ctx.fill()
+  }
+  ctx.restore()
+}
+
 export const objects: Scene = {
-  id: 'wd1-100-ctos-objects',
-  start: 100,
+  id: 'wd1-098-ctos-objects',
+  start: 98.2,
   end: 111.0,
-  note: 'ctOS 物件：低机位绕平板 → 熄灯浮起 → 连线成网 → Data is interconnected → 拉远',
+  note: 'ctOS 物件：98.2 接 part2 展台 → 低机位绕平板 → 熄灯浮起 → 连线成网 → Data is interconnected → 拉远',
   render(f) {
     const { ctx, W, H, t } = f
     const c = memo('p3-objects', buildScene)
     const lightsOff = seg(t, 104.5, 105.4)
-    // 天幕：左上黑 → 右侧近地平线浅灰（屏幕空间渐变）
+    // 天幕：98.2 时与 s96 一致（竖直渐变 #0e0e0e → #8a8a8a，地平线 380/720 以下纯黑），
+    // 98.4–99.6 过渡到原片 100s 之后的斜向渐变（左上黑 → 右侧浅灰）
     ctx.fillStyle = '#000'
     ctx.fillRect(0, 0, W, H)
     if (lightsOff < 1) {
+      const hy = (380 / 720) * H
+      const mix = seg(t, 98.4, 99.6)
+      const v = ctx.createLinearGradient(0, 0, 0, hy)
+      v.addColorStop(0, '#0e0e0e')
+      v.addColorStop(1, '#8a8a8a')
       const g = ctx.createLinearGradient(0, 0, W * 0.85, H * 0.55)
       g.addColorStop(0, '#000')
       g.addColorStop(1, '#a6a6a6')
-      ctx.globalAlpha = 1 - lightsOff
+      ctx.globalAlpha = (1 - lightsOff) * (1 - mix)
+      ctx.fillStyle = v
+      ctx.fillRect(0, 0, W, hy)
+      ctx.globalAlpha = (1 - lightsOff) * mix
       ctx.fillStyle = g
       ctx.fillRect(0, 0, W, H)
       ctx.globalAlpha = 1
@@ -235,8 +315,9 @@ export const objects: Scene = {
     const plateA = 1 - 0.6 * seg(t, 104.2, 104.6) - 0.4 * seg(t, 105.0, 105.8)
     c.plates.visible = plateA > 0.01
     c.side.opacity = plateA
+    const others = seg(t, 98.2, 98.6)
+    c.sideB.opacity = plateA * others
     c.topMat.opacity = plateA
-    c.lineMat.opacity = plateA
     // 物件：地面 → 浮起
     const fly = ease.inOutCubic(seg(t, 104.6, 106.0))
     const dim = 1 - 0.85 * seg(t, 109.0, 110.3)
@@ -246,8 +327,8 @@ export const objects: Scene = {
       k.o.visible = t >= k.show && t < (k.hide ?? 1e9)
       k.o.position.set(lerp(k.a[0], k.b[0], fly), lerp(k.a[1], k.b[1], fly), lerp(k.a[2], k.b[2], fly))
       // 地面段物件比浮起后小（原片低机位时物件离得远、又被虚焦）
-      const sc = lerp(0.6, 1, fly)
-      k.o.scale.setScalar(sc * (k.show > 0 ? ease.outBack(seg(t, k.show, k.show + 0.4)) : 1))
+      const sc = lerp(k.sa, 1, fly)
+      k.o.scale.setScalar(Math.max(0.001, sc * (k.show > 0 ? ease.outBack(seg(t, k.show, k.show + 0.3)) : 1)))
     }
     // 网络连线生长（105.8 起）
     const np = seg(t, 105.8, 110.8)
@@ -260,15 +341,35 @@ export const objects: Scene = {
     c.lineGeo.attributes.position.needsUpdate = true
     c.netMat.opacity = 0.5 * seg(t, 105.8, 106.2)
 
-    const o = orbitAt(t, KEYS)
+    const o = t < 100 ? orbitAt(t, KEYS_A, ease.linear) : orbitAt(t, KEYS_B)
     applyOrbit(c.cam, o)
     const img = f.three.render(c.scene, c.cam, 0x000000, 0)
     ctx.save()
-    // 低机位段景深虚化
-    const blur = 1.6 * (1 - seg(t, 104.5, 105.5)) + 0.6
+    // 低机位段景深虚化（98.2 交接时为 0，与 s96 的清晰线框一致）
+    const blur = (1.6 * (1 - seg(t, 104.5, 105.5)) + 0.6) * seg(t, 98.2, 99.0)
     ctx.filter = `blur(${blur}px)`
     ctx.drawImage(img, 0, 0, W, H)
     ctx.restore()
+
+    // 展台顶面描边（s96 的主平板四边 + z=-0.6 横线），投影后在 2D 画，线宽与 s96 相同
+    if (plateA > 0.01) {
+      const P = (x: number, z: number) => project(c.cam, x * K, PLATE_T, z * K, W, H)
+      const poly = (pts: [number, number][], w: number, a: number, close = true) => {
+        const q = pts.map(([x, z]) => P(x, z))
+        if (q.some((p) => p.behind)) return
+        ctx.strokeStyle = `rgba(255,255,255,${a * plateA})`
+        ctx.lineWidth = w * S
+        ctx.beginPath()
+        q.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)))
+        if (close) ctx.closePath()
+        ctx.stroke()
+      }
+      for (const [x0, x1, z0, z1] of PLATES) {
+        const main = x0 === -1.5 && z0 === -1.5
+        poly([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 1.6, main ? 0.9 : 0.6 * others)
+      }
+      poly([[-4.5, -0.6], [4.5, -0.6]], 1, 0.5, false)
+    }
 
     // 节点小方点 + 旁边的极小说明字（2D）
     if (np > 0) {
@@ -287,16 +388,8 @@ export const objects: Scene = {
       })
     }
 
-    // "ctOS" 字样（上一段留下来的），100.3–100.75 淡出
-    const ca = 1 - seg(t, 100.3, 100.75)
-    if (ca > 0) {
-      const tp = project(c.cam, -2, 34, -4, W, H)
-      ctx.fillStyle = `rgba(235,235,235,${ca})`
-      ctx.font = `500 66px ${FONT.sans}`
-      ctx.fillText('CT', tp.x - 105, tp.y)
-      ctx.font = `500 100px ${FONT.sans}`
-      ctx.fillText('OS', tp.x - 18, tp.y)
-    }
+    // ctOS 字标（接 s96），100.3–100.75 淡出
+    if (t < 100.75) drawCtos(ctx, t)
 
     // "Data is interconnected" 空心字：108.2 起逐字打出，随后缩小后退
     if (t >= 108.2) {
