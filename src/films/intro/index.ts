@@ -56,7 +56,7 @@ const title: Scene = {
     cn(ctx, 110, 700)
     ctx.fillStyle = '#fff'
     ctx.fillText(typeOn('Watch Dogs 宣传片', seg(lt, 0.4, 1.4)), 160, 480)
-    highlight(ctx, { text: '用代码 1:1 复刻', x: 160, y: 610, size: 96, p: seg(lt, 1.2, 2.4), box: WD1.cyan, family: CN, weight: 700, cursor: true, frame: frameIndex(lt, 30) })
+    highlight(ctx, { text: '用代码 1:1 复刻 · V2', x: 160, y: 610, size: 96, p: seg(lt, 1.2, 2.4), box: WD1.cyan, family: CN, weight: 700, cursor: true, frame: frameIndex(lt, 30) })
     cn(ctx, 34, 400)
     ctx.fillStyle = 'rgba(255,255,255,0.75)'
     ctx.fillText(typeOn('两支原片 · WD1 151 秒 + WD2 121 秒 · 约 90 个镜头 · 全部由代码实时渲染', seg(lt, 2.2, 3.4)), 164, 720)
@@ -336,7 +336,7 @@ const limits: Scene = {
   render(f) {
     const { ctx, lt } = f
     ctx.globalAlpha = env(f)
-    header(f, '05', '做到了什么，还差什么')
+    header(f, '05', '第二版做了什么，还差什么')
     const col = (x: number, head: string, box: string, items: string[], t0: number) => {
       highlight(ctx, { text: head, x, y: 380, size: 40, p: seg(lt, t0, t0 + 0.8), box, family: CN, weight: 700 })
       items.forEach((s, i) => {
@@ -346,8 +346,8 @@ const limits: Scene = {
       })
     }
     col(120, '接近 1:1', WD1.cyan, ['版式与文字内容', '字重、字距、打字节奏', '转场时间点', '字幕逐句对齐'], 0.4)
-    col(700, '仍是替代品', '#ffffff', ['3D 模型：地球、城市、头骨', '照片：卫星图、人脸', '插画：DedSec 手绘', '运镜：凭截图估计'], 1.4)
-    col(1280, '下一步', '#ffffff', ['Blender 相机反求 → 1:1 运镜', 'OpenStreetMap 真实城市', 'NASA 地球 / Natural Earth', 'SSIM 逐镜头评分精修'], 2.4)
+    col(700, '第二版新增', '#ffffff', ['真实芝加哥 / 湾区 OSM 数据', 'NASA 地球 · Natural Earth', 'Blender 相机反求 9 段', '3D 后期 · 评分逐镜头精修'], 1.4)
+    col(1280, '仍在打磨', '#ffffff', ['灰色城市、线框客厅', 'DedSec 手绘、人脸照片', '无跟踪点镜头的运镜', '部分 3D 细节密度'], 2.4)
   },
 }
 
