@@ -54,6 +54,14 @@ scripts/       snap / export 无头渲染
 - 3D 场景用 `memo(key, build)` 缓存，共用 `f.three` 一个 WebGLRenderer。
 - 换成真实素材：镜头里凡是「程序化替代品」都在镜头表里标了 `ASSET`，把对应函数换成加载模型/图片即可。
 
+### 量化评分（精修依据）
+
+- `pnpm score <wd1|wd2> [起 终] [--step 0.5] [--tag v2]`：按 step 渲染复刻帧，与原片同刻帧（wd2 优先 `wd2-1080.mp4`）统一缩到 960×540 灰度比较。
+- 综合分 `100 × (0.4·SSIM + 0.4·EDGE + 0.2·HIST)`：EDGE 是 Sobel 边缘图相关（管构图/线条位置），HIST 是亮度直方图 EMD。细节见 `scripts/score.mjs` 文件头。
+- 产物：`docs/score/<tag>-<film>.md`（镜头按分数升序 + 热力条 `-heat.png`）、`.json`（逐帧/逐镜头数据，给 agent 读）、`snaps/score/` 最差 10 刻并排图。
+- `docs/score/v1-*` 是第一版基线，不要覆盖；精修后换新 tag 重跑，对比同一镜头分数。全片约 1 分钟。
+- 分数只排优先级：低分先看并排图再定性（时序错位、亮度、构图都会拉低分数）。
+
 ## 版权说明
 
 Watch Dogs、ctOS、DedSec 及原片设计归 Ubisoft 所有。本工程为学习与技术复刻，品牌文字和原片音轨不要用于商业发布。

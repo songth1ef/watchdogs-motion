@@ -10,7 +10,9 @@
     "snap": "node scripts/snap.mjs",
     "ref": "node scripts/extract-reference.mjs",
     "export": "node scripts/export.mjs",
-    "export:compare": "node scripts/export-compare.mjs"
+    "export:compare": "node scripts/export-compare.mjs",
+    "score": "node scripts/score.mjs",
+    "solve": "node scripts/solve-camera.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

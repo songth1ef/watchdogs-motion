@@ -19,7 +19,7 @@ import { s96MapCtos } from './part2/s96-map-ctos'
  */
 const shots: Scene[] = [s50City, s53Computer, s58Tower, s62Skull, s69Network, s72Statue, s77Represent, s82CtosSilos, s86PixelWords, s91Profiles, s94Sell, s96MapCtos]
 
-/** 未实现的空档自动补占位，保证 [50,100) 连续 */
+/** 未实现的空档自动补占位，保证 [50,98.2) 连续（98.2 起设备台由 part3/objects.ts 接管） */
 function fillGaps(list: Scene[], a: number, b: number): Scene[] {
   const sorted = [...list].sort((x, y) => x.start - y.start)
   const out: Scene[] = []
@@ -33,4 +33,4 @@ function fillGaps(list: Scene[], a: number, b: number): Scene[] {
   return out
 }
 
-export const part2: Scene[] = fillGaps(shots, 50, 100)
+export const part2: Scene[] = fillGaps(shots, 50, 98.2)

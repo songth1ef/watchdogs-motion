@@ -12,6 +12,7 @@ import { ThreeHost } from './engine/three-host'
 import { FONT } from './fx/text'
 import { drawCompare } from './compare'
 import { offscreen } from './fx/canvas'
+import { preloadAssets } from './assets'
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const canvas = $<HTMLCanvasElement>('out')
@@ -156,7 +157,8 @@ declare global {
   }
 }
 
-const ready = loadFonts()
+// 真实地理/地球资产在首帧前加载完（镜头渲染是时间纯函数，只能同步取用）
+const ready = Promise.all([loadFonts(), preloadAssets()]).then(() => {})
 window.__wd = {
   ready,
   renderAt(id, time, format = 'png') {
