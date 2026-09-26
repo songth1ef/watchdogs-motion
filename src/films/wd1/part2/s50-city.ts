@@ -1,56 +1,26 @@
 /**
  * 50.0–53.3  承接 part1：俯拍 3D 城市 + 设施小标签 + 右侧 "centralized control" 列表。
- * 51.0 起城市由灰色素模交叉淡变为青色半透明方块；52.0 起列表逐行（自上而下错开）从左侧擦除；
+ * 51.0 起城市由灰色交叉淡变为青色方块；52.0 起列表逐行（自上而下错开）从左侧擦除；
  * 52.4 起城市从左上向右下溶解，露出黑底接 "COMPUTER"。
+ *
+ * V2（G4a）：城市、相机、后期全部与 part1 s09-city 共用（真实芝加哥 OSM + grayPose：c 段反求末帧外推 +
+ * 按标签轨迹反解的 TAIL/TAIL2），50.0 处与 part1 同一函数、同一时刻 → 无跳变。
+ * 设施标签改为地面锚点投影（part1/tags.ts，与 s10 control 同一套锚点与残差修正）。
  * ASSET：城市与 part1 共用（part1/s09-city.ts 的 cityScene()），换真实模型只改那一处。
  */
 import * as THREE from 'three'
 import type { Scene } from '../../../engine/types'
-import { memo } from '../../../engine/three-host'
-import { cityScene, placeCam } from '../part1/s09-city'
+import { cityScene, drawRoutes, grayPost, placeCam } from '../part1/s09-city'
+import { TAG_KEYS, tagScreen } from '../part1/tags'
+import { renderWithPost } from '../../../three/post'
 import { tag } from '../../../fx/text'
 import { WD1 } from '../../../theme'
 import { clamp, ease, eraseHead, eraseTail, ref, setFont, span } from './common'
 
-const LABELS: [string, number, number][] = [
-  ['TRAFFIC LIGHTS', 500, 86],
-  ['NUCLEAR PLANT', 866, 148],
-  ['CAMERAS', 400, 264],
-  ['DOOR LOCK', 60, 310],
-  ['SECURITY SYSTEM', 238, 550],
-  ['BRIDGE CTRL', 432, 664],
-  ['WATER SUPPLY', 812, 660],
-]
-
-/**
- * 与 part1 共用同一座城市和相机（part1/s09-city.ts 的 cityScene / placeCam，关键帧已延续到 53.4），
- * 保证 50.0s 处画面连续。这里只在渲染前后临时改材质颜色做「灰 → 青」，渲染完恢复，不影响 part1。
- */
-function sharedCity() {
-  const c = cityScene()
-  return memo('wd1p2-city-shared', () => {
-    let mat: THREE.MeshLambertMaterial | null = null
-    let wireMat: THREE.LineBasicMaterial | null = null
-    c.scene.traverse((o) => {
-      if (o instanceof THREE.InstancedMesh) mat = o.material as THREE.MeshLambertMaterial
-      if (o instanceof THREE.LineSegments) wireMat = o.material as THREE.LineBasicMaterial
-    })
-    // 标签锚点：按 50.0s 时的屏幕位置反投影到楼顶高度的平面
-    placeCam(c.cam, 50)
-    const ray = new THREE.Raycaster()
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -3)
-    const anchors = LABELS.map(([, x, y]) => {
-      ray.setFromCamera(new THREE.Vector2((x / 1280) * 2 - 1, -(y / 720) * 2 + 1), c.cam)
-      const hit = new THREE.Vector3()
-      ray.ray.intersectPlane(plane, hit)
-      return hit
-    })
-    return { ...c, mat: mat!, wireMat: wireMat!, anchors }
-  })
-}
-
 const LIST = ['subway lines', 'traffic lights', 'surveillance', 'electricity grids']
 const RIGHT = 1152
+const CYAN = new THREE.Color(0x1aa89a)
+const CYAN_EMISSIVE = new THREE.Color(0x0b4a44)
 
 export const s50City: Scene = {
   id: 'wd1-050-city-ctos-list',
@@ -58,23 +28,32 @@ export const s50City: Scene = {
   end: 53.4,
   note: '承接 part1 的城市俯拍：灰→青、列表擦除、城市溶解',
   render({ ctx, t, three, W, H }) {
-    const c = sharedCity()
+    const c = cityScene()
     placeCam(c.cam, t)
-    // 灰 → 青（临时改共享材质，渲染后恢复）
+    // 灰 → 青（临时改共享材质，渲染后恢复，不影响 part1）
     const k = span(t, 50.85, 51.45, ease.inOutCubic)
-    const baseColor = c.mat.color.clone()
-    const baseEm = c.mat.emissive.clone()
-    const baseWire = c.wireMat.color.clone()
-    const baseOp = c.wireMat.opacity
-    c.mat.color.lerp(new THREE.Color(0x1aa89a), k)
-    c.mat.emissive.set(0x000000).lerp(new THREE.Color(0x0b4a44), k)
-    c.wireMat.color.lerp(new THREE.Color(0x6ff5e6), k)
-    c.wireMat.opacity = baseOp + 0.1 * k
-    const img = three.render(c.scene, c.cam)
-    c.mat.color.copy(baseColor)
-    c.mat.emissive.copy(baseEm)
-    c.wireMat.color.copy(baseWire)
-    c.wireMat.opacity = baseOp
+    const mat = c.mesh?.material as THREE.MeshLambertMaterial | undefined
+    const baseColor = mat?.color.clone()
+    const baseEm = mat?.emissive.clone()
+    if (mat) {
+      mat.color.lerp(CYAN, k)
+      mat.emissive.set(0x000000).lerp(CYAN_EMISSIVE, k)
+    }
+    const img = renderWithPost(
+      three,
+      c.scene,
+      c.cam,
+      grayPost(t, {
+        clear: 0x000000,
+        clearAlpha: 1,
+        // 转青后楼沿亮边也带青色（原片 51.5：青色楼块 + 浅青描边）
+        edge: { color: k > 0.5 ? 0x9ffff0 : 0xffffff },
+      }),
+    )
+    if (mat && baseColor && baseEm) {
+      mat.color.copy(baseColor)
+      mat.emissive.copy(baseEm)
+    }
 
     ctx.save()
     ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -90,44 +69,23 @@ export const s50City: Scene = {
 
     // 青色线路（part1 47.85s 起出现），城市转青后淡出
     ctx.save()
-    ctx.strokeStyle = WD1.cyanDeep
-    ctx.globalAlpha = 1 - k
-    ctx.lineWidth = 2.2
-    for (const r of c.routes) {
-      ctx.beginPath()
-      let started = false
-      for (const p of r) {
-        const v = p.clone().project(c.cam)
-        if (v.z > 1) {
-          started = false
-          continue
-        }
-        const x = (v.x * 0.5 + 0.5) * W
-        const y = (-v.y * 0.5 + 0.5) * H
-        if (started) ctx.lineTo(x, y)
-        else ctx.moveTo(x, y)
-        started = true
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    drawRoutes(ctx, c.cam, c.routes, 1 - k)
+    // 小标签：地面锚点按同一相机投影（与 s10 同一套，50.0 处连续）。52.3 以后文字消失只剩白条
+    TAG_KEYS.forEach((gk, i) => {
+      const p = tagScreen(i, t, c.cam)
+      if (p.behind) return
+      const shrink = 1 - span(t, 51.0, 52.6) * 0.3
+      const size = 26 * shrink
+      if (t < 52.3) tag(ctx, { text: gk.text, x: p.x, y: p.y + 36 * shrink, size, pointer: true })
+      else {
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(p.x, p.y + 36 * shrink - 4, gk.text.length * size * 0.55 * 1.5, 4)
       }
-      ctx.stroke()
-    }
+    })
     ctx.restore()
 
     ref(ctx)
-    // 小标签：跟随 3D 锚点。52.3 以后文字消失只剩白条
-    const v = new THREE.Vector3()
-    LABELS.forEach(([text], i) => {
-      v.copy(c.anchors[i]).project(c.cam)
-      const x = (v.x * 0.5 + 0.5) * 1280
-      const y = (-v.y * 0.5 + 0.5) * 720
-      const shrink = 1 - span(t, 51.0, 52.6) * 0.3
-      const size = 19 * shrink
-      if (t < 52.3) tag(ctx, { text, x, y, size, pointer: true })
-      else {
-        ctx.fillStyle = '#fff'
-        ctx.fillRect(x, y - 3, text.length * size * 0.55, 3)
-      }
-    })
-
     // 右侧列表
     const lineY = [320, 373, 428, 484]
     const drawRow = (text: string, baseY: number, boxed: boolean, p: number, typeP: number) => {

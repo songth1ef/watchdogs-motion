@@ -10,15 +10,15 @@
 | 3 | 11.80–15.10 | wd1-012-blackout | 「2003 Blackout」大标题 + 长下划线；美国东北斜纹陆地（V2：NE 陆地/五大湖、气泡 = 真实城市） + 点阵底；青色半透明气泡依次弹出；12.15s「Panic / New York State」白底打字，13.95s 从左擦除；整层加速推近，14.85s 淡出 | s03-blackout.ts |
 | 4 | 15.00–18.40 | wd1-015-roads | 美国东北灰色道路网 + 海岸/州界（V2：NE 真实海岸/州界，道路节点 = 真实城市），地图缓慢左移；白色半透明圆点（中心小十字）此起彼伏；15.55s「11 PEOPLE DIED IN THE DARK」等宽白底打字；18.1s 地图熄灭、标签从左擦除 | s04-roads.ts |
 | 5 | 18.20–22.30 | wd1-018-blame | 18.2 网格拼块转场（V2：整屏按 2 条竖线 × 2 条横线切格，每 0.1s 换切法，格内横线/方格/竖线/点阵/斜菱格；18.45–18.6 用原片量出的四象限）；线描方角「BLAME?」渐亮，19.2 换倒角字形；18.85 起菱形格底 + 中部柔光雾；以「?」下点为锚推近到「ME?」（V2：锚点下移 30–84px，短横落在字母基线、小字紧贴其下）；19.3 发光短横，19.55「a small vulnerability inside_」42 字/秒打字（vulnerability 灰底高亮）；21.3 起 "small" 变暗、21.42 起约 50 字/秒从左删除；21.1 起字母线段从左往右整根熄灭（? 保留到淡出） | s05-blame.ts |
-| 6 | 21.75–24.30 | wd1-022-pylons | 电塔阵列：俯视 → 压低视角沿中央塔列推进；23.05 圆环圈住主角塔，推到桁架特写；「_TRANSMISSION_CONTROL_ROOM」深灰渐变底等宽字从 ME? 的光标位置接出，随镜头漂移，24.0 擦除（画在 blame 之下，blame 在 22.0–22.3 淡出） | s06-pylons.ts |
+| 6 | 21.75–24.30 | wd1-022-pylons | 电塔阵列：俯视 → 压低视角沿中央塔列推进；23.05 圆环圈住主角塔，推到桁架特写；「_TRANSMISSION_CONTROL_ROOM」深灰渐变底等宽字从 ME? 的光标位置接出，随镜头漂移，24.0 擦除（画在 blame 之下，blame 在 22.0–22.3 淡出）。**V2（G4a）**：21.75–23.72 相机 = 反求 `wd1-pylons`（尺度 526、塔顶平面 y=10.4、主角塔 = 反求 (0.009, 0.18)），23.72–24.05 混合回手调特写；contrast(1.2) 改为后期 tone。评分 48.9 → 61.1 | s06-pylons.ts |
 | 7 | 24.35–26.95 | wd1-024-raymond | 「Raymond / Kenney」斜纹白底细体大字逐字打（末字灰色幽灵）、「DISGRUNTLED EMPLOYEE」粗体白底；头像由小放大、X 光全身照 25.5 弹出；× 网格 + 黄绿档案网与小字；26.0 起整层加速左甩出画 | s07-raymond.ts |
 | 8 | 26.60–30.60 | wd1-027-virus | USB 图标从左侧横线接入并分叉；5×7 点阵「VIRUS」（每格两条竖短划、斜体）逐格出现；「...and」+「walked away」白底打字，28.45 擦除；28.75 起四个白色饼图扫出并缓慢转动；数据小字列；29.0 起整体缩小淡出 | s08-virus.ts |
 | 9 | 29.90–33.35 | wd1-030-overloaded | 迷你文字行拼成的点阵「OVERLOADED」+ 聚向一点的档案网；31.4「the grid shutdown」白底打字；32.6 起整体缩成一点、横向闪光 | s08-virus.ts |
 | 10 | 33.30–34.70 | wd1-033-floor | 透视点阵地面前进，中心四列连成亮线；34.2 起横向撕裂、压暗 | s09-city.ts |
-| 11 | 34.40–50.00 | wd1-034-city | 3D 灰色城市（带河道）：34.4–38.2 暗色扫描线 + 故障飞越（夹杂点阵地面切片）→ 38.2 低空飞越 → 39.2 远景城市板块 → 42.4 抬高旋转成斜俯视 → 46 更陡俯视；47.85 青色线路 | s09-city.ts |
+| 11 | 34.40–50.00 | wd1-034-city | 3D 灰色城市（带河道）：34.4–38.2 暗色扫描线 + 故障飞越（夹杂点阵地面切片）→ 38.2 低空飞越 → 39.2 远景城市板块 → 42.4 抬高旋转成斜俯视 → 46 更陡俯视；47.85 青色线路。**V2（G4a）**：城市 = 真实芝加哥 OSM（West Loop 一带，高度 ×0.3，板块 + 距离雾）；相机 38.2–42.8 反求 `wd1-gray-city-b`、44.2–48.3 反求 `wd1-gray-city-c`（c 段 43.23–44.1 坏帧弃用，42.8–44.2 两段外推混合），34.4–38.2 由 b 首帧倒推，48.3 以后按设施标签轨迹反解（TAIL）；后期 greyCityEdges（亮边收稀压暗、不加颗粒），删 2D contrast(1.5)；青色线路 = OSM CTA 轨道。原片灰城与 OSM 配准不出唯一解（NCC ≤ 0.21），只对上街网朝向/街区尺度。评分 46.8 → 49.6 | s09-city.ts |
 | 12 | 40.00–43.25 | wd1-040-centralos | 「centralOperatingSystem」斜纹白底打字（前 15 字瞬出，其余 20 字/秒），42.45–43.1 整块加速下滑出画（V2 加快） | s10-ctos.ts |
 | 13 | 42.00–47.00 | wd1-042-ctos | c(42.0) / T(42.2) / O(42.3) / S(42.45) 依次分散弹出，42.85–43.4 收拢成「ctOS」（c、T 小型大写 = 0.62×，字重 500）并放大（V2 整体大 12%），46.55 起左滑出画（46.8 只剩 "OS"） | s10-ctos.ts |
-| 14 | 46.55–50.00 | wd1-046-control | 「centralized control」右对齐打字；青底白字清单 subway lines(47.95) / traffic lights(48.75) / surveillance(49.38)；48.55 起等宽设施标签 TRAFFIC LIGHTS / CAMERAS / NUCLEAR PLANT / WATER SUPPLY / DOOR LOCK / SECURITY SYSTEM / BRIDGE CTRL 依次弹出并按参考帧轨迹漂移 | s10-ctos.ts |
+| 14 | 46.55–50.00 | wd1-046-control | 「centralized control」右对齐打字；青底白字清单 subway lines(47.95) / traffic lights(48.75) / surveillance(49.38)；48.55 起等宽设施标签 TRAFFIC LIGHTS / CAMERAS / NUCLEAR PLANT / WATER SUPPLY / DOOR LOCK / SECURITY SYSTEM / BRIDGE CTRL 依次弹出并按参考帧轨迹漂移。**V2（G4a）**：标签改为地面锚点按灰城新相机投影（`tags.ts`：锚点与 48.3 后相机联合反解，残差在量过的时刻修正到原片位置）。评分 30.0 → 35.9 | s10-ctos.ts |
 
 注：原片 48s 左右并不是「COMPUTER」，而是 centralized control 清单继续展开；50s 处由 part2 硬切接上。
 
@@ -33,7 +33,7 @@
 | 道路网 | `s04-roads.ts` `roadNetwork()` / `outlines()` | **V2**：海岸/州界/五大湖换 NE 50m（只画美国），投影 = Albers + 仿射 + 控制点 RBF 橡皮膜（`projA()`）。道路仍是程序化：NE 城市点加密 + k 近邻，未接真实道路（NE 10m roads 或 OSM motorway 可替换 `realRoadNetwork()`） |
 | 电塔 | `s06-pylons.ts` `simplePylon()` / `heroPylon()` | 换真实电塔模型（远景 InstancedMesh，主角塔单独） |
 | Raymond 头像、X 光照 | `s07-raymond.ts` `drawFace()` / `drawBody()` | 换图片 `drawImage`，保持框位置（V2：头像右缘 1025、X 光照 (1034,201) 368×368） |
-| 城市 | `s09-city.ts` `cityScene()` | 当前用 `three/city.ts` `cityLayout()` + 自建实例网格与边线；换真实城市模型（芝加哥素模）并保留相机关键帧 `cityCamera()` |
+| 城市 | `s09-city.ts` `cityScene()` | V2 已换 `buildRealCity`（OSM）+ 反求相机 `grayPose()`；原片同款模型到手后只换 `cityScene()` 里的网格，对齐常量 `GRAY_B_ALIGN / GRAY_C_ALIGN / GRAY_RECT` 需按新模型重调 |
 
 ## 接近 1:1 的部分
 
@@ -78,3 +78,13 @@
 - 调参钩子：`part1/tune.ts`（wd2 为 `wd2/part1/tune.ts`）的 `tune(key, 默认值)`，只在无头调参脚本往 `window.__g1` 塞覆盖值时生效；正常播放/导出恒为默认值，不破坏纯函数约定。
 - 评分（`pnpm score wd1 --tag v2-g1`，全片 step 0.5）：earth 72.3→71.4、blackout 57.7→60.2、roads 59.4→58.0、global-network 46.2→55.9、world-views（95.95–97.55 子段）79.3→79.7。
 - 建议上提到共享库：`part1/earth.ts realEarthCanvas()`（按海陆分开调增益的地球合成，`assets/earth.ts earthComposite` 做不到）；`s04-roads.ts` 的 Albers 投影 + 控制点 RBF 橡皮膜（`projA`），可进 `assets/projection.ts`。
+
+## V2 精修记录（G4a 3D 城市组）
+
+- 覆盖：part1 `s06-pylons.ts`、`s09-city.ts`、`s10-ctos.ts` 的 control、新增 `city-cam.ts` / `tags.ts`；part2 `s50-city.ts`；part3 `city.ts` / `layout.ts` / `lights.ts`（素模城市见 wd1-part3.md）。
+- 评分（`pnpm score wd1 21.5 139.5 --tag v2-g4a`）：pylons 48.9→61.1、city 46.8→49.6、ctos 40.7→46.8、control 30.0→35.9、s50 36.8→52.0、clay-city 32.3→49.3。
+- 对齐方法：反求点云正射拼图（按反求相机把原片帧投到主平面）→ 与 OSM 建筑轮廓做 FFT 归一化互相关（旋转 × 尺度 × 平移）→ 用无后期渲染与原片的「模糊 Sobel 边缘图」NCC 坐标下降精修；相邻段独立对齐，交界用两段外推 + smoothstep 姿态混合。调参工具是临时脚本，未入库。
+- 衔接检查（逐帧位移/转角 + 交界前后各 2 帧快照）：23.72、38.2、42.8、44.2、48.3、50.0、124.3、133.4 均无跳变（48.15–48.2 有 c 段自身末帧抖动，<2°/帧）。
+- 已知坑：`buildRealCity` 的合并网格没有 normal 属性，post.ts 的法线 Pass（MeshNormalMaterial）拿到零法线，GTAO 会把整幅压黑、亮边描不出（灰城实测均值 18 → 3）。本组用 `city-cam.ts withFlatNormals()` 拆非索引补面法线绕过。
+- 已知坑：post 的 `grain` 会把原片纯黑背景弄脏，score 的 SSIM 在黑场上对噪声极敏感（灰城远景 SSIM 0.6 → 0.3），本组镜头都关了颗粒。
+- 建议上提到共享库：`city-cam.ts` 的 `sampleTrackExt`（带角速度的首尾外推）、`blendPose`、`alignPoint`、`unprojectToPlane` 可并入 `engine/camera-track.ts`；`withFlatNormals` 应在 `three/real-city.ts` 里直接输出法线。

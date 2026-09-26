@@ -5,10 +5,18 @@ import { clamp, seg } from '../../../engine/math'
 import { memo } from '../../../engine/three-host'
 import { FONT, font, measure, tracking } from '../../../fx/text'
 import { spline } from './util'
+import { alignTrack, cameraTrack } from '../../../engine/camera-track'
+import { renderWithPost } from '../../../three/post'
+import { blendPose, cameraPose, poseToCamera, sampleTrackExt, smoothW } from './city-cam'
 
 /**
  * 21.75–24.3  电塔阵列：俯视 → 压低视角沿塔列推进，圆环圈住一座塔，推到塔身特写；
  * 标签「_TRANSMISSION_CONTROL_ROOM」深灰渐变底等宽字。
+ * V2（G4a）：21.75–23.72 相机用反求 wd1-pylons（good，0.66 px）。反求点云 = 各塔塔顶（主平面），
+ * 正射拼图上塔阵是正方网格、间距 0.057 反求单位 → 尺度 30/0.057 ≈ 526；中央亮线那一列 x = 0.009、
+ * 被圆环圈住的主角塔在 z = 0.18（末帧视线落点所在行）→ 平移到 (0, 塔顶 10.4, HERO_Z)。旋转 0（相机同样朝 -z 推进）。
+ * 23.72 以后反求结束，按尾速外推并在 23.72–24.05 混合到原来的手调关键帧（推到桁架特写）。
+ * 2D 的 contrast(1.2) 改由后期 tone.contrast 负责（不加颗粒：会弄脏纯黑背景）。
  * ASSET：电塔是程序化几何（远处用方块拼的简化塔 InstancedMesh，主角塔用线段桁架），换真实模型时替换 simplePylon()/heroPylon()。
  */
 
@@ -128,6 +136,10 @@ const scene3d = () =>
     return { scene, cam }
   })
 
+/** 反求 → 场景：X' = 526·X + (−4.7, 10.4, −154.7) */
+const PYLON_ALIGN = { scale: 526, rotation: [0, 0, 0] as [number, number, number], offset: [-4.7, 10.4, HERO_Z - 526 * 0.18] as [number, number, number] }
+const pylonTrack = () => memo('wd1p1:pylon-track', () => alignTrack(cameraTrack('wd1-pylons'), PYLON_ALIGN))
+
 export const pylons: Scene = {
   id: 'wd1-022-pylons',
   start: 21.75,
@@ -135,22 +147,28 @@ export const pylons: Scene = {
   note: '电塔阵列：俯视转压低视角沿中央塔列推进，圆环圈住主角塔并推到桁架特写；_TRANSMISSION_CONTROL_ROOM 标签',
   render({ ctx, t, three }) {
     const { scene, cam } = scene3d()
-    // 相机：位置与注视点分别关键帧（相对主角塔）
-    const K = (keys: [number, number][]) => spline(t, keys)
-    const px = K([[23.8, 0], [24.1, -2], [24.3, -2.5]])
-    const py = K([[21.75, 430], [22.1, 360], [22.6, 150], [23.0, 80], [23.2, 32], [23.8, 15], [24.1, 10], [24.3, 9.5]])
-    const pz = HERO_Z + K([[21.75, 170], [22.1, 190], [22.6, 330], [23.0, 300], [23.2, 175], [23.8, 26], [24.1, 7], [24.3, 4]])
-    const lx0 = K([[23.8, 0], [24.1, 1], [24.3, 1.2]])
-    const ly0 = K([[22.6, 0], [23.0, 0], [23.2, 11], [23.8, 5], [24.1, 9], [24.3, 9.3]])
-    const lz = HERO_Z + K([[21.75, -40], [22.6, -60], [23.0, 60], [23.2, 80], [23.8, 0], [24.3, 0]])
-    cam.position.set(px, py, pz)
-    cam.up.set(0, 1, 0)
-    cam.lookAt(lx0, ly0, lz)
-    cam.updateMatrixWorld()
-    const gl = three.render(scene, cam)
+    // 相机：反求轨迹（21.75–23.72）→ 23.72–24.05 混合到手调关键帧（推到桁架特写，相对主角塔）
+    const trk = pylonTrack()
+    if (t <= trk.end) poseToCamera(cam, sampleTrackExt(trk, t, 0))
+    else {
+      const K = (keys: [number, number][]) => spline(t, keys)
+      const px = K([[23.8, 0], [24.1, -2], [24.3, -2.5]])
+      const py = K([[23.2, 32], [23.8, 15], [24.1, 10], [24.3, 9.5]])
+      const pz = HERO_Z + K([[23.2, 175], [23.8, 26], [24.1, 7], [24.3, 4]])
+      const lx0 = K([[23.8, 0], [24.1, 1], [24.3, 1.2]])
+      const ly0 = K([[23.2, 11], [23.8, 5], [24.1, 9], [24.3, 9.3]])
+      const lz = HERO_Z + K([[23.2, 80], [23.8, 0], [24.3, 0]])
+      cam.position.set(px, py, pz)
+      cam.up.set(0, 1, 0)
+      cam.fov = 40
+      cam.lookAt(lx0, ly0, lz)
+      cam.updateProjectionMatrix()
+      const manual = cameraPose(cam)
+      poseToCamera(cam, blendPose(sampleTrackExt(trk, t, 0.3), manual, smoothW(t, trk.end, 24.05)))
+    }
+    const gl = renderWithPost(three, scene, cam, { time: t, clear: 0x000000, clearAlpha: 0, tone: { contrast: 1.25, exposure: 0.6 } })
     ctx.save()
     ctx.globalAlpha = seg(t, 21.75, 21.95) * (1 - seg(t, 24.15, 24.25))
-    ctx.filter = 'contrast(1.2)'
     ctx.drawImage(gl, 0, 0)
     ctx.restore()
 

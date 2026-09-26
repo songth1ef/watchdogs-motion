@@ -10,7 +10,7 @@
 
 | 时间码 | 文件 | 画面元素 / 文字 | 运动与转场 |
 | --- | --- | --- | --- |
-| 50.0–53.4 | `s50-city.ts` | 承接 part1 的俯拍 3D 城市、7 个等宽小标签（TRAFFIC LIGHTS / NUCLEAR PLANT / CAMERAS / DOOR LOCK / SECURITY SYSTEM / BRIDGE CTRL / WATER SUPPLY），右侧 "centralized control" + 青底 subway lines / traffic lights / surveillance / electricity grids | 相机持续后拉+偏转；50.65 打出第 4 行；50.85–51.45 城市灰→青交叉淡变；51.8 起各行自上而下错开擦除（青底右端固定、左缘收窄，文字从尾部截掉，无底块行从头部擦）；52.3 标签文字消失只剩白条；52.7 起斜向溶解到黑 |
+| 50.0–53.4 | `s50-city.ts` | 承接 part1 的俯拍 3D 城市、7 个等宽小标签（TRAFFIC LIGHTS / NUCLEAR PLANT / CAMERAS / DOOR LOCK / SECURITY SYSTEM / BRIDGE CTRL / WATER SUPPLY），右侧 "centralized control" + 青底 subway lines / traffic lights / surveillance / electricity grids | 相机持续后拉+偏转；50.65 打出第 4 行；50.85–51.45 城市灰→青交叉淡变；51.8 起各行自上而下错开擦除（青底右端固定、左缘收窄，文字从尾部截掉，无底块行从头部擦）；52.3 标签文字消失只剩白条；52.7 起斜向溶解到黑。**V2（G4a）**：城市/相机/后期与 part1 s09 共用（`grayPose` 50 s 后为 TAIL2，C¹ 连续、50.0 无跳变），标签用 part1 `tags.ts` 的锚点投影（51.5/52.2 补量原片位置作残差修正）。评分 36.8 → 52.0 |
 | 52.8–57.9 | `s53-computer.ts` | 黑底 "COMPUTER"（119px 粗体）/ "CONTROLS A MAJOR CITY"（62px） | 打字（下一个字符先半透明闪一下）；55.08 起 " A MAJOR CITY" 加速右滑出屏；55.55 巨大 "?" 从左外减速滑入；55.62 CONTROLS、56.26 COMPUTER 被青色高亮笔刷过（字变黑） |
 | 57.75–62.7 | `s58-tower.ts` | 白底页面：威利斯塔剪影、深色标签 "THE ANSWER IS..."、"Private companies that have / everything to gain from a..."（Private companies 青高亮）、引线、黑底 "ctOS" 字标（CT 小型大写，O/S 底块更高）、塔身青块、小方块注释、T. Rushmore 引语 4 行 | 57.75 白页从左扩展铺满；镜头从 3.3× 急拉到 1.4×、再指数缓拉到 1×；60.65–61.3 向左上平移；61.3 起页面上移出画，下缘带灰绿色反光，露出黑底；**V2**：白页右缘 57.9≈730 / 58.0≈966 / 58.1≈1180 才铺满，急拉 2.57(57.9)→2.14(58.1)→58.4 接指数缓拉，标签底随打字增长（57.76 起 35 字/秒） |
 | 62.6–69.4 | `s62-skull.ts` | CT 头部扫描；"Personal Data Collection"（青底）/ "is the key commodity"（斜纹浅青底）；两侧白色定位小标记；青色数据点 | 62.9 切片由小放大；单张切片从头顶逐层扫到上颌；65.65 切换为已扫描切片堆成的 3D 体：俯视同心环 → 66.0 正视横条纹 → 67.2 斜俯视侧转 → 68.4 倾斜；文字 65.6 后下移左移并收窄消失；68.8–69.3 缩成网络中心节点；67.6 起网络在头骨后面生长；**V2**：先在切片上打黑字、63.3–63.6 青底才扫出；66.0 仍是俯视单张切片（上颌层），66.08 起才换 3D 体；文字 65.7–66.5 先快后慢收窄（65.8 剩 80%、66.0 剩 30%），轨迹按逐帧重量；63.0 切片放大到 165 |
@@ -33,7 +33,7 @@
 
 | 素材 | 替换位置 | 说明 |
 | --- | --- | --- |
-| 3D 城市 | `s50-city.ts` → `buildCity()` | 用 `three/city.ts` 程序化楼块；原片灰色阶段是高细节城市 |
+| 3D 城市 | `part1/s09-city.ts` `cityScene()` | V2 与 part1 共用真实芝加哥 OSM 城市；原片灰色阶段是高细节城市 |
 | 威利斯塔 | `s58-tower.ts` → `drawTower()` | 分层矩形 + 雾化渐变 |
 | CT 切片 / 头部体 | `s62-skull.ts` → `ctSlice(level)`、`widthAt()`/`drawHead()` | 程序化切片（颅骨环、脑回、眼眶、骨块）；换真实 CT 序列：`ctSlice` 返回对应层图片 |
 | 美国轮廓 / 城市 | `s69-network.ts` → `US_OUTLINE`、`CITIES` | **V2 已换真实数据**：美国标准 Albers 投影（70.5s 七枢纽拟合残差 5.8px）+ Natural Earth 50m 州面做点内判定 + NE 城市点小字（美国 + 加拿大南部）+ 枢纽→城市射线；`US_OUTLINE`/手写城市仅作资产缺失回退。原片城市小字比 NE 城市库密得多，其余仍是随机填充 |

@@ -4,6 +4,10 @@ import { WD1 } from '../../../theme'
 import { FONT, font, measure, tag, tracking } from '../../../fx/text'
 import { hatchRect } from '../../../fx/image'
 import { spline } from './util'
+import * as THREE from 'three'
+import { memo } from '../../../engine/three-host'
+import { placeCam } from './s09-city'
+import { TAG_KEYS, tagScreen } from './tags'
 
 /**
  * 城市上方的 2D 文字层：
@@ -94,16 +98,7 @@ function rightType(ctx: CanvasRenderingContext2D, text: string, n: number, right
   tracking(ctx, 0)
 }
 
-// 设施标签的屏幕轨迹（从 48.7/49.2/49.6/50.0 参考帧量出的左上角），[时刻, x, y]
-const TAGS: { text: string; t0: number; keys: [number, number, number][] }[] = [
-  { text: 'TRAFFIC LIGHTS', t0: 48.55, keys: [[48.55, 570, 520], [48.7, 571, 456], [49.2, 569, 281], [49.6, 648, 168], [50, 751, 91]] },
-  { text: 'CAMERAS', t0: 48.6, keys: [[48.6, 890, 830], [48.7, 828, 761], [49.2, 614, 602], [49.6, 576, 463], [50, 600, 355]] },
-  { text: 'NUCLEAR PLANT', t0: 48.75, keys: [[48.75, 1075, 225], [49.2, 1154, 211], [49.6, 1224, 197], [50, 1298, 185]] },
-  { text: 'WATER SUPPLY', t0: 48.8, keys: [[48.8, 1830, 936], [49.2, 1598, 960], [49.6, 1368, 984], [50, 1214, 950]] },
-  { text: 'DOOR LOCK', t0: 48.95, keys: [[48.95, 145, 1040], [49.2, 108, 876], [49.6, 48, 614], [50, 91, 434]] },
-  { text: 'SECURITY SYSTEM', t0: 49.15, keys: [[49.15, 548, 1144], [49.6, 446, 955], [50, 355, 787]] },
-  { text: 'BRIDGE CTRL', t0: 49.45, keys: [[49.45, 700, 1085], [50, 648, 960]] },
-]
+const controlCam = () => memo('wd1p1:control-cam', () => new THREE.PerspectiveCamera(24, 1920 / 1080, 20, 40000))
 
 export const control: Scene = {
   id: 'wd1-046-control',
@@ -125,11 +120,13 @@ export const control: Scene = {
       const n = Math.max(1, Math.min(txt.length, Math.floor((t - t0) * 34)))
       rightType(ctx, txt, n, R, top + 58, 64, { top, h: 79 })
     }
-    for (const g of TAGS) {
-      if (t < g.t0) continue
-      const x = spline(t, g.keys.map(([k, v]) => [k, v] as [number, number]))
-      const y = spline(t, g.keys.map(([k, , v]) => [k, v] as [number, number]))
-      tag(ctx, { text: g.text, x, y: y + 36, size: 26, p: clamp((t - g.t0) / 0.5), pointer: true })
-    }
+    // V2（G4a）：设施标签贴在城市地面锚点上，按灰色城市的新相机投影（残差修正见 tags.ts）
+    const cam = controlCam()
+    placeCam(cam, t)
+    TAG_KEYS.forEach((g, i) => {
+      if (t < g.t0) return
+      const { x, y, behind } = tagScreen(i, t, cam)
+      if (!behind) tag(ctx, { text: g.text, x, y: y + 36, size: 26, p: clamp((t - g.t0) / 0.5), pointer: true })
+    })
   },
 }

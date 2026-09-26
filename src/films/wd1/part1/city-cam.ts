@@ -22,7 +22,7 @@ export interface Pose {
 const newPose = (): Pose => ({ pos: new THREE.Vector3(), quat: new THREE.Quaternion(), fov: 40 })
 
 /**
- * 取轨迹在 t 的相机；超出 [start, end] 时按首/尾两帧的速度线性外推位置（旋转与 fov 夹紧），
+ * 取轨迹在 t 的相机；超出 [start, end] 时按首/尾两帧的速度与角速度线性外推位置和朝向（fov 夹紧），
  * `maxExt` 秒以外不再外推（避免长时间外推跑飞）。
  */
 export function sampleTrackExt(track: CameraTrack, t: number, maxExt = 0.5, out = newPose()): Pose {
@@ -32,14 +32,30 @@ export function sampleTrackExt(track: CameraTrack, t: number, maxExt = 0.5, out 
   out.fov = s.fov
   const n = track.times.length
   if (n < 2) return out
+  let i0 = -1
+  let i1 = -1
+  let dt = 0
   if (t > track.end) {
-    const dt = track.times[n - 1] - track.times[n - 2]
-    const v = track.pos[n - 1].clone().sub(track.pos[n - 2]).divideScalar(dt)
-    out.pos.addScaledVector(v, Math.min(t - track.end, maxExt))
+    i0 = n - 2
+    i1 = n - 1
+    dt = Math.min(t - track.end, maxExt)
   } else if (t < track.start) {
-    const dt = track.times[1] - track.times[0]
-    const v = track.pos[1].clone().sub(track.pos[0]).divideScalar(dt)
-    out.pos.addScaledVector(v, -Math.min(track.start - t, maxExt))
+    i0 = 1
+    i1 = 0
+    dt = Math.min(track.start - t, maxExt)
+  }
+  if (i0 >= 0 && dt > 0) {
+    const h = Math.abs(track.times[i1] - track.times[i0])
+    const v = track.pos[i1].clone().sub(track.pos[i0]).divideScalar(h)
+    out.pos.addScaledVector(v, dt)
+    // 角速度：相邻两帧的相对旋转，按 dt/h 放大角度
+    const d = track.quat[i0].clone().invert().premultiply(track.quat[i1].clone()) // q1·q0⁻¹（世界系增量）
+    const w = Math.min(1, Math.abs(d.w))
+    const ang = 2 * Math.acos(w) * Math.sign(d.w || 1)
+    if (ang > 1e-6) {
+      const axis = new THREE.Vector3(d.x, d.y, d.z).normalize()
+      out.quat.premultiply(new THREE.Quaternion().setFromAxisAngle(axis, (ang * dt) / h))
+    }
   }
   return out
 }
@@ -103,4 +119,18 @@ export function unprojectToPlane(cam: THREE.PerspectiveCamera, x: number, y: num
 export function projectTo(cam: THREE.Camera, p: THREE.Vector3Like, W = 1920, H = 1080) {
   const v = new THREE.Vector3(p.x, p.y, p.z).project(cam)
   return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H, behind: v.z > 1 }
+}
+
+/**
+ * buildRealCity 的合并网格只有 position（靠 flatShading 出面法线），没有 normal 属性：
+ * post.ts 的法线 Pass 用 MeshNormalMaterial 画它时法线为 0，AO 会把整幅压黑、亮边描不出来。
+ * 这里拆成非索引三角形并算面法线（顶点色一并保留）。建议上提：real-city.ts 直接输出法线。
+ */
+export function withFlatNormals(mesh: THREE.Mesh | null) {
+  if (!mesh) return mesh
+  const g = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry
+  g.computeVertexNormals()
+  mesh.geometry.dispose()
+  mesh.geometry = g
+  return mesh
 }

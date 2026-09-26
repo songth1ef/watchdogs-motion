@@ -26,7 +26,7 @@ import { hasGeo } from '../../../assets/geo'
 import { blockLayout, CLAY_A_ALIGN, CLAY_B_ALIGN, CLAY_RECT, HACKED_TRACK, PHONE_SCREEN, PHONE_T } from './layout'
 import { FONT, typeOn } from '../../../fx/text'
 import { WD1 } from '../../../theme'
-import { alignPoint, blendPose, poseToCamera, projectTo, sampleTrackExt, smoothW, unprojectToPlane, type Pose } from '../part1/city-cam'
+import { alignPoint, blendPose, withFlatNormals, poseToCamera, projectTo, sampleTrackExt, smoothW, unprojectToPlane, type Pose } from '../part1/city-cam'
 
 // HACKED 像素字（5×5）
 const GLYPHS: Record<string, string[]> = {
@@ -123,8 +123,9 @@ function buildCity() {
   const hk = hackedCells()
   let cityMat: THREE.MeshStandardMaterial
   if (hasGeo('chicago')) {
-    const city = buildRealCity({ region: 'chicago', style: 'clay', rect: CLAY_RECT, jitter: 0.08, ground: 0x000000, water: 0x161616, minArea: 30 })
+    const city = buildRealCity({ region: 'chicago', style: 'clay', rect: CLAY_RECT, jitter: 0.08, ground: 0x000000, water: 0x161616, minArea: 60 })
     carve(city.mesh!, hk.inside)
+    withFlatNormals(city.mesh) // 给后期的法线/AO Pass 用（buildRealCity 不输出法线）
     city.mesh!.castShadow = true
     city.mesh!.receiveShadow = true
     scene.add(city.group)
@@ -173,7 +174,7 @@ function buildCity() {
   sun.position.set(cx - 1200, 2600, cz + 900)
   sun.target.position.set(cx, 0, cz)
   sun.castShadow = true
-  sun.shadow.mapSize.set(4096, 4096)
+  sun.shadow.mapSize.set(2048, 2048)
   const sc = sun.shadow.camera as THREE.OrthographicCamera
   sc.left = -3200
   sc.right = 3200
@@ -212,7 +213,8 @@ const _pb = newPose()
 /** 俯冲段（123.4–124.3，反求解不出）：绕 a 段首帧视线与主平面的交点做轨道运动，124.3 并入 a 段 */
 function divePose(t: number, out: Pose): Pose {
   const { a } = tracks()
-  const p0 = sampleTrackExt(a, a.start, 0, newPose())
+  // 以 a 段首帧按速度/角速度往回外推的姿态为基准（124.3 处 u→0 且导数为 0 → 速度连续）
+  const p0 = sampleTrackExt(a, t, 0.9, newPose())
   const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(p0.quat)
   const pivot = p0.pos.clone().addScaledVector(fwd, (p0.pos.y - CLAY_A_ALIGN.offset[1]) / Math.max(0.2, -fwd.y))
   // u：1 = 123.55（最斜、最远），0 = 124.3
@@ -285,8 +287,8 @@ export const city: Scene = {
     }
     c.floorMat.color.setScalar(lerp(0.002, 0.3, out))
     c.spot.intensity = 2.2 * out
-    c.hemi.intensity = lerp(2.0, 0.25, out)
-    c.sun.intensity = lerp(2.2, 0.2, out)
+    c.hemi.intensity = lerp(1.25, 0.2, out)
+    c.sun.intensity = lerp(1.35, 0.15, out)
 
     poseToCamera(c.cam, clayPose(t))
     const phone = t >= 133.4
@@ -302,8 +304,12 @@ export const city: Scene = {
         time: t,
         clear: 0x000000,
         clearAlpha: phone ? 0 : 1, // 手机段背景透明：天际线（lights.ts）在城市之前画
-        ao: { intensity: 0.6, radius: 14, thickness: 6 },
-        tone: { contrast: 1.1, exposure: (tt) => 1.2 + 0.1 * glowAt(tt) },
+        ao: { intensity: 0.6, radius: 14, thickness: 6, samples: 8, resolution: 0.35 },
+        // 颗粒会弄脏原片纯黑的街道/背景（score 的 SSIM 对黑场噪声极敏感），不加
+        grain: false,
+        // 性能：SwiftShader 下 131 s 斜俯视一帧 3.1 s，MSAA 4→2、阴影贴图 4096→2048 后回到 3 s 以内
+        msaa: 2,
+        tone: { contrast: 1.1, exposure: (tt) => 0.95 + 0.05 * glowAt(tt) },
         dof: {
           // 手机段画面中心是天际线/字（透明、无深度），焦点取画面下部的城市
           focus,
@@ -312,7 +318,7 @@ export const city: Scene = {
           maxBlur: 40,
         },
         // 阈值按「曝光前」线性亮度：白楼顶 ≈ 1.0，只让手机段 emissive 抬亮的部分发光
-        bloom: { threshold: (tt) => 1.15 - 0.25 * glowAt(tt), strength: (tt) => 0.1 + 0.25 * glowAt(tt), radius: 0.4 },
+        bloom: { threshold: (tt) => 1.1 - 0.2 * glowAt(tt), strength: (tt) => 0.08 + 0.12 * glowAt(tt), radius: 0.2 },
       }),
     )
     ctx.save()
