@@ -27,7 +27,9 @@ const SCALE = 340
 const START: [number, number] = [-1500, 3400]
 /** 首帧机高（米）与俯仰修正（度） */
 const H0 = 180
-const PITCH_FIX = 7.8
+const PITCH_FIX = 10
+/** 风格化街网的不透明度 */
+const GRID_A = 0.2
 
 interface Grid3D {
   scene: THREE.Scene
@@ -59,6 +61,13 @@ function buildGrid(): Grid3D {
       const major = buildGeoLines(roads, { color: 0xdfe8ea, opacity: 0.6, filter: (c) => roadRank(c) <= 3, y: 0.3 })
       scene.add(minor, major)
     }
+    // 原片地面是很密、很规整的街网（风格化）：在真实道路之外叠一层按芝加哥街区尺度（东西 100m、南北 200m）的淡网格
+    const gp: number[] = []
+    for (let x = -6000; x <= 4000; x += 100) gp.push(x, 0.1, -6000, x, 0.1, 6000)
+    for (let z = -6000; z <= 6000; z += 200) gp.push(-6000, 0.1, z, 4000, 0.1, z)
+    const gg = new THREE.BufferGeometry()
+    gg.setAttribute('position', new THREE.Float32BufferAttribute(gp, 3))
+    scene.add(new THREE.LineSegments(gg, new THREE.LineBasicMaterial({ color: 0xb8c4c6, transparent: true, opacity: GRID_A })))
     const rail = R.layers.rail
     if (rail) scene.add(buildGeoLines(rail, { color: 0x5fd3d9, opacity: 0.12, y: 0.4 }))
     // 原片近处地面满是细碎的亮点（低矮房屋的点云）：每栋建筑在外环顶点上撒点，高度随机到楼高

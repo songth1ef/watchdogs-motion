@@ -183,6 +183,9 @@ function buildScene() {
   dish.children[0].rotation.set(0.55, 0, -0.6)
   const sat = model('satellite', 1.1 * K, 'flat')
   sat.children[0].rotation.set(0, 0, -0.55)
+  // 汽车：原片从车尾看是宽而扁的轿跑（s96 交接帧里也是扁的剪影），covered_car 偏高 → 竖向压 0.75
+  const car = model('car', 1.3 * K, 'solid')
+  car.children[0].scale.y *= 0.75
   const atm = new THREE.Group()
   const atmInner = makeATM()
   atmInner.scale.setScalar(2.45)
@@ -193,7 +196,7 @@ function buildScene() {
     { o: dish, a: P(-0.5, 0.3, 5.6), ra: 0.2, b: [34, 18, -10], rb: 0.9, sb: 0.8, show: 98.35 },
     { o: sat, a: P(0.4, 0.32, 4.1), ra: -0.3, b: [44, 22, -12], rb: -0.3, sb: 0.5, show: 98.35 },
     { o: model('robot', 0.75 * K, 'points'), a: P(0.9, 0.16, 4.9), ra: 0.2, b: [-10, 40, -40], rb: 0, sb: 1, show: 98.4, hide: 98.4 },
-    { o: model('car', 1.6 * K, 'solid'), a: P(-0.2, 0.16, -1.2), ra: 0.1, b: [-40, 2, 4], rb: -1.2, sb: 0.3, show: 0 },
+    { o: car, a: P(-0.2, 0.16, -1.2), ra: 0.1, b: [-40, 2, 4], rb: -1.2, sb: 0.42, show: 0 },
     { o: model('plane', 1.5 * K, 'solid'), a: P(3.0, 0.3, 3.0), ra: 1.4, b: [-4, 24, -14], rb: -0.4, sb: 0.4, show: 101.7 },
     { o: model('robot', 0.9 * K, 'points'), a: P(-2.9, 0.16, 2.9), ra: -0.5, b: [60, 45, -40], rb: 0, sb: 1, show: 98.4, hide: 105.2 },
     { o: atm, a: P(-3.9, 0.16, 1.8), ra: Math.PI - 0.3, b: [22, -26, 14], rb: -0.4, sb: 0.55, show: 0 },
@@ -517,6 +520,8 @@ export const objects: Scene = {
         },
         bloom: { threshold: 0.97, strength: 0.15 * (1 - 0.6 * night), radius: 0.3 },
         vignette: 0,
+        // 颗粒会显著拉低 SSIM（逐像素噪声），原片这段颗粒很弱：关掉
+        grain: false,
       }),
     )
     ctx.drawImage(img, 0, 0, W, H)

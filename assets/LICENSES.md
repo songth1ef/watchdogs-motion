@@ -46,3 +46,16 @@
 | 产物 | 来源 URL | 许可 / 署名 | 处理 |
 | --- | --- | --- | --- |
 | `public/assets/geo/bay-hillshade.jpg`（1.08 MB）、`bay-elevation.png`（1.06 MB）、`bay-terrain.json` | `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/{x}/{y}.png`（z11，x 325–331，y 788–796，共 63 块；AWS Open Data「Terrain Tiles」） | 各底层数据为公有领域或开放许可，需按 https://github.com/tilezen/joerd/blob/master/docs/attribution.md 署名；本区域主要为 USGS 3DEP/NED（美国公有领域）、SRTM（NASA，公有领域）、GMTED2010 / ETOPO1（公有领域）。建议署名「Terrain Tiles（Mapzen/Tilezen，AWS Open Data）；USGS 3DEP, NASA SRTM」 | 解码 Terrarium（R·256 + G + B/256 − 32768 米），重投影到 bay 区域本地米制栅格 2048×2352（47.3 m/px），计算晕渲（光源方位 315°、高度 45°、垂直夸张 2，海拔 ≤ 0.5 m 置黑）；高程 0–1000 m 线性映射到 0–255 灰度 |
+
+## 5. 3D 模型（wd1 设备台，G4b）
+
+原始下载缓存在 `node_modules/.cache/wd-models-raw/`（不入库），下载日期 2026-09-26；用 `src/films/wd1/part3/models/convert.py`（Blender 无头：合并网格 → Decimate → 归一化）转成只有几何的精简 JSON，放在 `src/films/wd1/part3/models/`，不含贴图。
+
+| 产物 | 原模型 | 来源 URL | 许可 | 处理 |
+| --- | --- | --- | --- | --- |
+| `dish.json`（7k 三角形） | Deep Space Network 34-meter | https://github.com/nasa/NASA-3D-Resources/tree/master/3D%20Models/Deep%20Space%20Network%2034-meter | NASA 3D Resources，美国政府作品、公有领域（NASA 媒体使用指南：不得暗示 NASA 背书） | 去掉底座/方位/俯仰部件，只留碟面、馈源、桁架 |
+| `satellite.json`（2.8k） | Tracking and Data Relay Satellites (TDRS) (A) | https://github.com/nasa/NASA-3D-Resources/tree/master/3D%20Models/Tracking%20and%20Data%20Relay%20Satellites%20(TDRS)%20(A) | 同上 | 全部网格 |
+| `plane.json`（3k） | Global Hawk | https://github.com/nasa/NASA-3D-Resources/tree/master/3D%20Models/Global%20Hawk | 同上 | Decimate |
+| `robot.json`（5k） | Robonaut 2 | https://github.com/nasa/NASA-3D-Resources/tree/master/3D%20Models/Robonaut%202 | 同上 | Decimate（镜头里画成点云全息） |
+| `car.json`（5k） | covered_car | https://polyhaven.com/a/covered_car | Poly Haven，CC0 1.0 | 1k glTF 几何，不含贴图 |
+| `laptop.json`（3k） | classic_laptop | https://polyhaven.com/a/classic_laptop | Poly Haven，CC0 1.0 | 同上 |

@@ -279,18 +279,26 @@ function buildRoom() {
   // 左墙：书柜/窗（竖向格子）
   for (let i = 0; i <= 6; i++) wall.push(WX0 + 0.004, 0.2 + i * 0.36, 1.2, WX0 + 0.004, 0.2 + i * 0.36, 2.6)
   for (const z of [1.2, 1.9, 2.6]) wall.push(WX0 + 0.004, 0.2, z, WX0 + 0.004, 2.36, z)
-  // 右墙双开门 + 门框
-  const door = (z0: number, z1: number) => {
-    const x = WX1 - 0.004
-    wall.push(x, 0, z0, x, 2.1, z0, x, 2.1, z0, x, 2.1, z1, x, 2.1, z1, x, 0, z1)
-    const zm = (z0 + z1) / 2
-    wall.push(x, 0, zm, x, 2.1, zm)
-    for (const [a, b] of [[z0, zm], [zm, z1]]) {
-      const ia = a + 0.1 * Math.sign(b - a), ib = b - 0.1 * Math.sign(b - a)
-      for (const [y0, y1] of [[0.2, 0.9], [1.05, 1.95]]) wall.push(x, y0, ia, x, y0, ib, x, y0, ib, x, y1, ib, x, y1, ib, x, y1, ia, x, y1, ia, x, y0, ia)
+  // 右前方的隔墙与双开门（面向相机，z = 4.85；65.2s 原片门框落地点/门头反投影：x 1.4–2.4、门高 1.36）
+  {
+    const z = 4.85, x0 = 1.4, x1 = 2.4, h = 1.36, xm = (x0 + x1) / 2
+    wall.push(x0 - 0.06, 0, z, x0 - 0.06, h + 0.08, z, x0 - 0.06, h + 0.08, z, x1 + 0.06, h + 0.08, z, x1 + 0.06, h + 0.08, z, x1 + 0.06, 0, z)
+    wall.push(x0, 0, z, x0, h, z, x0, h, z, x1, h, z, x1, h, z, x1, 0, z, xm, 0, z, xm, h, z)
+    for (const [a, b] of [[x0, xm], [xm, x1]]) {
+      const ia = a + 0.07, ib = b - 0.07
+      for (const [y0, y1] of [[0.12, 0.62], [0.72, 1.28]]) {
+        if (y0 < 0.5) {
+          const im = (ia + ib) / 2
+          for (const [c, d] of [[ia, im - 0.02], [im + 0.02, ib]]) wall.push(c, y0, z, d, y0, z, d, y0, z, d, y1, z, d, y1, z, c, y1, z, c, y1, z, c, y0, z)
+        } else wall.push(ia, y0, z, ib, y0, z, ib, y0, z, ib, y1, z, ib, y1, z, ia, y1, z, ia, y1, z, ia, y0, z)
+      }
     }
+    // 把手
+    wall.push(xm - 0.05, 0.62, z, xm - 0.05, 0.7, z, xm + 0.05, 0.62, z, xm + 0.05, 0.7, z)
+    // 隔墙到右墙
+    for (const y of [0, h + 0.08, CEIL]) wall.push(x1 + 0.06, y, z, WX1, y, z)
+    wall.push(x1 + 0.06, 0, z, x1 + 0.06, CEIL, z)
   }
-  door(2.3, 3.5)
   addPart(wall, 60.55, 0.62, [0.3, 0, -0.02, 5.4, 2.75, 0.02], 0.04)
   // 试过给墙面加暗灰底色（原片平均亮度 20–27）：SSIM 反而下降（线条之间的平坦灰被当成结构差异），保持纯黑
   // 扶手椅：左右各一 + 后方两把（64s 拉远后可见）
@@ -451,7 +459,7 @@ const _tp = new THREE.Vector3()
 const _tmp = new THREE.PerspectiveCamera()
 /**
  * 机位：< 59.4 用 V1 的娃娃相对关键帧；59.4–61.3 从娃娃远景插值到反求轨迹首帧（原片这段是闪入段，解不出，手调衔接）；
- * 61.3–64.61 直接用反求轨迹；64.61–65.35 在轨迹末帧基础上向右摇 38° 并右移（原片摇到右墙的门）。
+ * 61.3–64.61 直接用反求轨迹；64.61–65.35 在轨迹末帧基础上略向右移/右摇（原片几乎不摇，右前方的门本来就在画面右侧）（原片摇到右墙的门）。
  */
 function placeRoomCam(cam: THREE.PerspectiveCamera, t: number, k: { a: Key[]; b: Key[] }) {
   const trk = roomTrackAligned()
@@ -480,8 +488,8 @@ function placeRoomCam(cam: THREE.PerspectiveCamera, t: number, k: { a: Key[]; b:
     applyTrack(cam, trk, t)
     if (t > trk.end) {
       const u = ease.inOutCubic(seg(t, trk.end, 65.35))
-      cam.position.x += 0.9 * ROOM_S * u
-      cam.rotateY((-38 * Math.PI * u) / 180)
+      cam.position.x += 0.2 * ROOM_S * u
+      cam.rotateY((-4 * Math.PI * u) / 180)
     }
   }
   cam.updateProjectionMatrix()
@@ -517,16 +525,10 @@ function render3d(f: FrameCtx) {
       p.flash.visible = m.opacity > 0.01
     }
   }
+  // 试过走 three/post（辉光 0.5/1.0）：评分分别降到 30 / 24（线条整体变亮、直方图偏离），保持裸渲染。
+  // V1 的「错位 1px 再叠一次」也去掉了（去掉后 +1 分）
   const img = f.three.render(h.scene, h.camera)
   ctx.drawImage(img, 0, 0, W, H)
-  // 客厅段线条在原片里粗而亮：错位 1px 叠加一次模拟 2px 线宽
-  if (t > 59.8) {
-    ctx.globalCompositeOperation = 'lighter'
-    ctx.globalAlpha = 0.8
-    ctx.drawImage(img, 1, 1, W, H)
-    ctx.globalAlpha = 1
-    ctx.globalCompositeOperation = 'source-over'
-  }
   return h
 }
 
