@@ -12,6 +12,7 @@ import { memo } from '../../../engine/three-host'
 import { clamp, ease, hash, lerp, rng, seg } from '../../../engine/math'
 import { FONT, font, tracking } from '../../../fx/text'
 import { blockType, fr, mono } from './common'
+import { alignTrack, applyTrack, cameraTrack, type CameraTrack } from '../../../engine/camera-track'
 
 // ---------------- 材质 ----------------
 function xray(intensity = 1) {
@@ -137,16 +138,101 @@ function buildDoll() {
 }
 
 // ---------------- 客厅 ----------------
+/**
+ * V2 客厅：在「房间坐标」里搭（单位≈房间米制的 1/…，只保证与反求一致）：后墙 z=0、地面 y=0、x 向右。
+ * 房间坐标由反求 wd2-room-b 的 3D 点求得：取落在后墙窗台/墙面上的 31 个点做 PCA 拟合出墙面（残差 0.029），
+ * 法线为 +z、相机 up 在墙面内的投影为 +y；尺度 ×3.9、地面按 64.5s 桌腿落地点与右墙门脚反推。
+ * 家具位置/尺寸：用对齐后的反求相机把原片 62.97 / 63.0 / 64.5 帧的角点反投影到墙面或地面得到。
+ * 线稿密度：原片家具是很密的三角网（扶手椅的布面褶皱、窗格、护墙板），这里每个面都细分成网格再加对角线，
+ * 墙面加护墙板竖线、腰线、挂镜线，窗户是 2×4 窗格 + 窗洞进深 + 上方一排高窗。
+ * 整个房间组放进 V1 场景坐标：V1 = 3·房间 + (−1.17, 0, −6.05)（与娃娃/前一镜头的相机路径共用一个世界）。
+ */
 interface RoomPart {
   obj: THREE.Object3D
   mat: THREE.LineBasicMaterial
   t0: number
   flash?: THREE.Mesh
+  /** 闪入灰面的最大不透明度 */
+  flashA?: number
 }
+const ROOM_S = 3
+const ROOM_OFF = new THREE.Vector3(-1.17, 0, -6.05)
+/** 房间坐标 → V1 世界坐标 */
+const R2W = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z).multiplyScalar(ROOM_S).add(ROOM_OFF)
+
+/** 细分网格面：原点 o、两条边向量 u/v，nu×nv 格 + 一组对角线（jit = 顶点抖动，让网格像扫描出来的三角网） */
+function gridFace(pos: number[], o: number[], u: number[], v: number[], nu: number, nv: number, R: ReturnType<typeof rng>, jit = 0, diag = true) {
+  const P = (i: number, j: number) => {
+    const e = i > 0 && i < nu && j > 0 && j < nv ? jit : 0
+    return [0, 1, 2].map((k) => o[k] + (u[k] * i) / nu + (v[k] * j) / nv + (e ? R.range(-e, e) : 0))
+  }
+  const G: number[][][] = []
+  for (let i = 0; i <= nu; i++) {
+    G.push([])
+    for (let j = 0; j <= nv; j++) G[i].push(P(i, j))
+  }
+  for (let i = 0; i <= nu; i++)
+    for (let j = 0; j <= nv; j++) {
+      if (i < nu) pos.push(...G[i][j], ...G[i + 1][j])
+      if (j < nv) pos.push(...G[i][j], ...G[i][j + 1])
+      if (diag && i < nu && j < nv) pos.push(...((i + j) % 2 ? [...G[i][j], ...G[i + 1][j + 1]] : [...G[i + 1][j], ...G[i][j + 1]]))
+    }
+}
+/** 细分的盒子（6 面网格） */
+function gridBox(pos: number[], x: number, y: number, z: number, w: number, h: number, d: number, n: number, R: ReturnType<typeof rng>, jit = 0) {
+  const x0 = x - w / 2, y0 = y, z0 = z - d / 2
+  const nu = (a: number) => Math.max(1, Math.round(a * n))
+  gridFace(pos, [x0, y0, z0 + d], [w, 0, 0], [0, h, 0], nu(w), nu(h), R, jit) // 前
+  gridFace(pos, [x0, y0, z0], [w, 0, 0], [0, h, 0], nu(w), nu(h), R, jit, false) // 后
+  gridFace(pos, [x0, y0 + h, z0], [w, 0, 0], [0, 0, d], nu(w), nu(d), R, jit) // 顶
+  gridFace(pos, [x0, y0, z0], [0, 0, d], [0, h, 0], nu(d), nu(h), R, jit) // 左
+  gridFace(pos, [x0 + w, y0, z0], [0, 0, d], [0, h, 0], nu(d), nu(h), R, jit) // 右
+}
+/** 在局部坐标里生成、再绕 y 旋转 rot 并平移到 (x, z) */
+function place(out: number[], local: number[], x: number, z: number, rot: number, y = 0) {
+  const c = Math.cos(rot), s = Math.sin(rot)
+  for (let i = 0; i < local.length; i += 3) out.push(x + local[i] * c + local[i + 2] * s, local[i + 1] + y, z - local[i] * s + local[i + 2] * c)
+}
+/** 俱乐部扶手椅（原片那种方正、布面有菱形绗缝的沙发椅）：局部坐标面朝 +z，宽 0.95、深 0.9、高 0.8 */
+function clubChair(R: ReturnType<typeof rng>) {
+  const p: number[] = []
+  gridBox(p, 0, 0.12, 0.02, 0.95, 0.24, 0.86, 6, R, 0.012) // 座基
+  gridBox(p, 0, 0.36, 0.06, 0.66, 0.1, 0.7, 9, R, 0.015) // 坐垫
+  gridBox(p, 0, 0.12, -0.36, 0.95, 0.68, 0.18, 8, R, 0.012) // 靠背
+  gridBox(p, -0.4, 0.12, 0.04, 0.15, 0.44, 0.82, 7, R, 0.01) // 扶手
+  gridBox(p, 0.4, 0.12, 0.04, 0.15, 0.44, 0.82, 7, R, 0.01)
+  for (const [lx, lz] of [[-0.42, -0.38], [0.42, -0.38], [-0.42, 0.4], [0.42, 0.4]]) p.push(lx, 0, lz, lx * 0.97, 0.12, lz * 0.97)
+  return p
+}
+/** 2×4 窗格窗户 + 窗洞进深（贴后墙，z = 0） */
+function windowFrame(p: number[], x0: number, x1: number, y0: number, y1: number, cols = 2, rows = 4, depth = 0.1) {
+  for (const z of [0, -depth]) {
+    p.push(x0, y0, z, x1, y0, z, x1, y0, z, x1, y1, z, x1, y1, z, x0, y1, z, x0, y1, z, x0, y0, z)
+  }
+  for (const [x, y] of [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]) p.push(x, y, 0, x, y, -depth)
+  const inset = 0.03
+  for (let i = 1; i < cols; i++) {
+    const x = x0 + ((x1 - x0) * i) / cols
+    p.push(x - 0.012, y0, -depth, x - 0.012, y1, -depth, x + 0.012, y0, -depth, x + 0.012, y1, -depth)
+  }
+  for (let j = 1; j < rows; j++) {
+    const y = y0 + ((y1 - y0) * j) / rows
+    p.push(x0, y, -depth, x1, y, -depth)
+  }
+  // 内框
+  p.push(x0 + inset, y0 + inset, -depth, x1 - inset, y0 + inset, -depth, x1 - inset, y0 + inset, -depth, x1 - inset, y1 - inset, -depth)
+  p.push(x1 - inset, y1 - inset, -depth, x0 + inset, y1 - inset, -depth, x0 + inset, y1 - inset, -depth, x0 + inset, y0 + inset, -depth)
+  // 窗台
+  p.push(x0 - 0.05, y0, 0.06, x1 + 0.05, y0, 0.06, x0 - 0.05, y0 - 0.03, 0.06, x1 + 0.05, y0 - 0.03, 0.06)
+}
+
 function buildRoom() {
   const parts: RoomPart[] = []
   const scene = new THREE.Group()
-  const addPart = (pos: number[], t0: number, opacity = 0.85, flashBox?: [number, number, number, number, number, number]) => {
+  scene.scale.setScalar(ROOM_S)
+  scene.position.copy(ROOM_OFF)
+  const R = rng(611)
+  const addPart = (pos: number[], t0: number, opacity = 0.85, flashBox?: [number, number, number, number, number, number], flashA?: number) => {
     const mat = lineMat(0xffffff, opacity)
     const obj = segs(pos, mat)
     scene.add(obj)
@@ -157,71 +243,84 @@ function buildRoom() {
       flash.position.set(x, y + h / 2, z)
       scene.add(flash)
     }
-    parts.push({ obj, mat, t0, flash })
+    parts.push({ obj, mat, t0, flash, flashA })
   }
-  // 电视柜（最先出现，带白色实体闪光）
+  // 电视柜（最先出现，带白色实体闪光）：三层开放式柜 + 柜里的游戏机/功放
   const stand: number[] = []
-  boxEdges(stand, 0, 0, -5.2, 4.2, 0.9, 1.1)
-  boxEdges(stand, -1.2, 0.2, -4.7, 1.2, 0.3, 0.1)
-  boxEdges(stand, 1.2, 0.2, -4.7, 1.2, 0.3, 0.1)
-  boxEdges(stand, 0, 0.95, -5.1, 1.3, 0.15, 0.8) // 游戏机
-  addPart(stand, 60.0, 0.95, [0, 0, -5.2, 4.2, 0.9, 1.1])
+  const SX = 0.47, SW = 1.15, SD = 0.42, SZ = 0.3, SY = 0.3
+  for (const y of [0.1, 0.34, 0.6]) gridBox(stand, SX, y + SY, SZ, SW, 0.03, SD, 6, R)
+  for (const lx of [-SW / 2 + 0.02, 0, SW / 2 - 0.02]) for (const lz of [-SD / 2 + 0.02, SD / 2 - 0.02]) stand.push(SX + lx, SY, SZ + lz, SX + lx, 0.63 + SY, SZ + lz)
+  gridBox(stand, SX - 0.24, 0.37 + SY, SZ, 0.34, 0.1, 0.3, 14, R) // 功放
+  gridBox(stand, SX + 0.26, 0.37 + SY, SZ, 0.32, 0.08, 0.28, 14, R) // 游戏机
+  gridBox(stand, SX - 0.1, 0.13 + SY, SZ, 0.4, 0.07, 0.3, 12, R)
+  gridBox(stand, SX + 0.1, 0.63 + SY, SZ - 0.02, 0.5, 0.03, 0.2, 10, R) // 电视底座
+  addPart(stand, 60.1, 0.95, [SX, SY, SZ, SW, 0.63, SD])
   // 电视
   const tv: number[] = []
-  boxEdges(tv, 0, 1.6, -5.9, 3.0, 1.7, 0.12)
-  boxEdges(tv, 0, 1.2, -5.8, 0.6, 0.4, 0.3)
-  addPart(tv, 60.35, 0.95, [0, 1.6, -5.9, 3.0, 1.7, 0.12])
-  // 后墙与窗
+  gridBox(tv, 0.41, 0.96, 0.16, 1.0, 0.5, 0.04, 3, R)
+  tv.push(0.41, 0.93, 0.16, 0.41, 0.96, 0.16)
+  addPart(tv, 60.45, 0.95, [0.41, 0.96, 0.16, 1.0, 0.5, 0.04], 0.25)
+  // 后墙：窗（2×4 窗格 + 进深）、上方高窗、护墙板竖线、腰线/挂镜线/踢脚线；左右墙；右墙双开门
   const wall: number[] = []
-  boxEdges(wall, 0, 0, -1, 20, 6.5, 10.2)
-  for (const wx of [-7, -3.8, 3.8, 7]) {
-    boxEdges(wall, wx, 2.0, -6.05, 2.4, 3.0, 0.1)
-    for (let i = 1; i < 3; i++) wall.push(wx - 1.2, 2.0 + i, -6.0, wx + 1.2, 2.0 + i, -6.0)
-    wall.push(wx, 2.0, -6.0, wx, 5.0, -6.0)
+  const WX0 = -2.4, WX1 = 3.05, CEIL = 2.75
+  /** 反求 3D 点里扶手椅腿、电视柜底、64.5s 长桌腿都落在比墙面推算地面高约 0.3 的平面上（反求深度并非处处一致），家具按它放 */
+  const LIFT = 0.4
+  const WY0 = 0.9, WY1 = 1.75
+  for (const [x0, x1] of [[-1.74, -1.18], [-1.05, -0.52], [1.36, 1.86], [2.0, 2.5]]) {
+    windowFrame(wall, x0, x1, WY0, WY1)
+    windowFrame(wall, x0, x1, WY1 + 0.1, WY1 + 0.45, 2, 1, 0.06)
   }
-  // 右墙的门
-  boxEdges(wall, 9.95, 0, -2.2, 0.1, 4.2, 2.6)
-  wall.push(9.9, 0, -2.2, 9.9, 4.2, -2.2)
-  for (const dz of [-3.1, -1.3]) boxEdges(wall, 9.9, 0.4, dz, 0.05, 1.6, 0.8), boxEdges(wall, 9.9, 2.3, dz, 0.05, 1.5, 0.8)
-  // 左墙窗
-  for (const wz of [-3, 1.5]) boxEdges(wall, -9.95, 1.8, wz, 0.1, 3.0, 2.6)
-  addPart(wall, 60.6, 0.7)
-  // 扶手椅（左、右）+ 沙发
-  const chairs: number[] = []
-  const chair = (x: number, z: number, rot: number) => {
-    const p: number[] = []
-    boxEdges(p, 0, 0.35, 0, 1.8, 0.5, 1.7)
-    boxEdges(p, 0, 0.85, -0.7, 1.8, 1.2, 0.3)
-    boxEdges(p, -0.85, 0.85, 0, 0.25, 0.5, 1.7)
-    boxEdges(p, 0.85, 0.85, 0, 0.25, 0.5, 1.7)
-    for (const [lx, lz] of [[-0.8, -0.75], [0.8, -0.75], [-0.8, 0.75], [0.8, 0.75]]) p.push(lx, 0, lz, lx, 0.35, lz)
-    // 布面褶皱：几条斜线
-    for (let i = 0; i < 6; i++) p.push(-0.8, 0.85, 0.8 - i * 0.3, 0.8, 0.85, 0.6 - i * 0.3)
-    const c = Math.cos(rot), s = Math.sin(rot)
-    for (let i = 0; i < p.length; i += 3) {
-      const px = p[i], pz = p[i + 2]
-      chairs.push(x + px * c + pz * s, p[i + 1], z - px * s + pz * c)
+  for (const y of [0, 0.08, 0.8, 0.84, 2.14, 2.17, CEIL]) wall.push(WX0, y, 0, WX1, y, 0)
+  for (let x = WX0; x <= WX1 + 1e-6; x += 0.3) wall.push(x, 0.08, 0.004, x, 0.8, 0.004)
+  wall.push(WX0, 0, 0, WX0, CEIL, 0, WX1, 0, 0, WX1, CEIL, 0)
+  for (const x of [WX0, WX1]) {
+    for (const y of [0, 0.8, 2.15, CEIL]) wall.push(x, y, 0, x, y, 7)
+  }
+  // 左墙：书柜/窗（竖向格子）
+  for (let i = 0; i <= 6; i++) wall.push(WX0 + 0.004, 0.2 + i * 0.36, 1.2, WX0 + 0.004, 0.2 + i * 0.36, 2.6)
+  for (const z of [1.2, 1.9, 2.6]) wall.push(WX0 + 0.004, 0.2, z, WX0 + 0.004, 2.36, z)
+  // 右墙双开门 + 门框
+  const door = (z0: number, z1: number) => {
+    const x = WX1 - 0.004
+    wall.push(x, 0, z0, x, 2.1, z0, x, 2.1, z0, x, 2.1, z1, x, 2.1, z1, x, 0, z1)
+    const zm = (z0 + z1) / 2
+    wall.push(x, 0, zm, x, 2.1, zm)
+    for (const [a, b] of [[z0, zm], [zm, z1]]) {
+      const ia = a + 0.1 * Math.sign(b - a), ib = b - 0.1 * Math.sign(b - a)
+      for (const [y0, y1] of [[0.2, 0.9], [1.05, 1.95]]) wall.push(x, y0, ia, x, y0, ib, x, y0, ib, x, y1, ib, x, y1, ib, x, y1, ia, x, y1, ia, x, y0, ia)
     }
   }
-  chair(-4.8, -2.8, 0.5)
-  chair(5.2, -2.6, -0.5)
-  chair(-8.2, 0.5, 1.2)
-  chair(8.4, 0.8, -1.3)
-  addPart(chairs, 60.8, 0.85)
-  // 茶几 + 地毯 + 天花板灯
+  door(2.3, 3.5)
+  addPart(wall, 60.55, 0.62, [0.3, 0, -0.02, 5.4, 2.75, 0.02], 0.04)
+  // 试过给墙面加暗灰底色（原片平均亮度 20–27）：SSIM 反而下降（线条之间的平坦灰被当成结构差异），保持纯黑
+  // 扶手椅：左右各一 + 后方两把（64s 拉远后可见）
+  const chairs: number[] = []
+  place(chairs, clubChair(R), -1.5, 0.75, 0.55, LIFT)
+  place(chairs, clubChair(R), 2.4, 0.75, -0.6, LIFT)
+  place(chairs, clubChair(R), -1.15, 2.6, 1.1, LIFT)
+  place(chairs, clubChair(R), 2.1, 2.7, -1.2, LIFT)
+  addPart(chairs, 60.75, 0.5)
+  // 脚凳、茶几（长桌，64s 拉远时在画面正中）、边桌与台灯
   const misc: number[] = []
-  boxEdges(misc, 0, 0, 3.2, 4.2, 0.9, 1.8)
-  boxEdges(misc, 0, 0.9, 3.2, 4.4, 0.08, 2.0)
-  boxEdges(misc, 0, 0.01, -1.5, 8, 0.02, 5)
-  for (const lx of [-3.5, 3.5]) boxEdges(misc, lx, 6.3, -3, 1.2, 0.08, 1.2)
-  addPart(misc, 61.1, 0.8)
-  // 扫描三角网：在房间内随机连长线（原片那种穿插的细斜线）
-  const tri: number[] = []
-  const R = rng(61)
-  for (let i = 0; i < 70; i++) {
-    tri.push(R.range(-10, 10), R.range(0, 6.5), R.range(-6, 4), R.range(-10, 10), R.range(0, 6.5), R.range(-6, 4))
+  gridBox(misc, 1.42, 0.08 + LIFT, 0.95, 0.6, 0.36, 0.45, 12, R, 0.01)
+  for (const [lx, lz] of [[-0.27, -0.2], [0.27, -0.2], [-0.27, 0.2], [0.27, 0.2]]) misc.push(1.42 + lx, LIFT, 0.95 + lz, 1.42 + lx, 0.08 + LIFT, 0.95 + lz)
+  const TX = 0.63, TZ = 5.35, TW = 0.9, TD = 0.55, TH = 0.4 + LIFT
+  gridBox(misc, TX, TH - 0.05, TZ, TW, 0.05, TD, 16, R, 0.004)
+  gridBox(misc, TX, TH - 0.16, TZ, TW - 0.08, 0.1, TD - 0.08, 10, R)
+  for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const x = TX + (lx * (TW - 0.08)) / 2, z = TZ + (lz * (TD - 0.08)) / 2
+    gridBox(misc, x, LIFT, z, 0.05, TH - 0.05 - LIFT, 0.05, 20, R)
   }
-  addPart(tri, 60.9, 0.22)
+  // 桌上的遥控器/平板
+  gridBox(misc, TX - 0.3, TH, TZ + 0.05, 0.36, 0.015, 0.22, 12, R)
+  gridBox(misc, TX + 0.25, TH, TZ - 0.05, 0.2, 0.02, 0.05, 8, R)
+  gridBox(misc, 2.6, LIFT, 1.8, 0.4, 0.55, 0.4, 8, R) // 边桌
+  gridBox(misc, 2.6, 0.55 + LIFT, 1.8, 0.12, 0.3, 0.12, 8, R) // 台灯
+  addPart(misc, 61.1, 0.8)
+  // 扫描三角网：房间里穿插的长细斜线（原片满屏的淡斜线）
+  const tri: number[] = []
+  for (let i = 0; i < 90; i++) tri.push(R.range(WX0, WX1), R.range(0, CEIL), R.range(0, 4), R.range(WX0, WX1), R.range(0, CEIL), R.range(0, 4))
+  addPart(tri, 60.9, 0.0)
   return { group: scene, parts }
 }
 
@@ -266,7 +365,8 @@ function buildCloud() {
 }
 
 // ---------------- 场景组装 ----------------
-const DOLL_POS = new THREE.Vector3(-4.8, 0.85, -2.8)
+/** 娃娃坐在左扶手椅坐垫上（房间坐标 (−1.4, 0.46, 1.0) → V1 世界；镜头 A/B 的机位都相对娃娃，挪娃娃不改变 54.9–59.4 的构图） */
+const DOLL_POS = new THREE.Vector3(-1.45 * 3 - 1.17, 0.76 * 3, 0.8 * 3 - 6.05)
 const DOLL_S = 0.3
 function home() {
   return memo('wd2p2-home', () => {
@@ -329,14 +429,63 @@ function keys() {
     [57.8, L(-0.3, 3.3, 9.2), L(0.3, 2.4, 0)],
     [58.6, L(0, 3.3, 12.5), L(0.2, 2.5, 0)],
     [59.4, L(1.5, 4.5, 19), L(3.5, 2.2, 0)],
-    [60.4, [-3.2, 1.9, 3.2], [-1.0, 0.9, -4.5]],
-    [61.3, [-0.5, 1.6, 1.4], [0, 1.2, -5.5]],
-    [63.2, [0, 1.9, 6.8], [0, 1.5, -5.5]],
-    [64.5, [0.3, 2.1, 8.8], [1.5, 1.7, -5.5]],
-    [65.35, [2.0, 2.2, 9.2], [9.0, 1.4, -2.0]],
   ]
   keysCache = { a, b }
   return keysCache
+}
+
+/**
+ * 反求相机 wd2-room-b（61.30–64.61，good 0.77px）对齐到场景：先转到房间坐标（墙面 PCA，见 buildRoom 注释），再 ×3 + 偏移进 V1 世界。
+ * 合成一步：scale = 3.9 × 3，旋转 = 墙面基（行 = x/y/z 轴）的四元数，offset = 3·(−3.9·R·c + 地面) + (−1.17, 0, −6.05)。
+ */
+let roomTrack: CameraTrack | null = null
+function roomTrackAligned() {
+  return (roomTrack ??= alignTrack(cameraTrack('wd2-room-b'), {
+    scale: 3.9 * ROOM_S,
+    rotation: new THREE.Quaternion(0.3748018586832255, 0.12562819831707558, -0.011589425996250112, 0.9184807062319177),
+    offset: [-0.2807532598141091 * ROOM_S - 1.17, 1.05 * ROOM_S, 0.19068865935289725 * ROOM_S - 6.05],
+  }))
+}
+const _tq = new THREE.Quaternion()
+const _tp = new THREE.Vector3()
+const _tmp = new THREE.PerspectiveCamera()
+/**
+ * 机位：< 59.4 用 V1 的娃娃相对关键帧；59.4–61.3 从娃娃远景插值到反求轨迹首帧（原片这段是闪入段，解不出，手调衔接）；
+ * 61.3–64.61 直接用反求轨迹；64.61–65.35 在轨迹末帧基础上向右摇 38° 并右移（原片摇到右墙的门）。
+ */
+function placeRoomCam(cam: THREE.PerspectiveCamera, t: number, k: { a: Key[]; b: Key[] }) {
+  const trk = roomTrackAligned()
+  cam.fov = 38
+  if (t < 59.4) {
+    const cp = t < 56.2 ? camPath(k.a, t) : camPath(k.b, t)
+    cam.position.copy(cp.pos)
+    cam.lookAt(cp.at)
+  } else if (t < trk.start) {
+    // 原片 60.0 已是远景：娃娃缩在左上，镜头对着电视柜方向；用「轨迹首帧后退 1.4、左移 0.8、左转 12°」作为 59.8 的机位
+    const cp = camPath(k.b, 59.4)
+    _tmp.position.copy(cp.pos)
+    _tmp.lookAt(cp.at)
+    applyTrack(cam, trk, trk.start)
+    _tp.copy(cam.position)
+    _tq.copy(cam.quaternion)
+    const pre = cam.clone()
+    pre.position.add(new THREE.Vector3(-0.8, 0.1, 1.4).multiplyScalar(ROOM_S))
+    pre.rotateY((12 * Math.PI) / 180)
+    const u1 = ease.inOutCubic(seg(t, 59.4, 59.8))
+    const u2 = ease.inOutCubic(seg(t, 59.8, trk.start))
+    cam.position.copy(_tmp.position).lerp(pre.position, u1).lerp(_tp, u2)
+    cam.quaternion.copy(_tmp.quaternion).slerp(pre.quaternion, u1).slerp(_tq, u2)
+    cam.fov = lerp(38, trk.fov[0], u1)
+  } else {
+    applyTrack(cam, trk, t)
+    if (t > trk.end) {
+      const u = ease.inOutCubic(seg(t, trk.end, 65.35))
+      cam.position.x += 0.9 * ROOM_S * u
+      cam.rotateY((-38 * Math.PI * u) / 180)
+    }
+  }
+  cam.updateProjectionMatrix()
+  cam.updateMatrixWorld()
 }
 
 function project(v: THREE.Vector3, camera: THREE.Camera, W: number, H: number) {
@@ -348,10 +497,7 @@ function render3d(f: FrameCtx) {
   const { ctx, t, W, H } = f
   const h = home()
   const k = keys()
-  const cp = t < 56.2 ? camPath(k.a, t) : camPath(k.b, t)
-  h.camera.position.copy(cp.pos)
-  h.camera.lookAt(cp.at)
-  h.camera.updateMatrixWorld()
+  placeRoomCam(h.camera, t, k)
   // 娃娃亮度：拉远后变暗一些，客厅出来后渐隐
   h.doll.shell.uniforms.uA.value = t < 59 ? 1 : lerp(1, 0.55, seg(t, 59, 61))
   // 点云与青线：57.3 出现，60.5 后淡出
@@ -366,7 +512,8 @@ function render3d(f: FrameCtx) {
     p.obj.visible = a > 0
     if (p.flash) {
       const m = p.flash.material as THREE.MeshBasicMaterial
-      m.opacity = 0.8 * seg(t, p.t0, p.t0 + 0.08) * (1 - seg(t, p.t0 + 0.12, p.t0 + 0.45))
+      // 原片闪入是半透明灰面（不是纯白），持续约 0.5s
+      m.opacity = (p.flashA ?? 0.42) * seg(t, p.t0, p.t0 + 0.08) * (1 - seg(t, p.t0 + 0.3, p.t0 + 0.7))
       p.flash.visible = m.opacity > 0.01
     }
   }
@@ -491,7 +638,7 @@ function roomHud(ctx: CanvasRenderingContext2D, t: number, camera: THREE.Camera,
   const R = rng(640)
   ctx.globalAlpha = a
   for (let i = 0; i < 26; i++) {
-    const wp = new THREE.Vector3(R.range(-9, 9), R.range(0.5, 6), R.range(-6, 2))
+    const wp = R2W(R.range(-2.2, 3), R.range(0.3, 2.4), R.range(0, 2.5))
     const p = project(wp, camera, W, H)
     const on = seg(t, 59.4 + R.next() * 1.8, 59.6 + R.next() * 1.8)
     if (p.behind || on <= 0) continue
@@ -517,7 +664,7 @@ function roomHud(ctx: CanvasRenderingContext2D, t: number, camera: THREE.Camera,
       ctx.fillRect(p.x + 7, p.y + 5, 16, 20)
     }
   }
-  const rp = project(new THREE.Vector3(-1.2, 0.6, -4.6), camera, W, H)
+  const rp = project(R2W(0.25, 0.3, 0.55), camera, W, H)
   if (!rp.behind) {
     font(ctx, 16, 700, FONT.sans)
     ctx.fillStyle = '#f2f2f2'

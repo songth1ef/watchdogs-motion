@@ -66,3 +66,37 @@ export function blockLayout(seed: number, nx: number, nz: number, bs: number, st
     }
   return out
 }
+
+// ───────────────────────── V2：真实芝加哥（OSM）布局与反求相机对齐 ─────────────────────────
+// 方法（G4a）：把原片 124.3–129.3 的近俯拍帧按反求相机（wd1-clay-city-a）正射到点云主平面上拼成一张图，
+// 与 OSM 建筑轮廓二值图做 FFT 归一化互相关，扫描 旋转 × 尺度 × 平移：
+// 峰值 NCC 0.377（次高 0.31 是错一个街区），落在 River North（State St 以西 ~200 m、Grand Ave 一带），
+// 旋转 250°、2100 米/反求单位。随后用 132–133 的斜俯视核对：主河道（Main Branch）、Merchandise Mart
+// 一带长楼、河对岸 Loop 高楼群与原片对得上——原片素模城市就是芝加哥这一片。
+// three 坐标：X = 东、Z = 南、Y = 高（米），世界原点 = 芝加哥区域原点 State & Madison（buildRealCity 默认）。
+
+/**
+ * a 段（124.3–133.37）：反求坐标 → 世界。offset.y = 点云主平面（中低层楼顶）离地高度。
+ * 配准后再做一轮图像精修：用无后期的真实城市渲染 124.8–132.3 共 9 帧，与原片同帧比「模糊 Sobel 边缘图」NCC，
+ * 对 尺度/旋转/平移/高度 坐标下降：NCC 0.10 → 0.45（tmp 工具，未入库；方法见 docs/shots/wd1-part3.md）。
+ */
+export const CLAY_A_ALIGN = { scale: 2101.9, rotation: [0, 250.05, 0] as [number, number, number], offset: [-210.1, 23, -888.3] as [number, number, number] }
+/**
+ * b 段（133.4–138.97）：独立坐标系，主平面是手机屏幕（= 城市地面）。
+ * 初值：让 b 在 133.4 的相机与 a 在 133.37（按尾速外推一帧）的相机重合（只绕 Y 转，尺度由相机离地高度定：5894）；
+ * 再对 133.4–136.9 六帧画面下半部（城市）做同样的边缘 NCC 精修：0.29 → 0.34，尺度 +9%。
+ * 所以交界处两段相机并不严格重合，city.ts 在 133.1–133.7 做姿态混合。
+ */
+export const CLAY_B_ALIGN = { scale: 6418.8, rotation: [0, 249.93, 0] as [number, number, number], offset: [-548.3, 15, -916.6] as [number, number, number] }
+
+/** 手机屏幕上真实城市的范围（本地米 [西, 南, 东, 北]）：由 137.9/138.9 帧按 b 段相机正射到地面量出 */
+export const CLAY_RECT: [number, number, number, number] = [-1360, -1755, 1030, 3455]
+/** 手机屏幕（世界 X/Z 米）：[x0, z0, x1, z1]；机身厚度 */
+export const PHONE_SCREEN: [number, number, number, number] = [-1900, -4610, 1020, 2315]
+export const PHONE_T = 420
+
+/**
+ * HACKED 像素字在 a 段反求坐标里的位置（128 s 正射拼图量出）：左下角、右下角（字底边），
+ * 字高 5 格。世界位置 = alignPoint(…, CLAY_A_ALIGN)，y 取地面。
+ */
+export const HACKED_TRACK = { bl: [-0.11, 0, 0.02] as const, br: [0.0425, 0, -0.0275] as const }

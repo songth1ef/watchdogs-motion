@@ -1,6 +1,7 @@
 import type { Scene } from '../../engine/types'
 import { chicagoSat, year2013 } from './part1/intro'
-import { cityTopDown, ctosBadge, ctosGrid, dossier, fewHundred } from './part1/ctos-city'
+import { cityTopDown, ctosBadge, dossier, fewHundred } from './part1/ctos-city'
+import { ctosGrid } from './part1/ctos-grid3d'
 import { codeStorm, gridCollapse, scatter, shards, theyWereWrong } from './part1/hack'
 import { barChart, internetWords, redNoise, usMap } from './part1/usa'
 import { bars3d, bayArea, darkGrid, peninsula, sixtyFourBillion, waveforms } from './part1/bay'

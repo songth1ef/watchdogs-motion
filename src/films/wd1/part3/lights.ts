@@ -34,18 +34,25 @@ function buildSkyline() {
     { c: 0.72, w: 36, h: 175 },
     { c: 0.76, w: 22, h: 125 },
     { c: 0.52, w: 22, h: 110 },
+    // V2：原片天际线两翼也有一排中高层（138.2 参考帧：灯带横跨 ~1020px）
+    { c: 0.08, w: 26, h: 70 },
+    { c: 0.15, w: 30, h: 95 },
+    { c: 0.2, w: 20, h: 60 },
+    { c: 0.57, w: 26, h: 85 },
+    { c: 0.84, w: 30, h: 90 },
+    { c: 0.9, w: 24, h: 65 },
   ]
   for (const l of land) sil.push({ x: l.c * SKY_W - l.w / 2, w: l.w, h: l.h })
   for (let x = 0; x < SKY_W; ) {
     const w = R.range(10, 34)
     const center = Math.exp(-(((x / SKY_W - 0.5) / 0.3) ** 2))
-    sil.push({ x, w, h: R.range(14, 36) + R.range(0, 80) * center })
+    sil.push({ x, w, h: R.range(22, 48) + R.range(0, 80) * center })
     x += w * R.range(0.6, 1.1)
   }
   const wins: Win[] = []
   for (const b of sil)
     for (let y = SKY_H - b.h + 4; y < SKY_H - 3; y += 6)
-      for (let x = b.x + 2; x < b.x + b.w - 2; x += 5) if (R.chance(0.62)) wins.push({ x, y, k: R.next() })
+      for (let x = b.x + 2; x < b.x + b.w - 2; x += 5) if (R.chance(0.72)) wins.push({ x, y, k: R.next() })
   return { sil, wins }
 }
 
