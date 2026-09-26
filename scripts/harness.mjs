@@ -3,7 +3,7 @@ import { createServer } from 'vite'
 import { chromium } from 'playwright'
 
 export async function openHarness() {
-  const server = await createServer({ logLevel: 'error', server: { port: 0, host: '127.0.0.1' } })
+  const server = await createServer({ logLevel: 'error', server: { port: 0, host: '127.0.0.1', hmr: false, watch: null } })
   await server.listen()
   const url = server.resolvedUrls.local[0]
   const browser = await chromium.launch({

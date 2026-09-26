@@ -1,5 +1,35 @@
 import type { Scene } from '../../engine/types'
-import { placeholder } from '../placeholder'
+import { chicagoSat, year2013 } from './part1/intro'
+import { cityTopDown, ctosBadge, ctosGrid, dossier, fewHundred } from './part1/ctos-city'
+import { codeStorm, gridCollapse, scatter, shards, theyWereWrong } from './part1/hack'
+import { barChart, internetWords, redNoise, usMap } from './part1/usa'
+import { bars3d, bayArea, darkGrid, peninsula, sixtyFourBillion, waveforms } from './part1/bay'
 
-/** WD2 0s–43s：2013 大字、芝加哥夜景地图与红色飞机、ctOS 线框城市、马赛克档案卡、代码窗 hundred、三角网格碎裂、白点矩阵、77% 柱状图、SAN JOSE/SACRAMENTO 圆盘、美国网络 internet of things */
-export const part1: Scene[] = [placeholder('wd2-part1', 0, 43, '待实现')]
+/**
+ * WD2 0s–43s。镜头表见 docs/shots/wd2-part1.md。
+ * scenes 按绘制顺序排列（后者盖在前者上）；字幕层永远在最后。
+ */
+export const part1: Scene[] = [
+  chicagoSat,
+  year2013,
+  ctosGrid,
+  cityTopDown,
+  gridCollapse,
+  dossier,
+  ctosBadge,
+  codeStorm,
+  fewHundred,
+  shards,
+  scatter,
+  theyWereWrong,
+  barChart,
+  usMap,
+  internetWords,
+  redNoise,
+  sixtyFourBillion,
+  bayArea,
+  peninsula,
+  bars3d,
+  waveforms,
+  darkGrid,
+]
