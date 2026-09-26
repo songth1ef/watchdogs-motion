@@ -18,7 +18,8 @@ const TOP = 60 // 大写字母顶边在离屏里的 y
 const CW = LW + PAD * 2
 const CH = 300
 const INK = '#e4e6e0'
-const BG = '#020401'
+// V2：按评分管线（与 snap 相同的 RGB 转换）量得原片底色灰度≈1，V1 的 #020401 偏亮
+const BG = '#010101'
 
 /** ASSET：干净的 WATCH_DOGS 字标（离屏缓存） */
 function baseLogo() {
@@ -186,7 +187,8 @@ export const logo: Scene = {
   note: '黑场 → 140.73 WATCH_DOGS 故障标志出现并缓慢放大；144.07 "everything is connected" 乱码解出；146.17 白底 "connection is power"；148.6 标语消失，148.9 收尾故障，149.2 黑场到片尾',
   render(f) {
     const { ctx, W, H, t } = f
-    ctx.fillStyle = t >= 140.73 && t < 149.2 ? BG : '#000'
+    // V2：原片 149.2 之后的「黑场」其实仍是底色（灰度 3），150.1 才真正变成 0
+    ctx.fillStyle = t >= 140.73 && t < 150.08 ? BG : '#000'
     ctx.fillRect(0, 0, W, H)
     const F = F30(t)
     const st = logoState(F)

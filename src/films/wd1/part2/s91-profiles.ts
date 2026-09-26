@@ -123,8 +123,9 @@ export function profileCam(t: number) {
       [93.9, 1.0],
       [94.1, 1.4],
       [94.3, 2.2],
-      [94.5, 3.2],
-      [94.72, 4.6],
+      // V2：原片 94.5 已推到 ≈6×（Status: 字宽约 285px），推镜是加速的
+      [94.5, 6.0],
+      [94.72, 10],
     ]),
     ox: track(t, [
       [92.5, 569],
@@ -133,8 +134,8 @@ export function profileCam(t: number) {
       [93.9, 564],
       [94.1, 530],
       [94.3, 478],
-      [94.5, 440],
-      [94.72, 400],
+      [94.5, 204],
+      [94.72, -60],
     ]),
     oy: track(t, [
       [92.5, 327],
@@ -143,33 +144,47 @@ export function profileCam(t: number) {
       [93.9, 322],
       [94.1, 305],
       [94.3, 290],
-      [94.5, 300],
-      [94.72, 310],
+      [94.5, 216],
+      [94.72, 170],
     ]),
   }
 }
 
 export const s91Profiles: Scene = {
   id: 'wd1-091-citizen-profiles',
-  start: 91.1,
+  start: 91.25,
   end: 94.72,
   note: '白格面板 → 白模人头推近 → Citizen Profiles 档案卡',
   render({ ctx, t }) {
     ref(ctx)
-    // 91.1–91.45：黑底上一块白格面板向四周扩展到铺满
+    // 91.25–91.37：黑底上一块白格面板从画面中下部向四周扩展到铺满（V2：按原片逐帧，比 V1 晚 0.15s、扩得更快）
     const pw = track(t, [
-      [91.1, 330],
-      [91.3, 332],
-      [91.45, 1400],
+      [91.25, 280],
+      [91.3, 300],
+      [91.33, 630],
+      [91.37, 1500],
     ])
-    if (t < 91.45) {
+    const pcx = track(t, [
+      [91.25, 673],
+      [91.3, 680],
+      [91.33, 753],
+      [91.37, 700],
+    ])
+    const ptop = track(t, [
+      [91.25, 267],
+      [91.3, 262],
+      [91.33, 128],
+      [91.37, -300],
+    ])
+    if (t < 91.37) {
       ctx.fillStyle = '#000'
       ctx.fillRect(0, 0, 1280, 720)
       ctx.fillStyle = '#fff'
-      ctx.fillRect(698 - pw / 2, 266 - (pw - 330) * 0.3, pw, 720)
+      ctx.fillRect(pcx - pw / 2, ptop, pw, 720)
       ctx.fillStyle = '#000'
-      for (let k = 1; k < 4; k++) ctx.fillRect(698 - pw / 2 + (pw * k) / 4, 266, 1, 720)
-      ctx.fillRect(698 - pw / 2, 400, pw, 1)
+      ctx.fillRect(pcx - 0.5, ptop, 1, 720)
+      const ph = 720 - ptop
+      ctx.fillRect(pcx - pw / 2, ptop + ph * 0.36, pw, 1.5)
     } else {
       ctx.fillStyle = '#fcfcfc'
       ctx.fillRect(0, 0, 1280, 720)

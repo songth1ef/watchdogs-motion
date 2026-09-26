@@ -59,18 +59,38 @@ const PIECES: Piece[] = (() => {
       for (let k = 0; k < n; k++) {
         const pa = a + ((b - a) * k) / n
         const pb = a + ((b - a) * (k + 1)) / n
-        out.push({ row: r, a: pa, b: pb, tIn: r === 0 ? 77.02 : 77.72 + R.next() * 0.7 + (r / 25) * 0.25, tOut: 81.5 + R.next() * 1.1 })
+        // V2：原片条块大致自上而下出现（77.8 已有前 4 行、78.0 前 6 行、78.2 大部分）
+        out.push({ row: r, a: pa, b: pb, tIn: r === 0 ? 77.02 : 77.62 + (r / 25) * 0.45 + R.next() * 0.4, tOut: 81.5 + R.next() * 1.1 })
       }
     }
   }
   return out
 })()
 
-/** 文档 → 屏幕：81.35 之前整体略大（放大 1.077，左上移） */
+/**
+ * 文档 → 屏幕。V2：原片是整段持续缓慢拉远（按文档宽量：78.5≈1.084、79.5≈1.053、80.5≈1.021、81.0≈1.007、81.36=1），
+ * 水平中心固定在 x≈643；V1 是 1.077 恒定到 80.95 再急拉。
+ */
 function docCam(t: number) {
-  const k = span(t, 80.95, 81.35, ease.inOutCubic)
-  const s = 1.077 + (1 - 1.077) * k
-  return { s, ox: 416 + (434 - 416) * k, oy: 133 + (158 - 133) * k }
+  const s = track(t, [
+    [77.0, 1.08],
+    [77.6, 1.082],
+    [78.5, 1.084],
+    [79.5, 1.053],
+    [80.5, 1.021],
+    [81.0, 1.007],
+    [81.36, 1.0],
+  ])
+  const oy = track(t, [
+    [77.0, 133],
+    [77.6, 134.5],
+    [78.5, 140.9],
+    [79.5, 147.1],
+    [80.5, 154.7],
+    [81.0, 157.2],
+    [81.36, 158],
+  ])
+  return { s, ox: 643 - (DOC.w / 2) * s, oy }
 }
 
 export function drawDocument(ctx: CanvasRenderingContext2D, t: number, keepTopRule: boolean) {
@@ -144,7 +164,7 @@ export const s77Represent: Scene = {
     const a = 'what does that '
     const b = 'REPRESENT?'
     const full = a + b
-    const n = Math.min(typed(a, t, 77.08, 38).n + typed(b, t, 77.5, 26).n, full.length)
+    const n = Math.min(typed(a, t, 77.08, 38).n + typed(b, t, 77.5, 32).n, full.length)
     // 81.4 起从头部擦除，并逐渐变灰
     // 先擦掉 "what does that "，只剩 "REPRESENT?" 变灰淡出
     const cut = Math.round(span(t, 81.4, 81.75) * a.length)

@@ -40,14 +40,14 @@ function silhouetteColor(dark: number) {
 }
 
 /** ASSET：舞台剪影 + 雾气背景 */
-function drawSet(ctx: CanvasRenderingContext2D, dark: number) {
+function drawSet(ctx: CanvasRenderingContext2D, dark: number, floorY = 520, z = 1) {
   const a = 1 - dark
   if (a > 0) {
     // 雾气逆光背景
     const g = ctx.createRadialGradient(CX, 120, 40, CX, 200, 900)
     g.addColorStop(0, `rgba(250,250,250,${a})`)
     g.addColorStop(0.45, `rgba(200,200,200,${a})`)
-    g.addColorStop(1, `rgba(90,90,90,${a})`)
+    g.addColorStop(1, `rgba(135,135,135,${a})`)
     ctx.fillStyle = g
     ctx.fillRect(-1400, -800, 3800, 1330)
     const sc = silhouetteColor(dark)
@@ -92,7 +92,9 @@ function drawSet(ctx: CanvasRenderingContext2D, dark: number) {
     ctx.fillRect(345, 465, 8, 70)
     ctx.fillRect(240, 465, 10, 75)
     ctx.fillRect(282, 465, 10, 75)
-    // 右侧大体块 + 平台桁架
+    // 右侧大体块 + 平台桁架。V2：近景体块有视差——推得越近越往画面中间靠（120.5 原片右侧黑块从 x≈1080 开始）
+    ctx.save()
+    ctx.translate(-(z - 1) * 57, 0)
     ctx.beginPath()
     ctx.moveTo(915, 140)
     ctx.lineTo(950, 125)
@@ -117,6 +119,7 @@ function drawSet(ctx: CanvasRenderingContext2D, dark: number) {
     ctx.fillRect(862, 275, 60, 8)
     ctx.fillRect(862, 275, 6, 280)
     ctx.fillRect(876, 283, 6, 270)
+    ctx.restore()
     // 大屏下方的楼梯、吊架影子
     ctx.lineWidth = 2
     ctx.beginPath()
@@ -142,39 +145,40 @@ function drawSet(ctx: CanvasRenderingContext2D, dark: number) {
     ctx.lineTo(56, 0)
     ctx.stroke()
     ctx.restore()
-    // 地面：黑色，大屏脚下一团雾光
+    // 地面：黑色，大屏脚下一团雾光。V2：地平线随相机后拉在舞台空间里下移（原片 120.5≈425、121.0≈461、122.5≈498，
+    // 真实相机有俯仰/平移，2D 缩放近似不了，只能让地面线跟着走）
     ctx.fillStyle = '#000'
-    ctx.fillRect(-1400, 520, 3800, 1200)
-    const gl = ctx.createRadialGradient(CX, 520, 10, CX, 520, 520)
-    gl.addColorStop(0, `rgba(255,255,255,${0.85 * a})`)
+    ctx.fillRect(-1400, floorY, 3800, 1200)
+    const gl = ctx.createRadialGradient(CX, floorY, 10, CX, floorY, 520)
+    gl.addColorStop(0, `rgba(255,255,255,${0.55 * a})`)
     gl.addColorStop(1, 'rgba(255,255,255,0)')
     ctx.save()
-    ctx.translate(0, 520)
+    ctx.translate(0, floorY)
     ctx.scale(1, 0.18)
-    ctx.translate(0, -520)
+    ctx.translate(0, -floorY)
     ctx.fillStyle = gl
-    ctx.fillRect(-400, 0, 2100, 1040)
+    ctx.fillRect(-400, floorY - 520, 2100, 1040)
     ctx.restore()
   }
   // 左侧灯箱（熄灯后仍亮）
   ctx.save()
   ctx.shadowColor = 'rgba(255,255,255,0.9)'
   ctx.shadowBlur = 18
-  for (const x0 of [0, 145]) {
+  for (const x0 of [-33, 118]) {
     ctx.fillStyle = '#f2f2f2'
-    ctx.fillRect(x0, 190, 138, 275)
+    ctx.fillRect(x0, 182, 138, 284)
   }
   ctx.restore()
   ctx.fillStyle = 'rgba(60,60,60,0.9)'
-  for (const x0 of [0, 145]) {
-    for (let i = 1; i < 5; i++) ctx.fillRect(x0 + (i * 138) / 5 - 1, 190, 2, 275)
-    for (let j = 1; j < 9; j++) ctx.fillRect(x0, 190 + (j * 275) / 9 - 1, 138, 2)
+  for (const x0 of [-33, 118]) {
+    for (let i = 1; i < 5; i++) ctx.fillRect(x0 + (i * 138) / 5 - 1, 182, 2, 284)
+    for (let j = 1; j < 9; j++) ctx.fillRect(x0, 182 + (j * 284) / 9 - 1, 138, 2)
   }
 }
 
 /** 大屏上的文字（舞台空间，超出屏幕也照画——原片里巨大的字会压到屏幕外） */
 function drawText(ctx: CanvasRenderingContext2D, t: number) {
-  const word = (text: string, cap: number, baseline: number, cx: number, box: number, dim: number) => {
+  const word = (text: string, cap: number, baseline: number, cx: number, box: number, dim: number, linear = false) => {
     const size = cap / 0.72
     ctx.font = `500 ${size}px ${FONT.sans}`
     ctx.letterSpacing = `${-size * 0.02}px`
@@ -183,7 +187,7 @@ function drawText(ctx: CanvasRenderingContext2D, t: number) {
     if (box > 0) {
       ctx.fillStyle = WD1.cyan
       const padX = cap * 0.2
-      ctx.fillRect(x - padX, baseline - cap * 1.18, (w + padX * 2) * ease.outCubic(box), cap * 1.5)
+      ctx.fillRect(x - padX, baseline - cap * 1.18, (w + padX * 2) * (linear ? box : ease.outCubic(box)), cap * 1.5)
     }
     ctx.fillStyle = `rgba(0,0,0,${1 - dim})`
     ctx.fillText(text, x, baseline)
@@ -197,12 +201,14 @@ function drawText(ctx: CanvasRenderingContext2D, t: number) {
         [120.5, 126, 389, 635],
         [120.7, 61, 360, 632],
         [121.0, 49, 347, 632],
-        [121.4, 40, 335, 630],
-        [121.8, 23, 327, 626],
+        [121.4, 40, 338, 630],
+        [121.8, 31, 334, 628],
+        [122.2, 26, 330, 626],
+        [122.6, 23, 327, 626],
       ],
       ease.outQuad,
     )
-    word('SHUTDOWN', cap, base, cx, seg(t, 120.42, 120.75), 0)
+    word('SHUTDOWN', cap, base, cx, seg(t, 120.44, 120.66), 0, true)
   }
   if (t >= 120.95) {
     const [cap, base, cx] = keyed(
@@ -211,8 +217,12 @@ function drawText(ctx: CanvasRenderingContext2D, t: number) {
         [120.95, 200, 575, 650],
         [121.1, 110, 535, 645],
         [121.3, 68, 445, 640],
-        [121.6, 32, 378, 638],
-        [121.8, 27, 372, 638],
+        // V2：按 121.5–122.6 参考帧量字宽（换算回舞台空间），收缩要持续到 122.6 才定版
+        [121.5, 44, 420, 639],
+        [121.8, 35, 398, 638],
+        [122.0, 31.5, 390, 638],
+        [122.4, 28, 380, 638],
+        [122.6, 26.5, 376, 638],
       ],
       ease.outQuad,
     )
@@ -237,22 +247,38 @@ export const stage: Scene = {
         [120.7, 1.8],
         [121.0, 1.62],
         [121.5, 1.35],
-        [122.0, 1.15],
+        [122.0, 1.2],
         [122.5, 1.0],
-        [122.9, 0.84],
+        // V2：原片熄灯前后拉变慢（122.6 ≈0.92、123.1 ≈0.84），123.1 后才急退
+        [122.9, 0.88],
+        [123.1, 0.84],
+        [123.2, 0.77],
         [123.3, 0.63],
+        [123.4, 0.47],
         [123.6, 0.08],
       ],
       ease.linear,
     )
-    const dark = seg(t, 122.8, 123.0)
+    const dark = seg(t, 122.85, 123.1)
     ctx.save()
     ctx.scale(S, S)
     ctx.translate(CX, CY)
     ctx.scale(z, z)
     ctx.translate(-CX, -CY)
     ctx.globalAlpha = 1 - seg(t, 123.4, 123.6)
-    drawSet(ctx, dark)
+    const [floorY] = keyed(
+      t,
+      [
+        [120.3, 420],
+        [120.5, 425],
+        [121.0, 461],
+        [122.0, 490],
+        [122.5, 498],
+        [123.0, 505],
+      ],
+      ease.linear,
+    )
+    drawSet(ctx, dark, floorY, z)
     // 大屏
     ctx.save()
     ctx.shadowColor = 'rgba(255,255,255,0.9)'

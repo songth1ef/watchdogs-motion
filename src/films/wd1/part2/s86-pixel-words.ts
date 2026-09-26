@@ -1,7 +1,7 @@
 /**
  * 86.3–91.25  Data Silos 小卡片阵列飞散成一群「像素块」，从下方升起、在一条带上翻转，
  * 87.6–88.9 逐个落位拼成像素大字 "HOW  YOU / THINK" → 89.4–89.9 逐像素替换成 "WHAT  YOU / BELIEVE"
- * → 90.4 起像素块四散放大成满屏白色方块 → 91.2 铺满白（接 Citizen Profiles 白底）。
+ * → 90.55 起像素块四散放大、大部分飞出画面，91.25 只剩少量大白块（接 s91 的白格面板，91.37 铺满白）。
  * 像素字体是手写 5 行点阵（PIX），每个像素 = 一个带 3×3 细格的白色小卡片。
  */
 import type { Scene } from '../../../engine/types'
@@ -61,14 +61,14 @@ const B = layout([
 ])
 
 /** 像素卡片：sx = 绕竖轴翻转后的横向缩放，skew = 透视错切 */
-function tile(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, sx: number, skew: number) {
+function tile(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, sx: number, skew: number, solid = false) {
   ctx.save()
   ctx.translate(x + (P * s) / 2, y + (P * s) / 2)
   ctx.transform(sx, skew, 0, 1, 0, 0)
   const w = (P - 2) * s
   ctx.fillStyle = '#fff'
   ctx.fillRect(-w / 2, -w / 2, w, w)
-  if (s < 2.5) {
+  if (s < 2.5 && !solid) {
     ctx.fillStyle = '#000'
     const k = w / 4
     for (let i = 1; i < 4; i++) {
@@ -82,16 +82,10 @@ function tile(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, sx
 export const s86PixelWords: Scene = {
   id: 'wd1-086-how-you-think',
   start: 86.3,
-  end: 91.25,
+  end: 91.3,
   note: 'Data Silos 飞散 → 像素字 HOW YOU THINK → WHAT YOU BELIEVE → 白块铺屏',
   render({ ctx, t }) {
     ref(ctx)
-    // 91.1 起整屏白
-    if (t >= 91.12) {
-      ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, 1280, 720)
-      return
-    }
     // 镜头：88.6 前略推近并偏左，89.2 回到 1:1
     const cs = 1 + 0.35 * (1 - span(t, 88.3, 89.1, ease.inOutCubic))
     const cx = -10 * (1 - span(t, 88.3, 89.1, ease.inOutCubic))
@@ -100,7 +94,7 @@ export const s86PixelWords: Scene = {
     ctx.scale(cs, cs)
     ctx.translate(-640, -360)
 
-    const scatter = span(t, 90.55, 91.15)
+    const scatter = span(t, 90.65, 91.3)
     const drawSet = (pts: typeof A, set: number) => {
       pts.forEach((p, i) => {
         const h1 = hash(i * 31 + set * 7919)
@@ -112,39 +106,46 @@ export const s86PixelWords: Scene = {
         let sx = 1
         let skew = 0
         if (set === 0) {
-          // 飞入：按字母成组，从下方散布点升到中部带状，再逐个落位
-          const land = 87.55 + (p.letter / 12) * 0.9 + h1 * 0.45
-          const q = span(t, land, land + 0.45, ease.outCubic)
+          // 飞入（V2 按 30fps 逐帧重对）：字母组 86.75–88.0 从左下升到中部带（y≈300–450，88.2 前缓慢上移到 ≈250–350），
+          // 部分像素拖在带下方（87.6–88.4 原片带下面有一片零散小卡片），88.1–89.0 逐个落位
+          const land = 88.05 + (p.letter / 12) * 0.25 + h1 * 0.2
+          const q = span(t, land, land + 0.25, ease.outCubic)
           // 同一字母的像素保持相对排布（看起来是一块块小格阵列）
           const o = ORIGIN[p.letter]
           const hl = hash(p.letter * 5)
           const lx = hash(p.letter * 13 + 1) * 1400 - 60
-          const band = 170 + hash(p.letter * 17 + 3) * 70
-          const rise = span(t, 86.55 + hl * 0.45, 87.45 + hl * 0.2, ease.outCubic)
-          const fx = lx + (p.x - o[0]) * 0.8 + (1 - rise) * (hl - 0.5) * 500
-          const fy = band + (p.y - o[1]) * 0.8 + (1 - rise) * (520 + hl * 200)
+          const band = 345 + hash(p.letter * 17 + 3) * 60 - 40 * span(t, 87.4, 88.3)
+          const rise = span(t, 86.6 + hl * 0.3, 87.25 + hl * 0.2, ease.outCubic)
+          const lag = h2 > 0.8 ? (1 - span(t, 87.6 + h3 * 0.4, 88.4 + h3 * 0.3, ease.inOutCubic)) * span(t, 87.2, 87.7) * (80 + h3 * 260) : 0
+          const fx = lx + (p.x - o[0]) * 0.8 + (1 - rise) * (hl - 0.5) * 500 - (1 - rise) * 300
+          const fy = band + (p.y - o[1]) * 0.8 + (1 - rise) * (420 + hl * 200) + lag
           x = fx + (p.x - fx) * q
           y = fy + (p.y - fy) * q
-          sx = Math.cos((1 - q) * (1.2 + h1 * 1.2))
-          skew = (1 - q) * (h3 - 0.5) * 1.2
+          sx = Math.cos((1 - q) * (0.5 + hl * 0.7))
+          skew = (1 - q) * (0.35 + (hl - 0.5) * 0.9)
           s = 0.85 + 0.15 * q
-          // 换字：89.4–89.75 随机消失
-          if (t > 89.35 + h1 * 0.25) return
+          // 换字：89.5–89.72 随机消失（原片 89.5 仍以旧字为主）
+          if (t > 89.5 + h1 * 0.22) return
         } else {
-          const tin = 89.4 + h1 * 0.28
+          const tin = 89.45 + h1 * 0.25
           if (t < tin) return
           const g = 1 - span(t, tin, tin + 0.12)
           x += (h2 - 0.5) * 30 * g
           sx = 1 - g * 0.8
           if (scatter > 0) {
-            // 散开放大成白块
-            const k = ease.inCubic(clamp01((scatter - h3 * 0.3) / 0.7))
-            x += (h2 - 0.5) * 700 * k
-            y += (h1 - 0.5) * 500 * k
-            s = 1 + k * (1 + h3 * 9)
+            // 散开（V2 对原片 30fps 逐帧）：90.55 起字形先抖散，随后像素块沿径向飞出并放大——
+            // 上行飞出画面顶端、下行落到画面下半；91.0 后只剩十来块大白块（边长 50–100），不铺满白屏
+            const k = clamp01((scatter - h3 * 0.15) / 0.85) ** 1.2
+            const kj = span(t, 90.55, 90.75)
+            x += (h2 - 0.5) * 40 * kj + (x - 640) * 1.3 * k + (h2 - 0.5) * 500 * k
+            y += (h1 - 0.5) * 30 * kj + (y - 300) * (y < 300 ? 4.5 : 2.4) * k + (h1 - 0.5) * 160 * k
+            s = 1 + 0.15 * kj + k * (0.6 + h3 * 3.2)
+            skew = (h1 - 0.5) * 0.3 * kj * (1 - k)
+            // 越往后越稀：只留一小部分块
+            if (hash(i * 13 + 777) < k * 0.88) return
           }
         }
-        tile(ctx, x, y, s, Math.max(0.05, Math.abs(sx)), skew)
+        tile(ctx, x, y, s, Math.max(0.05, Math.abs(sx)), skew, set === 1 && scatter > 0 && hash(i * 7 + 3) > 0.15)
       })
     }
     drawSet(A, 0)

@@ -5,7 +5,7 @@ import { fitText } from './util'
 
 /**
  * 0.0–2.7  PEGI 18 分级卡（PROVISIONAL）。
- * 原片：0→0.2s 淡入，2.3→2.6s 淡出，之后 0.1s 纯黑。
+ * 原片：0→0.2s 淡入，2.2→2.53s 淡出，之后纯黑。
  * ASSET：PEGI 标用文字+矩形拼出，换官方矢量标时替换 drawPegi()。
  */
 function drawPegi(ctx: CanvasRenderingContext2D) {
@@ -34,7 +34,8 @@ export const pegi: Scene = {
   end: 2.7,
   note: 'PEGI 18 PROVISIONAL 分级卡，淡入淡出',
   render({ ctx, t }) {
-    const a = Math.min(seg(t, 0, 0.2), 1 - seg(t, 2.3, 2.6))
+    // V2：按原片逐帧亮度，淡出是 2.2→2.53（2.5 时只剩 10%）
+    const a = Math.min(seg(t, 0, 0.2), 1 - seg(t, 2.2, 2.53))
     if (a <= 0) return
     ctx.globalAlpha = a
     drawPegi(ctx)

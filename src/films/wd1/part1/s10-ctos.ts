@@ -19,8 +19,9 @@ export const centralOS: Scene = {
   note: 'centralOperatingSystem 斜纹白底打字，42.55s 起整块向下滑出画',
   render({ ctx, t }) {
     const text = 'centralOperatingSystem'
-    const n = t < 40.2 ? Math.floor(15 * seg(t, 40.05, 40.2)) : Math.min(text.length, 15 + Math.floor((t - 40.2) * 20))
-    const dy = 950 * ease.inQuad(seg(t, 42.45, 43.2))
+    const n = t < 40.2 ? Math.floor(15 * seg(t, 40.05, 40.2)) : Math.min(text.length, 15 + Math.floor((t - 40.15) * 20))
+    // V2：原片 43.0 时底块已滑到 y≈860，比 V1 快
+    const dy = 1000 * ease.inQuad(seg(t, 42.45, 43.1))
     const x = 259
     const size = 128
     const base = 212 + dy
@@ -46,17 +47,20 @@ export const ctos: Scene = {
   end: 47.0,
   note: 'c T O S 依次弹出（分散），42.95s 收拢成 ctOS 并随城市推近放大，46.75s 向左滑出',
   render({ ctx, t }) {
-    const S = spline(t, [[42.0, 130], [42.95, 130], [43.6, 135], [44.5, 250], [46.2, 265], [47.0, 272]])
-    const small = S * 0.55
-    const gather = ease.inOutCubic(seg(t, 42.95, 43.45))
-    const out = -900 * ease.inCubic(seg(t, 46.72, 47.0))
+    // V2：按 43.5/44.5/46.0 参考帧量字宽，整体比 V1 大约 12%
+    const S = spline(t, [[42.0, 130], [42.95, 132], [43.6, 150], [44.5, 282], [46.2, 295], [47.0, 300]])
+    // V2：原片 c/T 小型大写约为 O 高的 0.62，字重偏 500
+    const small = S * 0.62
+    const gather = ease.inOutCubic(seg(t, 42.85, 43.4))
+    // V2：原片 46.8 已只剩 "OS" 露在左缘，滑出提前到 46.55
+    const out = -1100 * seg(t, 46.55, 46.95) ** 1.5
     const base = 355
     const x0 = 262 + out
     // 分散布局（42.2–42.9 参考帧）与收拢布局
     const spread = [293, 432, 677, 1183]
-    const packed = [x0, x0 + 0.35 * S, x0 + 0.67 * S, x0 + 1.47 * S]
+    const packed = [x0, x0 + 0.39 * S, x0 + 0.76 * S, x0 + 1.55 * S]
     const letters = ['C', 'T', 'O', 'S']
-    const t0 = [42.0, 42.1, 42.25, 42.45]
+    const t0 = [42.0, 42.2, 42.3, 42.45]
     ctx.fillStyle = 'rgba(235,235,235,0.93)'
     letters.forEach((ch, i) => {
       const a = seg(t, t0[i], t0[i] + 0.08)
@@ -64,7 +68,7 @@ export const ctos: Scene = {
       const sz = i < 2 ? (gather > 0 ? small : 70) : gather > 0 ? S : 130
       const x = spread[i] + (packed[i] - spread[i]) * gather
       ctx.globalAlpha = a
-      font(ctx, sz, 400, FONT.sans)
+      font(ctx, sz, 500, FONT.sans)
       tracking(ctx, -sz * 0.04)
       ctx.fillText(ch, x, base)
     })

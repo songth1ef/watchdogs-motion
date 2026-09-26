@@ -269,11 +269,12 @@ export const s62Skull: Scene = {
     ])
     const sc = track(t, [
       [62.9, 60],
-      [63.0, 120],
+      [63.0, 165],
       [63.4, 190],
       [64.4, 232],
       [65.6, 205],
-      [66.4, 205],
+      [66.1, 205],
+      [66.4, 185],
       [67.2, 175],
       [67.8, 180],
       [68.4, 165],
@@ -288,13 +289,15 @@ export const s62Skull: Scene = {
       ref(ctx)
     }
 
-    if (t < 65.65) {
+    // V2：原片 66.0 仍是俯视单张切片（上颌层），66.1 起才换成 3D 体
+    if (t < 66.08) {
       // 单张 CT 切片（俯视）
       const level = track(t, [
         [62.9, 0.85],
         [63.4, 0.55],
         [64.4, -0.12],
         [65.6, -0.5],
+        [66.08, -0.56],
       ])
       const img = ctSlice(level)
       const size = (256 / 110) * sc
@@ -315,8 +318,8 @@ export const s62Skull: Scene = {
     } else {
       // 3D 切片体
       const pitch = track(t, [
-        [65.65, Math.PI / 2],
-        [66.0, 0.0],
+        [66.08, Math.PI / 2],
+        [66.35, 0.0],
         [66.6, 0.0],
         [67.2, 0.9],
         [67.8, 0.85],
@@ -324,7 +327,7 @@ export const s62Skull: Scene = {
         [68.9, 1.35],
       ])
       const yaw = track(t, [
-        [65.65, 0],
+        [66.08, 0],
         [66.6, 0],
         [67.2, 1.3],
         [67.8, 1.5],
@@ -332,7 +335,7 @@ export const s62Skull: Scene = {
         [68.9, 0.2],
       ])
       const roll = track(t, [
-        [65.65, 0],
+        [66.08, 0],
         [66.6, 0],
         [67.2, 0.1],
         [67.8, -0.2],
@@ -347,18 +350,20 @@ export const s62Skull: Scene = {
     // 文字：Personal Data Collection / is the key commodity（65.6 后下移、左移并收窄消失）
     const tx = track(t, [
       [65.5, 640],
-      [65.8, 440],
-      [66.0, 380],
-      [66.2, 347],
-      [66.5, 340],
+      [65.8, 472],
+      [66.0, 392],
+      [66.2, 355],
+      [66.5, 339],
     ])
     const ty = track(t, [
-      [65.4, 440],
-      [65.6, 520],
-      [65.8, 600],
-      [66.2, 586],
+      [65.1, 440],
+      [65.4, 475],
+      [65.6, 541],
+      [65.8, 608],
+      [66.2, 605],
     ])
-    const collapse = span(t, 65.75, 66.45, ease.inCubic)
+    // V2：原片 65.8 剩 80%、66.0 剩 30%、66.2 剩 13%——先快后慢
+    const collapse = span(t, 65.7, 66.5, ease.outQuad)
     if (t > 62.95 && collapse < 1) {
       ctx.save()
       const l1 = 'Personal Data Collection'
@@ -370,8 +375,9 @@ export const s62Skull: Scene = {
       ctx.beginPath()
       ctx.rect(tx - 2, ty - 60, Math.max(0, bw1 + 2), 120)
       ctx.clip()
+      // V2：原片先在切片上打黑字（无底），63.3–63.6 青底才从左扫出
       ctx.fillStyle = WD1.cyan
-      ctx.fillRect(tx - 2, ty - 36, bw1, 42)
+      ctx.fillRect(tx - 2, ty - 36, Math.min(bw1, w1 * span(t, 63.3, 63.6)), 42)
       ctx.fillStyle = '#000'
       ctx.fillText(l1.slice(0, n1), tx, ty)
       // 第二行：先出斜纹浅青底，再打字

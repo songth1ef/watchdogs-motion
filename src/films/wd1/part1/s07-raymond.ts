@@ -212,13 +212,14 @@ export const raymond: Scene = {
       const s = 0.18 + 0.82 * ease.inOutCubic(faceP)
       const w = 185 * s
       const h = 187 * s
-      drawFace(ctx, 1004 - w, 390 - h, w, h)
+      // V2：按 26.0 参考帧，头像右缘 1025、X 光照 (1034,201) 368×368（V1 小约 12% 且偏左）
+      drawFace(ctx, 1025 - w, 390 - h, w, h)
     }
     const bodyP = ease.outBack(seg(t, 25.5, 25.68))
     if (bodyP > 0) {
-      const w = 326 * bodyP
-      const h = 325 * bodyP
-      drawBody(ctx, 1013, 224 + (325 - h) / 2, w, h)
+      const w = 368 * bodyP
+      const h = 368 * bodyP
+      drawBody(ctx, 1034, 201 + (368 - h) / 2, w, h)
     }
 
     // 大字

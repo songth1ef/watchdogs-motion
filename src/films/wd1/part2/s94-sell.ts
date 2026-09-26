@@ -9,7 +9,7 @@ import { offscreen } from '../../../fx/canvas'
 import { WD1 } from '../../../theme'
 import { FONT, ease, ref, setFont, span, track, typed } from './common'
 
-const COLS = 21
+const COLS = 26
 const ROWS = 27
 let GRID: string[] | null = null
 
@@ -19,10 +19,15 @@ function asciiGrid() {
   const { ctx: g } = offscreen('wd1p2-ascii-dollar', COLS, ROWS)
   g.clearRect(0, 0, COLS, ROWS)
   g.fillStyle = '#fff'
-  g.font = `700 ${ROWS * 0.95}px ${FONT.sans}`
+  // V2：原片的 $ 比字体里的更宽更粗（宽高比约 0.64），横向拉伸铺满格子
+  g.font = `900 ${ROWS * 0.95}px ${FONT.sans}`
   g.textAlign = 'center'
   g.textBaseline = 'middle'
-  g.fillText('$', COLS / 2, ROWS / 2 + 1)
+  g.save()
+  g.translate(COLS / 2, ROWS / 2 + 1)
+  g.scale(1.55, 1)
+  g.fillText('$', 0, 0)
+  g.restore()
   const d = g.getImageData(0, 0, COLS, ROWS).data
   const on = (x: number, y: number) => x >= 0 && y >= 0 && x < COLS && y < ROWS && d[(y * COLS + x) * 4 + 3] > 100
   const rows: string[] = []
@@ -54,7 +59,7 @@ export const s94Sell: Scene = {
     const s = track(t, [
       [94.15, 0.3],
       [94.3, 0.357],
-      [94.5, 0.69],
+      [94.5, 0.8],
       [94.7, 0.85],
       [95.0, 1.0],
       [95.6, 1.19],
@@ -88,7 +93,7 @@ export const s94Sell: Scene = {
 
     // ASCII $（中心 (640,318)，高约 530）
     const grid = asciiGrid()
-    const cw = 300 / COLS
+    const cw = 370 / COLS
     const ch = 530 / ROWS
     ctx.font = `700 ${ch * 1.15}px ${FONT.mono}`
     ctx.fillStyle = '#3a3a3a'
@@ -99,7 +104,7 @@ export const s94Sell: Scene = {
         if (c === ' ') continue
         if (t < 94.3 + hash(x * 131 + y * 17) * 0.5) continue
         ctx.save()
-        ctx.translate(640 - 150 + x * cw, 318 - 265 + y * ch)
+        ctx.translate(640 - 185 + x * cw, 318 - 265 + y * ch)
         ctx.transform(1, 0, -0.2, 1, 0, 0)
         ctx.fillText(c, 0, 0, cw * 1.08)
         ctx.restore()
