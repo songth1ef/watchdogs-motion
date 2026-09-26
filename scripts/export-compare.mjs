@@ -2,8 +2,8 @@
 // 用法：pnpm export:compare            全部
 //       pnpm export:compare wd1 10 13  只导某一段的某个区间（调试用）
 // 原片音轨与画面仅用于本地对照，成片不要公开发布。
-import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { execFileSync, spawn } from 'node:child_process'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { openHarness } from './harness.mjs'
 
 const FPS = 30
@@ -48,7 +48,12 @@ try {
     const dur = (await h.info('intro')).duration
     const [s, e] = [Number(a ?? 0), Number(b ?? dur)]
     const out = `${OUT}/_intro.mp4`
-    const enc = ffmpeg(['-f', 'image2pipe', '-framerate', String(FPS), '-i', '-', '-f', 'lavfi', '-t', String(e - s), '-i', 'anullsrc=r=48000:cl=stereo', '-map', '0:v', '-map', '1:a', '-shortest', ...ENC, out])
+    // 配音：按 cues.json 的起点把每句旁白放到时间轴上混成一轨
+    const voice = JSON.parse(readFileSync('assets/voice/intro/cues.json', 'utf8'))
+    const vin = voice.cues.flatMap((c) => ['-i', `assets/voice/intro/${c.file}`])
+    const mix = voice.cues.map((c, i) => `[${i + 1}:a]aresample=48000,aformat=channel_layouts=stereo,volume=2,adelay=${Math.round((c.start - s) * 1000)}:all=1[v${i}]`).join(';')
+    const amix = `${mix};${voice.cues.map((_, i) => `[v${i}]`).join('')}amix=inputs=${voice.cues.length}:normalize=0,alimiter=limit=0.89:level=false,apad,atrim=0:${e - s}[a]`
+    const enc = ffmpeg(['-f', 'image2pipe', '-framerate', String(FPS), '-i', '-', ...vin, '-filter_complex', amix, '-map', '0:v', '-map', '[a]', '-t', String(e - s), ...ENC, out])
     await pump(h, enc, async (t) => dataUrlToBuf(await page.evaluate(([tt]) => window.__wd.renderAt('intro', tt, 'jpeg'), [t])), s, e, 'intro')
     parts.push(out)
   }
@@ -70,9 +75,16 @@ try {
   await h.close()
 }
 
-if (!only && parts.length === 3) {
-  writeFileSync(`${OUT}/_list.txt`, parts.map((p) => `file '${p.replace(`${OUT}/`, '')}'`).join('\n') + '\n')
-  const cat = ffmpeg(['-f', 'concat', '-safe', '0', '-i', `${OUT}/_list.txt`, '-c', 'copy', '-movflags', '+faststart', `${OUT}/watchdogs-compare.mp4`])
+// 三段都在就拼成片（只重导某一段时也会用上次导好的其他段）
+const all = ['intro', 'wd1', 'wd2'].map((p) => `${OUT}/_${p}.mp4`)
+if ((!only || !a) && all.every((p) => existsSync(p))) {
+  writeFileSync(`${OUT}/_list.txt`, all.map((p) => `file '${p.replace(`${OUT}/`, '')}'`).join('\n') + '\n')
+  // 章节：播放器里可直接跳到「WD1 对比」「WD2 对比」
+  const probe = (f) => Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).toString())
+  const [d0, d1, d2] = all.map(probe)
+  const ch = (st, en, title) => `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(st * 1000)}\nEND=${Math.round(en * 1000)}\ntitle=${title}\n`
+  writeFileSync(`${OUT}/_chapters.txt`, ';FFMETADATA1\n' + ch(0, d0, '实现介绍（可跳过）') + ch(d0, d0 + d1, 'WD1 复刻 vs 原片') + ch(d0 + d1, d0 + d1 + d2, 'WD2 复刻 vs 原片'))
+  const cat = ffmpeg(['-f', 'concat', '-safe', '0', '-i', `${OUT}/_list.txt`, '-i', `${OUT}/_chapters.txt`, '-map_metadata', '1', '-map_chapters', '1', '-c', 'copy', '-movflags', '+faststart', `${OUT}/watchdogs-compare.mp4`])
   cat.stdin.end()
   await cat.done
   console.log(`成片：${OUT}/watchdogs-compare.mp4`)

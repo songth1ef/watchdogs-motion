@@ -11,11 +11,16 @@ import { FONT, font, highlight, tag, tracking, typeOn } from '../../fx/text'
 import { WD1 } from '../../theme'
 import { wd1 } from '../wd1'
 import { wd2 } from '../wd2'
+import voice from '../../../assets/voice/intro/cues.json'
 
 /**
  * 对比视频的开头：约 50 秒快速介绍本工程怎么实现。用本工程自己的引擎和效果库做成 WD1 风格的动态图形。
  * 中文用苹方，英文和数字沿用 Helvetica。
  */
+/** 各小节时间与旁白由 assets/voice/intro/cues.json 决定（按配音时长排出，单一真相源） */
+export const INTRO_TOTAL = voice.total
+const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`
+
 const CN = `"PingFang SC", "Hiragino Sans GB", ${FONT.sans}`
 
 function cn(ctx: CanvasRenderingContext2D, size: number, weight: number | string = 600) {
@@ -55,6 +60,16 @@ const title: Scene = {
     cn(ctx, 34, 400)
     ctx.fillStyle = 'rgba(255,255,255,0.75)'
     ctx.fillText(typeOn('两支原片 · WD1 151 秒 + WD2 121 秒 · 约 90 个镜头 · 全部由代码实时渲染', seg(lt, 2.2, 3.4)), 164, 720)
+    // 开头直接强调：正片从几分几秒开始
+    const jp = seg(lt, 0.3, 1.0)
+    ctx.save()
+    ctx.globalAlpha *= jp
+    ctx.fillStyle = WD1.cyan
+    ctx.fillRect(160, 770, 1000, 92)
+    cn(ctx, 46, 700)
+    ctx.fillStyle = '#000'
+    ctx.fillText(`▶ 正片从 ${mmss(INTRO_TOTAL)} 开始，可直接跳过本段介绍`, 188, 832)
+    ctx.restore()
     const g = seg(lt, 0, 0.5)
     if (g < 1) sliceGlitch(ctx, { amount: 1 - g, seed: frameIndex(lt, 30), maxShift: 120 })
   },
@@ -356,11 +371,53 @@ const handoff: Scene = {
   },
 }
 
+// ---------------------------------------------------------------- 全程叠加：右上角倒计时 + 底部旁白字幕
+const overlay: Scene = {
+  id: 'intro-overlay',
+  start: 0,
+  end: INTRO_TOTAL,
+  note: '右上角「正片倒计时」+ 旁白字幕',
+  render({ ctx, t }) {
+    const left = Math.max(0, INTRO_TOTAL - t)
+    const text = `${mmss(INTRO_TOTAL)} 进入正片 · 还有 ${Math.ceil(left)} 秒 ▸`
+    cn(ctx, 26, 600)
+    const w = ctx.measureText(text).width + 36
+    ctx.fillStyle = 'rgba(79,245,227,0.92)'
+    ctx.fillRect(1920 - 60 - w, 50, w, 50)
+    ctx.fillStyle = '#000'
+    ctx.fillText(text, 1920 - 60 - w + 18, 85)
+    const cue = voice.cues.find((c) => t >= c.start && t < c.start + c.dur + 0.2)
+    if (cue) {
+      cn(ctx, 30, 500)
+      ctx.textAlign = 'center'
+      ctx.lineJoin = 'round'
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)'
+      ctx.lineWidth = 6
+      // 长句折成两行
+      const words = cue.text
+      const lines = words.length > 34 ? [words.slice(0, Math.ceil(words.length / 2)), words.slice(Math.ceil(words.length / 2))] : [words]
+      lines.forEach((l, i) => {
+        const y = 1010 - (lines.length - 1 - i) * 44
+        ctx.strokeText(l, 960, y)
+        ctx.fillStyle = '#fff'
+        ctx.fillText(l, 960, y)
+      })
+      ctx.textAlign = 'left'
+    }
+  },
+}
+
+const SECTIONS = [title, pipeline, principle, effects, team, limits, handoff].map((s, i) => ({
+  ...s,
+  start: voice.scenes[i][0],
+  end: voice.scenes[i][1],
+}))
+
 export const intro: Film = {
   id: 'intro',
-  title: '对比视频开头 · 实现介绍',
-  duration: 50,
+  title: '对比视频开头 · 实现介绍（带配音）',
+  duration: INTRO_TOTAL,
   fps: 30,
   background: '#000000',
-  scenes: [title, pipeline, principle, effects, team, limits, handoff],
+  scenes: [...SECTIONS, overlay],
 }
