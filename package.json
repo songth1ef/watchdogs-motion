@@ -12,7 +12,8 @@
     "export": "node scripts/export.mjs",
     "export:compare": "node scripts/export-compare.mjs",
     "score": "node scripts/score.mjs",
-    "solve": "node scripts/solve-camera.mjs"
+    "solve": "node scripts/solve-camera.mjs",
+    "export:replica": "node scripts/export-replica.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

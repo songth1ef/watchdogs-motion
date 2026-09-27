@@ -10,7 +10,7 @@ import type { Film } from './engine/types'
 import { H, W, activeScenes, renderFrame } from './engine/render'
 import { ThreeHost } from './engine/three-host'
 import { FONT } from './fx/text'
-import { drawCompare } from './compare'
+import { drawCompare, drawReplica } from './compare'
 import { offscreen } from './fx/canvas'
 import { preloadAssets } from './assets'
 
@@ -151,6 +151,8 @@ declare global {
       renderAt(id: Film['id'], time: number, format?: 'png' | 'jpeg'): string
       /** 对比视频帧：左复刻、右留黑给原片 */
       compareAt(id: Film['id'], time: number): string
+      /** 公开发布版帧：全屏复刻 + 角标 */
+      replicaAt(id: Film['id'], time: number): string
       duration(id: Film['id']): number
       fps(id: Film['id']): number
     }
@@ -173,6 +175,14 @@ window.__wd = {
     draw()
     const o = offscreen('compare-out', W, H)
     drawCompare(o.ctx, film, time, canvas)
+    return o.canvas.toDataURL('image/jpeg', 0.95)
+  },
+  replicaAt(id, time) {
+    film = films[id]
+    t = time
+    draw()
+    const o = offscreen('replica-out', W, H)
+    drawReplica(o.ctx, film, time, canvas)
     return o.canvas.toDataURL('image/jpeg', 0.95)
   },
   duration: (id) => films[id].duration,

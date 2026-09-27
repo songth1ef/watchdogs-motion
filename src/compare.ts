@@ -66,3 +66,30 @@ export function drawCompare(out: CanvasRenderingContext2D, film: Film, t: number
   out.fillRect(PANE.left, H - 60, (W - PANE.left * 2) * (t / film.duration), 4)
   out.restore()
 }
+
+/**
+ * 公开发布版（纯复刻）的一帧：全屏复刻画面 + 右上角小角标，开场 4 秒左下角显示片名，避免被误认为官方原片。
+ */
+export function drawReplica(out: CanvasRenderingContext2D, film: Film, t: number, frame: HTMLCanvasElement) {
+  out.save()
+  out.drawImage(frame, 0, 0, 1920, 1080)
+  const badge = 'RECREATION · RENDERED IN CODE'
+  out.font = `400 18px ${FONT.mono}`
+  out.letterSpacing = '3px'
+  const w = out.measureText(badge).width + 28
+  out.fillStyle = 'rgba(0,0,0,0.45)'
+  out.fillRect(1920 - 40 - w, 36, w, 34)
+  out.fillStyle = 'rgba(255,255,255,0.8)'
+  out.fillText(badge, 1920 - 40 - w + 14, 59)
+  const a = Math.max(0, Math.min(1, t / 0.5, (4 - t) / 0.6))
+  if (a > 0) {
+    const name = film.id === 'wd1' ? 'WATCH DOGS · E3 INTRODUCTION TRAILER — RECREATION' : 'WATCH DOGS 2 · ctOS INTRODUCTION — RECREATION'
+    out.globalAlpha = a
+    const w2 = out.measureText(name).width + 28
+    out.fillStyle = WD1.cyan
+    out.fillRect(40, 36, w2, 34)
+    out.fillStyle = '#000'
+    out.fillText(name, 54, 59)
+  }
+  out.restore()
+}
