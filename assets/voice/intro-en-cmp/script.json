@@ -1,0 +1,9 @@
+[
+  "This is a shot-by-shot recreation of two Watch Dogs trailers, rendered entirely in code. The side-by-side comparison starts at 59 seconds, so feel free to skip ahead.",
+  "I studied the trailers frame by frame, wrote a shot list, and rebuilt every shot in code, checking each one against the source until it lined up.",
+  "Every frame is a pure function of time: the same timestamp always renders the same image, so the film can be scrubbed, exported, and measured.",
+  "First I built a small toolkit: typed highlights, glitch slicing, dot-matrix type, network graphs, pixelation, and procedural 3D cities.",
+  "Then six AI agents rebuilt the trailers in parallel, one time range each, while I built the engine and stitched the seams.",
+  "Version two adds real OpenStreetMap buildings, NASA imagery, 3D post-processing, and camera moves solved in Blender.",
+  "Here's the comparison: my recreation on the left, the original on the right."
+]
