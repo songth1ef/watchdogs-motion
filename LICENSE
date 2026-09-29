@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2026 songth1ef
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+The MIT license above covers the source code only. Third-party data and
+models bundled in this repository keep their own licenses — see
+assets/LICENSES.md for sources, licenses and required attribution:
+
+- public/assets/geo/chicago.wdgeo.gz, sf.wdgeo.gz, bay.wdgeo.gz are derived
+  from OpenStreetMap: © OpenStreetMap contributors, Open Database License
+  (ODbL) 1.0, https://www.openstreetmap.org/copyright
+- NASA imagery and NASA 3D Resources models: public domain (U.S. Government works)
+- Natural Earth: public domain
+- Terrain Tiles (Mapzen/Tilezen, AWS Open Data): see assets/LICENSES.md
+- Poly Haven models: CC0 1.0
+
+Watch Dogs, ctOS and DedSec are trademarks of Ubisoft Entertainment. This is
+an unofficial fan study, not affiliated with or endorsed by Ubisoft. No
+original trailer footage or audio is included in this repository.

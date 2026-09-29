@@ -1,5 +1,21 @@
 # watchdogs-motion
 
+> **English** · A shot-by-shot recreation of two Watch Dogs trailers — the *Watch Dogs* E3 introduction and the *Watch Dogs 2* ctOS introduction — rendered entirely in the browser with **Canvas 2D + three.js**. Every frame is a pure function of time, so the film can be scrubbed, exported frame by frame, and scored against the source.
+>
+> - Real **OpenStreetMap** buildings for Chicago and the Bay Area, **NASA** Earth imagery, **Natural Earth** vectors
+> - Camera moves **solved in Blender** from reference frames (`pnpm solve`), 3D post-processing (AO, DoF, bloom, edges)
+> - Built-in player with side-by-side / onion-skin / difference views against a local reference video, plus an SSIM-based **similarity score** per shot (`pnpm score`)
+>
+> ```bash
+> pnpm install && pnpm dev     # player at http://localhost:5173
+> ```
+>
+> The original trailers are **not** included. To compare against them, place your own reference copies at `public/reference/wd1.mp4` and `public/reference/wd2.mp4` (see below).
+>
+> Fan-made, non-commercial study. *Watch Dogs, ctOS and DedSec are trademarks of Ubisoft; this project is not affiliated with or endorsed by Ubisoft.* Code: MIT. Bundled data keeps its own license (OpenStreetMap data © OpenStreetMap contributors, ODbL) — see [LICENSE](./LICENSE) and [assets/LICENSES.md](./assets/LICENSES.md).
+
+---
+
 用代码逐镜头复刻两支 Watch Dogs 宣传动画，作为可二次开发的动态图形工程：
 
 | id  | 原片 | 时长 | 帧率 |
@@ -62,6 +78,8 @@ scripts/       snap / export 无头渲染
 - `docs/score/v1-*` 是第一版基线，不要覆盖；精修后换新 tag 重跑，对比同一镜头分数。全片约 1 分钟。
 - 分数只排优先级：低分先看并排图再定性（时序错位、亮度、构图都会拉低分数）。
 
-## 版权说明
+## 版权与许可
 
-Watch Dogs、ctOS、DedSec 及原片设计归 Ubisoft 所有。本工程为学习与技术复刻，品牌文字和原片音轨不要用于商业发布。
+- 代码：MIT（见 [LICENSE](./LICENSE)）。
+- 随仓库附带的第三方数据与模型各自保留原许可，来源与署名见 [assets/LICENSES.md](./assets/LICENSES.md)；其中 `public/assets/geo/*.wdgeo.gz` 源自 OpenStreetMap，© OpenStreetMap contributors，ODbL 1.0。
+- Watch Dogs、ctOS、DedSec 及原片设计归 Ubisoft 所有。本工程为非官方的学习与技术复刻，与 Ubisoft 无关；仓库不含任何原片画面或音频，对照用原片需自行准备、仅限本地使用。

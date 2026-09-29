@@ -27,5 +27,7 @@
     "playwright": "1.61.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.1"
-  }
+  },
+  "license": "MIT",
+  "description": "Shot-by-shot recreation of two Watch Dogs trailers, rendered entirely in code (Canvas 2D + three.js)"
 }
